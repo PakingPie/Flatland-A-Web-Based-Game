@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111e24">
+<title>The Flatland · Living Society</title>
+<style>
+/*__STYLE__*/
+</style>
+</head>
+<body>
+<canvas id="world" tabindex="0" aria-label="Flatland game world. Move with WASD or arrow keys. Press H for controls."></canvas>
+<div id="hud" hidden>
+  <header class="topbar">
+    <div class="brand"><div class="wordmark"><span class="mark"></span>THE FLATLAND</div><div class="eyebrow">Phase 2A / A life beyond the outline</div></div>
+    <div class="topright"><div class="timebox"><strong id="dayText">Day 1 · Dawn</strong><small id="seedText"></small></div><button class="small-btn" id="helpBtn" aria-label="Help and controls">Help</button><button class="small-btn" id="pauseBtn" aria-label="Pause game">Pause</button></div>
+  </header>
+  <section class="panel vitals" aria-label="Survival status">
+    <div class="panel-head"><strong>Your condition</strong><span class="tag">Generation 0</span></div>
+    <div class="stat" id="healthStat"><div class="stat-label"><span>Health</span><span id="healthText">100</span></div><div class="track" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" id="healthBar"><div class="fill" id="healthFill" style="background:var(--coral)"></div></div></div>
+    <div class="stat" id="hungerStat"><div class="stat-label"><span>Food</span><span id="hungerText">84</span></div><div class="track" role="progressbar" aria-label="Food" aria-valuemin="0" aria-valuemax="100" id="hungerBar"><div class="fill" id="hungerFill" style="background:var(--green)"></div></div></div>
+    <div class="stat" id="thirstStat"><div class="stat-label"><span>Water</span><span id="thirstText">78</span></div><div class="track" role="progressbar" aria-label="Water" aria-valuemin="0" aria-valuemax="100" id="thirstBar"><div class="fill" id="thirstFill" style="background:var(--water)"></div></div></div>
+    <div class="stat" id="staminaStat"><div class="stat-label"><span>Stamina</span><span id="staminaText">100</span></div><div class="track" role="progressbar" aria-label="Stamina" aria-valuemin="0" aria-valuemax="100" id="staminaBar"><div class="fill" id="staminaFill" style="background:var(--gold)"></div></div></div>
+    <div class="identity"><span>Irregular triangle</span> · first generation<br>A shape is not a measure of worth.<br><span id="reputationSummary">Little known locally</span></div>
+  </section>
+  <section class="panel objectives" aria-label="Expedition goals"><div class="eyebrow" id="objectiveTitle">Your first expedition</div>
+    <div class="objective" id="goalDays"><span class="check"></span><span>Survive full days</span><span class="count" id="daysCount">0 / 3</span></div>
+    <div class="objective" id="goalGather"><span class="check"></span><span>Gather provisions</span><span class="count" id="gatherCount">0 / 12</span></div>
+    <div class="objective" id="goalRefuges"><span class="check"></span><span>Find refuges</span><span class="count" id="refugesCount">0 / 2</span></div>
+    <p class="objective-note">Keep yourself alive. Explore at your own pace. The world goes on around you.</p>
+  </section>
+  <div id="location"></div><div id="notice" class="panel" hidden></div>
+  <div id="log" role="status" aria-live="polite" aria-atomic="false"></div>
+  <section class="bottom-center" aria-label="Actions"><div id="context"></div><div id="restDetails" hidden></div><div class="actionbar">
+    <button class="action" id="gatherBtn" title="Hold E, or hold this button, to gather"><kbd>E</kbd><span>Gather</span></button>
+    <button class="action" id="eatBtn" title="F: eat one provision"><kbd>F</kbd><span>Eat</span><span class="qty" id="foodCount">1</span></button>
+    <button class="action water" id="drinkBtn" title="R: drink one flask"><kbd>R</kbd><span>Drink</span><span class="qty" id="waterCount">1</span></button>
+    <button class="action" id="restBtn" title="Space: toggle rest. Move to stop resting."><kbd>Space</kbd><span>Rest</span></button>
+    <button class="action" id="talkBtn" title="T: speak to a nearby citizen"><kbd>T</kbd><span>Talk</span></button>
+    <button class="action" id="sprintBtn" title="Hold Shift, or hold this button, while moving"><kbd>Shift</kbd><span>Sprint</span></button>
+  </div><div class="control-tip">WASD / arrows to move · T to talk · Hover / click to inspect · P to pause & save</div></section>
+  <section class="panel map-panel" aria-label="World map"><div class="map-head"><span>FIELD MAP</span><span>N ↑</span></div><canvas id="minimap" width="336" height="224" aria-label="Map with your location and refuge markers"></canvas><div class="map-foot"><span>▲ You</span><span>◇ Refuge</span></div></section>
+  <div id="joystick" role="group" aria-label="Touch movement joystick"><div id="stick"></div></div>
+  <aside class="panel" id="tooltip" hidden></aside>
+
+<aside class="panel citizen-panel" id="citizenPanel" role="dialog" aria-labelledby="citizenName" hidden>
+  <div class="citizen-heading"><div><div class="eyebrow">Citizen / a life beyond the outline</div><h2 id="citizenName">Unknown citizen</h2></div><button class="small-btn" id="closeCitizenBtn" aria-label="Close citizen panel">×</button></div>
+  <div id="citizenForm"></div>
+  <div class="relationship-heading"><span id="relationshipStage">Stranger</span><span id="playerReputation">Little known locally</span></div>
+  <div class="relationship-meters"><label>Familiarity <span id="familiarityText">0</span><meter id="familiarityMeter" min="0" max="100" value="0">Familiarity</meter></label><label>Trust <span id="trustText">0</span><meter id="trustMeter" min="0" max="100" value="0">Trust</meter></label></div>
+  <div class="social-tabs" role="tablist" aria-label="Citizen information"><button id="conversationTab" role="tab" aria-selected="true" aria-controls="conversationView">Conversation</button><button id="notesTab" role="tab" aria-selected="false" aria-controls="notesView">Discovered notes</button></div>
+  <div class="social-scroll" tabindex="0" role="region" aria-label="Scrollable conversation and discovered notes">
+    <section id="conversationView" role="tabpanel" aria-labelledby="conversationTab"><p id="dialogueText" aria-live="polite"></p><p id="socialOutcome" aria-live="polite"></p><div id="conversationOptions"></div><p class="social-warning">The world is still moving. You still need food and water.</p></section>
+    <section id="notesView" role="tabpanel" aria-labelledby="notesTab" hidden><p class="knowledge-rule">Claimed is not confirmed. Trust does not unlock every secret.</p><div id="knownFacts"></div><div class="genetic-lock">Hereditary traits & verified genealogy: undiscovered. A line’s appearance reveals no hidden genome.</div><h3>Rumors</h3><div id="knownRumors"></div></section>
+  </div>
+  <small id="socialScrollHint" hidden>Scroll inside this panel for more ↓</small><div id="conversationStatus" role="status"></div>
+</aside>
+</div>
+<section class="overlay" id="startScreen" aria-label="Start expedition"><div class="modal">
+  <div class="motif" aria-hidden="true"><i></i><i></i><i></i></div><div class="eyebrow">A small life in a living world</div><h1>THE FLATLAND</h1>
+  <p class="lede">You are an irregular triangle.<br>Stay alive. Meet your neighbors.<br>A life is more than its outline.</p>
+  <div class="rule"></div><dl class="instructions"><dt>WASD / arrows</dt><dd>Move. Hold <b>Shift</b> to sprint.</dd><dt>Hold E</dt><dd>Gather green food or blue water nearby.</dd><dt>F / R</dt><dd>Eat / drink from your pack. Each holds 8.</dd><dt>Space</dt><dd>Rest. Refuges restore health when fed and hydrated.</dd><dt>T / click a citizen</dt><dd>Introduce yourself. Discover lives, not just outlines.</dd></dl>
+  <div class="seedrow"><label for="seedInput">World seed</label><input id="seedInput" value="abbott-1884" maxlength="48" spellcheck="false" autocomplete="off" aria-label="World seed"></div>
+  <button class="primary" id="continueBtn" disabled>Continue saved expedition →</button><p class="save-status" data-save-status role="status"></p><button class="small-btn" id="startBtn">Begin new expedition →</button><p class="fine">Phase 2A · Manual save and autosave are separate browser-local slots.<br>Use Pause to save or load. No accounts or network connection required.</p>
+</div></section>
+<section class="overlay" id="pauseScreen" aria-label="Paused" hidden><div class="modal"><div class="eyebrow">The world can wait</div><h2>Expedition paused</h2><p id="pauseReason">Take a breath. Nothing advances while paused.</p><button class="primary" id="resumeBtn">Resume expedition</button><div class="secondary-row"><button class="small-btn" id="pauseHelpBtn">Controls & field guide</button><button class="small-btn" id="restartBtn">Restart same seed</button><button class="small-btn" id="newSeedBtn">New world seed</button></div><div class="secondary-row"><button class="small-btn" id="saveBtn">Save manually</button><button class="small-btn" id="loadBtn">Load manual save</button></div><p class="save-status" data-save-status role="status"></p><p class="fine">Autosaves every 30 seconds of play and on pause. New games replace the autosave, not the manual save. Saves stay in this browser and origin. Clearing browser data removes them.</p></div></section>
+<section class="overlay" id="helpScreen" aria-label="Controls and field guide" hidden><div class="modal"><div class="eyebrow">Field guide / Phase 2A</div><h2>Survive. Listen. Discover.</h2><dl class="instructions"><dt>WASD / arrows</dt><dd>Move through the world. Buildings and natural obstacles are solid.</dd><dt>Shift</dt><dd>Sprint while moving. Costs stamina and extra food and water. Exhausted legs need a short recovery.</dd><dt>E · hold</dt><dd>Gather from a nearby green berry patch or blue spring. Depleted sources replenish over time.</dd><dt>F / R</dt><dd>Use one packed food / water. These restore 38 food / 45 water, up to 100.</dd><dt>Space</dt><dd>Field rest: faster stamina recovery, 35% less food use and 28% less water use, but no healing. Refuge rest adds healing when both food and water exceed 30. Move to get up.</dd><dt>Pause menu</dt><dd>Manual save / load, autosave status, and new expedition. Continue resumes the newest valid save. Loading starts paused.</dd><dt>Hover / click</dt><dd>Observe a visible form or open a citizen’s conversation and notes. T speaks to the nearest citizen. Use Tab / Enter or keys 1–7 to choose a topic; Escape closes the panel.</dd><dt>Trust & sources</dt><dd>Introductions reveal claimed names, not private lives. Vary your topics and return on later days. Asking about family too soon can offend. Rumors can be false; claims are not proof.</dd><dt>P / Escape</dt><dd>Pause or resume. H opens this guide. Switching away automatically pauses.</dd></dl><div class="rule"></div><p>Food and water slowly decrease. An empty meter costs health. One day lasts two minutes of unpaused play. Complete all three expedition goals, then keep exploring.</p><p class="fine">Refuges are dashed circles with diamond markers, also shown on the field map. Society may judge your outline. Social prejudice is not a measure of fitness or worth. There is no combat, marriage, reproduction or succession yet. Conversation does not pause survival; keep your supplies ready. The seed reproduces the starting world, not different player actions.</p><button class="primary" id="closeHelpBtn">Return to expedition</button></div></section>
+<section class="overlay" id="deathScreen" aria-label="Expedition ended" hidden><div class="modal"><div class="eyebrow">The end of this expedition</div><h2>Even small lives matter.</h2><p class="lede" id="deathCause"></p><p id="deathStats"></p><div class="rule"></div><button class="primary" id="retryBtn">Try again · same world</button><div class="secondary-row"><button class="small-btn" id="menuBtn">Choose a different seed</button></div><p class="fine">Generational succession is planned for a later phase. For now, a new expedition starts as a new irregular triangle.</p></div></section>
+<script>
+/*__SCRIPT__*/
+</script>
+</body>
+</html>
