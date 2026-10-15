@@ -2,7 +2,9 @@
 
 **Design baseline:** v0.3 · 2026-10-15  
 **Project:** Browser-based, two-dimensional survival, society, and generational evolution game inspired by Edwin A. Abbott's *Flatland*.  
-**Status:** Planning document. Phases marked "planned" are *not* implemented by virtue of being listed here.
+**Status:** Phase 1.1 + 2A are implemented in [the-flatland.html](../the-flatland.html) (v0.2.0), with recorded evidence and validation limits in the [QA report](QA_REPORT.md). Phase 2B onward is planned and is *not* implemented by virtue of being listed here.
+
+**Repository and license:** [PakingPie/Flatland-A-Web-Based-Game](https://github.com/PakingPie/Flatland-A-Web-Based-Game) is public and uses the [MIT license](../LICENSE), Copyright (c) 2026 PerkinPie. Public deployment is a separate decision.
 
 > **North star:** Survive as a shape in a stratified two-dimensional society, learn who other citizens really are, form a family, and choose a descendant whose inherited geometry carries your lineage forward. Social prestige must not be treated as proof of genetic fitness, intelligence, or moral worth.
 
@@ -10,19 +12,19 @@
 
 | Phase | Status | Focus | Exit criterion |
 | --- | --- | --- | --- |
-| 1 — Living World | **Prototype exists outside this repository** | Canvas world, movement, resources, survival, wandering NPCs, minimap | Explore and complete a three-day survival expedition |
-| **1.1 — Polish & Persistence** | **Next** | HUD/camera fixes, clearer rest feedback, saves | Resume the same game reliably, including NPC/resource state |
-| **2A — Living Society** | **Next (same development batch as 1.1)** | Citizen identities, conversation, trust, rumors and partial knowledge | Introduce yourself, discover limited information, and retain relationship progress |
+| 1 — Living World | **Implemented; original [baseline preserved](../baseline/the-flatland-phase1.html)** | Canvas world, movement, resources, survival, wandering NPCs, minimap | Explore and complete a three-day survival expedition |
+| **1.1 — Polish & Persistence** | **Implemented in [the-flatland.html](../the-flatland.html), v0.2.0; [QA evidence and limits](QA_REPORT.md)** | HUD/camera fixes, clearer rest feedback, saves | Resume the same game reliably, including NPC/resource state |
+| **2A — Living Society** | **Implemented in [the-flatland.html](../the-flatland.html), v0.2.0; [QA evidence and limits](QA_REPORT.md)** | Citizen identities, conversation, trust, rumors and partial knowledge | Introduce yourself, discover limited information, and retain relationship progress |
 | 2B — Courtship & Marriage | Planned | Partner preferences, proposals, consent/rejection, marriage, household relationships | Form or decline a marriage with meaningful consequences |
 | 3 — Family, Inheritance & Evolution | Planned | Multiple offspring, genealogy, strict geometric mutations, successor selection | Play as a chosen child from the next generation |
 | 4 — Combat & Law | Planned | Shape-specific attacks, danger, guards, injuries, crimes | Combat and legal reactions follow geometry and social context |
 | 5 — Civilization | Planned | Trade, property, class mobility, politics, institutions and reform | Multiple viable long-term paths beyond becoming a circle |
 
-**Milestone strategy:** Implement Phase 1.1 + 2A in one assignment, with separate checkpoints. Playtest before 2B; implement Phase 3 only after relationships and saving are stable. Combat comes after generational succession, not before.
+**Milestone strategy:** Phase 1.1 + 2A are implemented together in v0.2.0. Their recorded QA does not establish full native-persistence acceptance; see the [QA report](QA_REPORT.md), including the limited independent playtest. Complete target-browser persistence validation and playtesting before 2B; implement Phase 3 only after relationships and saving are stable. Combat comes after generational succession, not before.
 
-## Phase 1 — Existing external prototype
+## Phase 1 — Preserved baseline
 
-The initial self-contained HTML5 Canvas prototype has been created and playtested outside this repository. It includes:
+The original self-contained HTML5 Canvas prototype is preserved in the [Phase 1 baseline](../baseline/the-flatland-phase1.html). Its survival systems are also included in the current v0.2.0 build. It includes:
 
 - Seeded world generation, districts, roads, obstacles, buildings, and refuges.
 - A player-controlled irregular triangle, movement, sprint, collision, and mobile touch movement.
@@ -31,9 +33,11 @@ The initial self-contained HTML5 Canvas prototype has been created and playteste
 - A minimap, pause/help UI, and a three-day expedition objective.
 - Optional deterministic QA hooks via `?debug=1`.
 
-**Important:** As of this document's creation, the repository contains no playable game files. Adding the actual tested Phase 1 source is a prerequisite to development in the repository; do not reconstruct it from this summary or report the repo as playable.
+**Current files:** The repository includes the [playable build](../the-flatland.html), modular source under `../src/`, and the [build tool](../tools/build.py). Historical automated results are recorded in the [QA report](QA_REPORT.md); the original gameplay test harness and raw artifacts are absent (see [Known gaps](../README.md#known-gaps)).
 
 ## Phase 1.1 — Polish & Persistence
+
+**Status:** Implemented in [the-flatland.html](../the-flatland.html) (v0.2.0). See [QA evidence and limits](QA_REPORT.md); native persistence has only the limited independent observation recorded there, not full acceptance across target environments.
 
 **Scope**
 
@@ -46,6 +50,8 @@ The initial self-contained HTML5 Canvas prototype has been created and playteste
 **Accept when:** A player can save, close/reopen and continue equivalently; the player remains visible at each world edge; rest effects are understandable; Phase 1 regression checks pass.
 
 ## Phase 2A — Living Society
+
+**Status:** Implemented in [the-flatland.html](../the-flatland.html) (v0.2.0). See [QA evidence and limits](QA_REPORT.md). The scope below describes the milestone; independent rumor verification and investigation remain unimplemented, as recorded in the [README](../README.md).
 
 **Scope**
 
@@ -65,12 +71,16 @@ The initial self-contained HTML5 Canvas prototype has been created and playteste
 
 ## Phase 2B — Courtship & Marriage
 
+**Status:** Planned.
+
 - Romantic compatibility, preferences, affection, agency, consent, rejection, and marriage/partnership status.
 - Marriage eligibility is **separate** from biological reproduction eligibility.
 - Same-sex marriages are allowed and have meaningful shared-life/household and social effects.
 - Under the agreed initial game rules, same-sex marriages **do not produce joint biological children**. A character with an existing biological child may still select that descendant in a later generation. Without any eligible descendant, the playable lineage ends upon death.
 - Cultural rules and social prejudice may influence NPC attitudes, but a society's discriminatory hierarchy must not be confused with a moral judgment by the game itself.
 - Family history becomes a meaningful, partly hidden consideration during courtship.
+
+**OPEN DESIGN QUESTION:** Under the current planned rules, a player who marries a same-sex partner before having a child reaches a lineage dead end. Should a later phase add adoption or household-heir mechanics? This question is unresolved; it adds no rule or implementation.
 
 **Accept when:** Different NPCs can accept/reject proposals for believable reasons and the relationship/marriage state survives save/load; birth is reserved for Phase 3.
 
@@ -127,7 +137,7 @@ Square → Pentagon → Hexagon → ... → higher regular polygon
 ## Design invariants for every phase
 
 1. **The world is 2D:** Visible polygons/lines are the aesthetic and core mechanical language.
-2. **Sex is not visible geometry:** Female characters appear as thin lines but possess hidden inheritable geometry.
+2. **A woman's line form does not reveal her hereditary geometry or ancestry:** Female characters appear as thin lines while carrying hidden inheritable geometry.
 3. **Hierarchy is socially constructed:** Do not mechanically equate elite geometric status with moral worth or genetic superiority.
 4. **Truth is not knowledge:** Separate actual data, public claims, and player discoveries; never leak ancestry through a tooltip or data view.
 5. **Generations matter:** Player decisions affect relationships, inherited forms, genealogy, and legacy.

@@ -13,7 +13,9 @@ Date: 2026-10-15. Current-build testing used Chromium 144.0.7559.96 on Linux, Pl
 | Native localStorage browser-close/reopen | 0 | 0 | 1 |
 | **Total** | **66** | **0** | **1** |
 
-Machine-readable results are in `docs/qa/phase2a-*.json` and `docs/qa/native-storage.json`. Earlier Phase 1.1 checkpoint results are also archived but are **not counted again**. The untouched Phase 1 report under `baseline/` is historical evidence only.
+The original machine-readable results, earlier Phase 1.1 checkpoint artifacts, and historical Phase 1 report are absent from this repository and were unavailable for this cleanup. The table preserves the existing recorded results; those checks were not rerun during the cleanup. Earlier Phase 1.1 checkpoint results are **not counted again**. See [Known gaps](../README.md#known-gaps).
+
+**Native-persistence note:** The native localStorage row above retains its original blocked result. See [Independent playtest (2026-10-15)](#independent-playtest-2026-10-15) for a separate, limited close/reopen observation; it does not mark the original acceptance test as fully passed.
 
 ## Critical environment limitation
 
@@ -21,7 +23,14 @@ The environment denied file and localhost browser navigation with `ERR_BLOCKED_B
 
 On that opaque origin, native localStorage access is denied. Persistence/social tests **explicitly install a memory-backed localStorage adapter**. They exercise the actual game's save capture, validation, restore, migration, error handling and slot-selection logic, but **do not prove native on-disk persistence**. The fresh-document test restores an adapter fixture, not data read from a reopened physical browser profile. The unmodified unavailable-storage case was tested separately and remained playable.
 
-`tests/test_native_storage.py` attempts a genuine localhost, native localStorage, persistent browser-profile close/reopen sequence without a storage adapter. It was run here and blocked at navigation; the archived report says `nativePersistenceVerified: false`. No policy bypass was attempted. Native disk durability is an outstanding acceptance check to run in the target environment, using `python tests/test_native_storage.py` or `python tools/test.py --require-native`.
+The original native-storage test attempted a genuine localhost, native localStorage, persistent browser-profile close/reopen sequence without a storage adapter. It was run in the original environment and blocked at navigation; the existing report records `nativePersistenceVerified: false`. No policy bypass was attempted. That test script, runner, and raw report are absent from this repository, so there is no included command to rerun that acceptance test. Native disk durability remains an acceptance check for the target environment, subject to the separate limited observation below.
+
+### Independent playtest (2026-10-15)
+
+- **Tester:** Claude, using headless Chromium (puppeteer chrome-headless-shell 131) on Linux, served from http://127.0.0.1 with a persistent browser profile.
+- **Verified:** one manual save from the Pause menu, full browser close, reopen of the same profile, Continue. Time, position, vitals, pack, gather count, refuge progress and social state matched exactly.
+- **Also observed:** conversations and trust gating, the 50x same-topic spam produced no gains, camera/player clearance at all world edges, and field vs refuge rest messages.
+- **Not verified:** Firefox, Safari, file:// origin, mobile devices, multiple saves or reopen cycles, and long real-time sessions.
 
 ## Executed coverage
 
@@ -37,7 +46,7 @@ Save-cost sampling over 20 Phase 2A saves measured approximately **0.85 ms mean 
 
 **Social:** 64 unique reproducible names/IDs; stranger-safe views with no authoritative private fields; line-form geometry independent of latent side count; native hover/click, accepted introductions, keyboard topics and claimed work; intrusive-family penalties; 50 immediate clicks with no cooldown gains; daily caps and repeated-topic penalties; trust development over days with explicit family disclosure; max-trust reserved citizen still refusing; deceptive occupation remaining a claim; generated inaccurate rumors remaining unverified; controlled reputation comparison; persisted discoveries/relationship/social RNG; genuine version-1 save migration; distant inspection cannot perform remote social actions; normal AI/survival continue while a speaker is selected; native restart-confirmation cancellation.
 
-**Responsive interaction:** conversation/notes at 1440×900, 1280×720, 390×844 and 844×390. Emulated touch opened Talk, introduced a citizen, scrolled to the personal-family option, changed to discovered notes and closed the panel. Key screenshots were visually inspected and are included under `docs/screenshots/`.
+**Responsive interaction:** conversation/notes at 1440×900, 1280×720, 390×844 and 844×390. Emulated touch opened Talk, introduced a citizen, scrolled to the personal-family option, changed to discovered notes and closed the panel. Key screenshots were reported as visually inspected in the original results; those screenshots are absent from this repository and were unavailable for this cleanup.
 
 ## Review and hardening
 

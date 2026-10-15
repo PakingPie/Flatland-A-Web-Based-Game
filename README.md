@@ -5,7 +5,7 @@ A lightweight, offline-capable Canvas survival and social simulation inspired by
 
 **Current scope:** survival, persistence, identities, conversations, trust, reputation, and progressive discovery. There is no courtship, marriage, reproduction, aging, succession, evolution, combat, or advanced economy yet. Social prestige is a fictional institution, not a measure of intelligence, morality, or biological fitness.
 
-> **Planning:** [v0.3 Development Roadmap](docs/ROADMAP.md). The external source archive also holds the original automated test harness, screenshots, and historical Git bundle; those supplementary files have not yet been imported into this repository.
+> **Planning:** [v0.3 Development Roadmap](docs/ROADMAP.md). Phase 1.1 + 2A are implemented in the included v0.2.0 build; Phase 2B onward is planned. See the [QA report](docs/QA_REPORT.md) for recorded evidence and its limits.
 
 ## Play
 
@@ -62,56 +62,64 @@ Saves remain in this browser/profile/origin. There is one manual slot and one au
 
 Malformed, incompatible, or inaccessible saves produce a visible message without replacing the current expedition. Full/unavailable storage does not prevent playing. The format is version 2 with world-generator version 1; genuine version-1 Phase 1.1 saves migrate. Original Phase 1 had no persistent saves.
 
-**Validation limitation:** serialization, recovery, migration and save errors passed automated tests using an explicit in-memory storage adapter. This runner blocks file/localhost browser navigation, so native localStorage durability across an actual browser shutdown remains unverified here. A real close/reopen test is included for an unrestricted local environment. See `docs/QA_REPORT.md`.
+**Validation limitation:** the [QA report](docs/QA_REPORT.md) records historical automated checks using an explicit in-memory storage adapter; the original harness and raw artifacts are unavailable in this repository. Its separate [independent playtest](docs/QA_REPORT.md#independent-playtest-2026-10-15) records one successful native save/close/reopen/Continue cycle in headless Chromium on Linux. That limited observation does not establish durability across other browsers, origins, repeated cycles, or long sessions.
 
 ## Source layout
 
 ```text
-baseline/                 Untouched original Phase 1 HTML and historical QA
+baseline/                 Untouched original Phase 1 HTML
 src/                      Focused JS fragments, HTML shell, CSS
-  core.js                 Constants, math, seeded RNG, common helpers
-  characters.js           Identity/genome/body/runtime, observable presentation
-  navigation.js           Collision broad-phase and A* navigation
-  world.js                Seeded generation, resources, NPC survival/AI
-  social.js               Public standing, identities, relationships, safe views
-  persistence.js          Versioned snapshots, validation, storage and migration
-  input.js                Keyboard, pointer and touch input
-  renderer.js             Camera, Canvas drawing, minimap
-  game.js                 Fixed-step controller, survival, menus and HUD
-  social-ui.js            Conversation and discovered-information panel
-  bootstrap.js            Startup and opt-in QA hooks
-  shell.html / style.css  Accessible UI structure and responsive layout
+src/core.js               Constants, math, seeded RNG, common helpers
+src/characters.js         Identity/genome/body/runtime, observable presentation
+src/navigation.js         Collision broad-phase and A* navigation
+src/world.js              Seeded generation, resources, NPC survival/AI
+src/social.js             Public standing, identities, relationships, safe views
+src/persistence.js        Versioned snapshots, validation, storage and migration
+src/input.js              Keyboard, pointer and touch input
+src/renderer.js           Camera, Canvas drawing, minimap
+src/game.js               Fixed-step controller, survival, menus and HUD
+src/social-ui.js          Conversation and discovered-information panel
+src/bootstrap.js          Startup and opt-in QA hooks
+src/shell.html            Accessible UI structure
+src/style.css             Responsive layout
 tools/build.py            Deterministic single-file assembly
-tests/                   Automated tests and a genuine legacy save fixture
-docs/                     Design, architecture, development, QA and setup
+tools/check_docs.py       Relative documentation link and path checks
+docs/                     Roadmap and QA report
 the-flatland.html        Included playable build
 ```
 
 The fragments share one strict lexical closure, not a framework or runtime loader. Build with `python tools/build.py`; verify with `python tools/build.py --check`. Do not edit the generated HTML directly. The original supplied HTML is preserved byte-for-byte at `baseline/the-flatland-phase1.html`.
 
-## Development and tests
+## Development and validation
 
-Python 3.10+ is recommended for tooling. The observed test environment was Python 3.13.5, Playwright 1.57.0, Chromium 144.0.7559.96 on Linux. Node is optional for syntax checking; the game itself does not require Node.
+Use Python 3.10+ for the dependency-free build and documentation checks. Edit the source fragments, then rebuild and check the distributable:
 
 ```sh
-python -m venv .venv
-# Activate: source .venv/bin/activate   (Windows: .venv\Scripts\activate)
-python -m pip install -r requirements-dev.txt
-python -m playwright install chromium
+python tools/build.py
 python tools/build.py --check
-python tools/test.py
+python tools/check_docs.py
 ```
 
-`CHROMIUM_PATH` can select an existing Chromium executable. `tools/test.py` runs the current suites and reports a blocked native-persistence test separately. Use `python tools/test.py --require-native` for an acceptance gate that fails when native durability cannot be verified. Test dependencies are development-only.
+The build check verifies source/build agreement; the documentation check verifies relative links and file/directory references in this README and the Markdown documents directly under `docs/`. Neither check exercises gameplay or browser persistence.
 
-**Observed result:** 66 automated checks passed, none failed; one native browser-persistence acceptance test was environment-blocked, not passed. See `docs/QA_REPORT.md` and archived machine-readable results under `docs/qa/`. Screenshots were visually inspected; no unassisted human playthrough or physical-phone certification is claimed.
+**Historical results:** the [QA report](docs/QA_REPORT.md) records 66 automated checks passed, none failed, and one environment-blocked native-persistence acceptance test. These results were not rerun during this documentation cleanup; the original test runner, fixtures, machine-readable results, and screenshots are absent. See its separate independent playtest subsection for the limited native-persistence observation.
+
+## Known gaps
+
+No original source archive was available for this cleanup. The repository does not include the original game-design, architecture, GitHub-setup, or development guides; development dependency manifest; automated test runner, test suites, or legacy save fixture; raw QA artifacts; screenshots; historical Phase 1 QA report; or original development-history bundle. These have not been recreated from memory. The QA report preserves the existing recorded results, but their underlying artifacts cannot currently be inspected or reproduced using an included gameplay test suite.
 
 ## Repository and ownership
 
-A local `main` branch with separate baseline, Phase 1.1, and Phase 2A commits is prepared. **No remote GitHub repository was created or pushed**: the connected GitHub actions available for this task were read-only. The source delivery contains a Git bundle preserving the full local history. See `docs/GITHUB_SETUP.md` for reconstruction and private creation instructions for `PakingPie/the-flatland`.
+The public repository is [PakingPie/Flatland-A-Web-Based-Game](https://github.com/PakingPie/Flatland-A-Web-Based-Game), with default branch `main`. Clone the existing repository to work locally:
 
-No open-source license was selected. No public deployment or GitHub Pages was enabled. This project is independent of Aetherion and the Unreal projects.
+```sh
+git clone https://github.com/PakingPie/Flatland-A-Web-Based-Game.git
+```
+
+At the reviewed snapshot (`e663cb2`, 2026-10-15), the public history contains five commits: the initial commit, roadmap, overview, a combined Phase 1.1 + 2A source/build import (`9c5b3ad`), and the subsequent Phase 1 baseline import (`e663cb2`). It does not contain separate original Phase 1.1 and Phase 2A development commits. No history was reconstructed for this cleanup.
+
+The project uses the [MIT license](LICENSE), Copyright (c) 2026 PerkinPie. Repository visibility does not establish a hosted game deployment. This project is independent of Aetherion and the Unreal projects.
 
 ## Design and next milestone
 
-`docs/GAME_DESIGN.md` preserves the approved later-phase rules; `docs/ARCHITECTURE.md` explains implementation boundaries. Before starting Phase 2B, run native persistence acceptance on the intended browser. Then introduce courtship and voluntary partnership with marriage separate from biological parentage; do not add reproduction or side-count mutation as generic random changes. Those systems need their own acceptance gates and saved-state migrations.
+The [roadmap](docs/ROADMAP.md) records later-phase plans and unresolved design questions. Before starting Phase 2B, validate native persistence on the intended browser, including repeated close/reopen cycles. Courtship and voluntary partnership are planned, with marriage separate from biological parentage. Reproduction and side-count mutation need their own acceptance gates and saved-state migrations.
