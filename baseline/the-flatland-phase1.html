@@ -1,0 +1,2547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111e24">
+<title>The Flatland · Phase 1</title>
+<style>
+:root {
+  color-scheme:dark;
+  --bg:#111e24;
+  --panel:rgba(17,30,36,.94);
+  --line:#34464b;
+  --ink:#e5ece7;
+  --muted:#9aadae;
+  --green:#a6cfaa;
+  --water:#85cbd4;
+  --coral:#f1a38b;
+  --gold:#d5c39a
+}
+* {
+  box-sizing:border-box
+}
+html,body {
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:var(--bg);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--ink)
+}
+body {
+  overscroll-behavior:none
+}
+button,input {
+  font:inherit
+}
+button {
+  cursor:pointer;
+  color:inherit
+}
+button:focus-visible,input:focus-visible {
+  outline:2px solid var(--water);
+  outline-offset:4px
+}
+button:disabled {
+  cursor:default;
+  opacity:.42
+}
+button {
+  touch-action:manipulation
+}
+button:hover:not(:disabled) {
+  border-color:var(--muted)
+}
+[hidden] {
+  display:none!important
+}
+#world {
+  display:block;
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  touch-action:none;
+  outline:none
+}
+#hud {
+  position:absolute;
+  inset:0;
+  pointer-events:none
+}
+#hud button,#minimap,#joystick {
+  pointer-events:auto
+}
+.topbar {
+  position:absolute;
+  top:20px;
+  left:24px;
+  right:24px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px
+}
+.wordmark {
+  font-size:19px;
+  font-weight:650;
+  letter-spacing:.14em;
+  display:flex;
+  align-items:center;
+  gap:12px
+}
+.mark {
+  display:inline-block;
+  width:22px;
+  height:24px;
+  background:var(--coral);
+  clip-path:polygon(1% 100%,39% 0,100% 80%);
+  flex:none
+}
+.eyebrow {
+  font-size:10px;
+  letter-spacing:.19em;
+  text-transform:uppercase;
+  color:var(--muted);
+  line-height:1.6
+}
+.brand .eyebrow {
+  margin:5px 0 0 34px
+}
+.topright {
+  display:flex;
+  gap:8px;
+  align-items:center
+}
+.timebox {
+  margin-right:14px;
+  text-align:right
+}
+.timebox strong {
+  font-size:13px;
+  font-weight:550
+}
+.timebox small {
+  display:block;
+  font-size:10px;
+  color:var(--muted);
+  margin-top:4px
+}
+.small-btn {
+  background:var(--panel);
+  border:1px solid var(--line);
+  padding:9px 12px;
+  border-radius:6px;
+  font-size:12px
+}
+.panel {
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:9px;
+  box-shadow:0 8px 28px #00000018
+}
+.vitals {
+  position:absolute;
+  left:24px;
+  top:100px;
+  width:226px;
+  padding:17px 17px 13px
+}
+.panel-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:15px
+}
+.panel-head strong {
+  font-size:13px;
+  font-weight:550
+}
+.tag {
+  font-size:9px;
+  letter-spacing:.12em;
+  color:var(--coral);
+  text-transform:uppercase
+}
+.stat {
+  margin:12px 0
+}
+.stat-label {
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:6px
+}
+.stat-label span:last-child {
+  font-variant-numeric:tabular-nums;
+  color:var(--ink)
+}
+.track {
+  height:4px;
+  background:#2a3b41;
+  border-radius:4px;
+  overflow:hidden
+}
+.fill {
+  height:100%;
+  width:100%;
+  border-radius:4px;
+  transition:width .12s linear
+}
+.stat.low .stat-label {
+  color:var(--coral)
+}
+.stat.low .track {
+  background:#71483e
+}
+.stat.low .fill {
+  background:var(--coral)!important
+}
+.identity {
+  border-top:1px solid var(--line);
+  padding-top:12px;
+  margin-top:15px;
+  font-size:10px;
+  color:var(--muted);
+  line-height:1.6
+}
+.identity span {
+  color:var(--ink)
+}
+.objectives {
+  position:absolute;
+  right:24px;
+  top:100px;
+  width:228px;
+  padding:17px
+}
+.objective {
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-top:13px;
+  font-size:11px;
+  color:var(--muted)
+}
+.objective .check {
+  width:13px;
+  height:13px;
+  border:1px solid #60777a;
+  border-radius:3px;
+  flex:none;
+  display:grid;
+  place-items:center;
+  font-size:9px
+}
+.objective.done {
+  color:var(--green)
+}
+.objective.done .check {
+  border-color:var(--green);
+  background:#a6cfaa18
+}
+.objective .count {
+  margin-left:auto;
+  font-variant-numeric:tabular-nums;
+  color:var(--ink)
+}
+.objective-note {
+  font-size:10px;
+  line-height:1.6;
+  color:var(--muted);
+  margin:14px 0 0;
+  padding-top:12px;
+  border-top:1px solid var(--line)
+}
+.map-panel {
+  position:absolute;
+  right:24px;
+  bottom:24px;
+  width:190px;
+  padding:10px 10px 8px
+}
+.map-head {
+  font-size:9px;
+  color:var(--muted);
+  letter-spacing:.14em;
+  margin-bottom:7px;
+  display:flex;
+  justify-content:space-between
+}
+#minimap {
+  width:168px;
+  height:112px;
+  display:block;
+  border-radius:3px;
+  pointer-events:none
+}
+.map-foot {
+  font-size:9px;
+  color:var(--muted);
+  display:flex;
+  justify-content:space-between;
+  margin-top:7px
+}
+.map-foot span:first-child {
+  color:var(--coral)
+}
+#location {
+  position:absolute;
+  top:95px;
+  left:50%;
+  transform:translateX(-50%);
+  text-align:center;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  font-size:10px;
+  color:#b0c2bc;
+  text-shadow:0 2px 9px #111e24;
+  white-space:nowrap
+}
+#location:before {
+  content:"";
+  display:block;
+  width:24px;
+  height:1px;
+  background:#64817d;
+  margin:0 auto 9px
+}
+.bottom-center {
+  position:absolute;
+  bottom:25px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  align-items:center;
+  flex-direction:column;
+  gap:9px;
+  width:max-content;
+  max-width:calc(100% - 470px)
+}
+#context {
+  min-height:24px;
+  max-width:100%;
+  padding:7px 13px;
+  text-align:center;
+  font-size:11px;
+  line-height:1.5;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:6px;
+  white-space:normal
+}
+#context:empty {
+  visibility:hidden
+}
+.actionbar {
+  display:flex;
+  gap:6px;
+  pointer-events:auto
+}
+.action {
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--panel);
+  padding:10px 12px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:11px;
+  white-space:nowrap;
+  min-height:44px;
+  justify-content:center
+}
+.action.active {
+  border-color:var(--green);
+  background:#28423c
+}
+.action kbd {
+  color:var(--muted);
+  font:10px inherit;
+  font-size:10px;
+  border:1px solid #3c5055;
+  border-radius:3px;
+  padding:2px 4px;
+  min-width:18px;
+  text-align:center
+}
+.action .qty {
+  color:var(--green);
+  font-size:11px;
+  font-variant-numeric:tabular-nums
+}
+.action.water .qty {
+  color:var(--water)
+}
+.control-tip {
+  font-size:10px;
+  color:#9aadae;
+  letter-spacing:.025em;
+  text-align:center
+}
+#log {
+  position:absolute;
+  left:24px;
+  bottom:24px;
+  width:240px;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  font-size:11px;
+  line-height:1.6;
+  color:#bccdc5;
+  text-shadow:0 1px 4px #111e24
+}
+#log div {
+  border-left:2px solid #506964;
+  padding-left:10px
+}
+#log div.warn {
+  border-color:var(--coral);
+  color:#f0b49c
+}
+#tooltip {
+  position:absolute;
+  z-index:3;
+  width:230px;
+  padding:13px 14px;
+  pointer-events:none;
+  box-shadow:0 8px 24px #0005
+}
+#tooltip strong {
+  display:block;
+  font-size:12px;
+  margin-bottom:7px
+}
+#tooltip p {
+  font-size:11px;
+  color:var(--muted);
+  margin:0;
+  line-height:1.65
+}
+#tooltip small {
+  display:block;
+  border-top:1px solid var(--line);
+  padding-top:8px;
+  margin-top:8px;
+  font-size:10px;
+  color:#92aaa6
+}
+#notice {
+  position:absolute;
+  top:155px;
+  left:50%;
+  transform:translateX(-50%);
+  max-width:440px;
+  padding:13px 20px;
+  font-size:12px;
+  line-height:1.65;
+  border-color:#6d9685;
+  text-align:center;
+  transition:opacity .3s
+}
+.overlay {
+  position:absolute;
+  inset:0;
+  z-index:5;
+  display:grid;
+  place-items:center;
+  background:#0c171cd9;
+  padding:24px;
+  overflow-y:auto;
+  overscroll-behavior:contain
+}
+.modal {
+  width:min(560px,100%);
+  padding:36px 40px;
+  background:#14242a;
+  border:1px solid #3a5055;
+  border-radius:14px;
+  box-shadow:0 28px 100px #0005
+}
+.modal .eyebrow {
+  color:var(--green)
+}
+.modal h1 {
+  font-size:42px;
+  letter-spacing:.08em;
+  font-weight:550;
+  margin:13px 0 6px;
+  line-height:1.12
+}
+.modal h2 {
+  font-size:28px;
+  font-weight:550;
+  margin:12px 0
+}
+.modal .lede {
+  font-size:15px;
+  color:#b5c5bf;
+  line-height:1.8;
+  margin:16px 0 23px
+}
+.modal p {
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.8
+}
+.modal .rule {
+  height:1px;
+  background:var(--line);
+  margin:23px 0
+}
+.instructions {
+  display:grid;
+  grid-template-columns:96px 1fr;
+  gap:12px 16px;
+  font-size:12px;
+  line-height:1.5
+}
+.instructions dt {
+  color:var(--ink)
+}
+.instructions dd {
+  margin:0;
+  color:var(--muted)
+}
+.seedrow {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:24px 0 14px
+}
+.seedrow label {
+  font-size:10px;
+  color:var(--muted);
+  letter-spacing:.08em;
+  text-transform:uppercase
+}
+.seedrow input {
+  min-width:0;
+  flex:1;
+  background:#101c22;
+  border:1px solid #3e565b;
+  border-radius:5px;
+  color:var(--ink);
+  padding:10px 12px;
+  font-size:12px
+}
+.primary {
+  width:100%;
+  border:1px solid #c0d9b8;
+  background:#bed5b3;
+  color:#172921;
+  border-radius:6px;
+  padding:13px 20px;
+  font-size:13px;
+  font-weight:650
+}
+.primary:hover:not(:disabled) {
+  background:#cce2c2;
+  border-color:#cce2c2
+}
+.secondary-row {
+  display:flex;
+  gap:9px;
+  margin-top:11px
+}
+.secondary-row button {
+  flex:1
+}
+.fine {
+  font-size:10px!important;
+  color:#8da3a3!important
+}
+.modal .motif {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  float:right;
+  margin-top:-3px
+}
+.motif i {
+  display:block;
+  width:18px;
+  height:18px;
+  border:1px solid #8ba49d;
+  transform:rotate(12deg)
+}
+.motif i:first-child {
+  background:var(--coral);
+  border:none;
+  clip-path:polygon(3% 100%,40% 0%,100% 76%);
+  width:21px;
+  height:23px
+}
+.motif i:last-child {
+  border-radius:50%
+}
+#joystick {
+  display:none;
+  position:absolute;
+  bottom:24px;
+  left:22px;
+  width:106px;
+  height:106px;
+  border:1px solid #708e8b70;
+  border-radius:50%;
+  background:#17282d99;
+  touch-action:none
+}
+#stick {
+  position:absolute;
+  width:38px;
+  height:38px;
+  top:33px;
+  left:33px;
+  border:1px solid #b6cec89e;
+  border-radius:50%;
+  background:#8ea79e40;
+  pointer-events:none
+}
+.touch #joystick {
+  display:block
+}
+.touch #log {
+  bottom:149px;
+  width:190px
+}
+.touch .control-tip {
+  display:none
+}
+.touch .bottom-center {
+  bottom:24px
+}
+.touch .action kbd {
+  display:none
+}
+.touch #tooltip {
+  display:none!important
+}
+@media(max-width:1120px) {
+  .map-panel {
+    width:166px;
+    right:18px
+  }
+  #minimap {
+    width:144px;
+    height:96px
+  }
+  .bottom-center {
+    max-width:calc(100% - 385px)
+  }
+  .action {
+    padding:10px 8px;
+    gap:5px
+  }
+  .vitals {
+    width:200px
+  }
+  .objectives {
+    width:202px
+  }
+  #log {
+    width:190px
+  }
+  .wordmark {
+    font-size:17px
+  }
+}
+@media(max-width:900px) {
+  .action {
+    padding:9px 8px;
+    gap:5px
+  }
+  .action kbd {
+    display:none
+  }
+  .bottom-center {
+    max-width:calc(100% - 360px)
+  }
+  .topbar {
+    left:16px;
+    right:16px
+  }
+  .vitals {
+    left:16px;
+    width:175px;
+    padding:13px
+  }
+  .objectives {
+    right:16px;
+    width:180px;
+    padding:13px
+  }
+  .objective {
+    gap:7px;
+    font-size:10px
+  }
+  .map-panel {
+    right:16px;
+    width:148px
+  }
+  #minimap {
+    width:126px;
+    height:84px
+  }
+  .map-foot {
+    font-size:8px
+  }
+  .timebox {
+    margin-right:5px
+  }
+  .brand .eyebrow {
+    font-size:8px
+  }
+}
+@media(max-width:720px) {
+  .topbar {
+    top:14px;
+    left:14px;
+    right:14px;
+    align-items:center
+  }
+  .wordmark {
+    font-size:14px;
+    gap:9px
+  }
+  .mark {
+    width:17px;
+    height:20px
+  }
+  .brand .eyebrow {
+    display:none
+  }
+  .timebox strong {
+    font-size:11px
+  }
+  .timebox small {
+    font-size:9px
+  }
+  .small-btn {
+    padding:8px 10px;
+    font-size:11px
+  }
+  .topright {
+    gap:5px
+  }
+  .vitals {
+    left:14px;
+    top:68px;
+    width:158px;
+    padding:12px
+  }
+  .panel-head {
+    margin-bottom:8px
+  }
+  .panel-head strong {
+    font-size:11px
+  }
+  .tag {
+    font-size:8px
+  }
+  .stat {
+    margin:10px 0
+  }
+  .stat-label {
+    font-size:10px
+  }
+  .identity {
+    font-size:9px;
+    margin-top:10px;
+    padding-top:9px
+  }
+  .objectives {
+    top:68px;
+    right:14px;
+    width:152px;
+    padding:12px
+  }
+  .objective {
+    margin-top:11px;
+    font-size:9px;
+    gap:6px
+  }
+  .objective-note {
+    display:none
+  }
+  .objectives .eyebrow {
+    font-size:9px
+  }
+  .map-panel {
+    right:14px;
+    bottom:auto;
+    top:226px;
+    width:122px;
+    padding:8px
+  }
+  .map-head {
+    font-size:8px
+  }
+  #minimap {
+    width:104px;
+    height:70px
+  }
+  .map-foot {
+    font-size:8px
+  }
+  .map-foot span:last-child {
+    display:none
+  }
+  #location {
+    top:342px;
+    max-width:90%;
+    font-size:9px
+  }
+  .bottom-center {
+    bottom:19px;
+    max-width:calc(100% - 28px)
+  }
+  .action {
+    padding:10px 11px;
+    font-size:11px
+  }
+  .control-tip {
+    font-size:9px
+  }
+  #context {
+    font-size:10px
+  }
+  #log {
+    left:14px;
+    bottom:126px;
+    width:220px;
+    font-size:10px;
+    max-height:78px;
+    overflow:hidden
+  }
+  #notice {
+    top:373px;
+    width:calc(100% - 36px);
+    font-size:11px
+  }
+  .modal {
+    padding:27px 25px
+  }
+  .modal h1 {
+    font-size:31px
+  }
+  .modal .lede {
+    font-size:13px
+  }
+  .modal p {
+    font-size:11px
+  }
+  .instructions {
+    font-size:11px;
+    grid-template-columns:85px 1fr;
+    gap:10px
+  }
+  .touch .bottom-center {
+    left:auto;
+    right:14px;
+    bottom:20px;
+    transform:none;
+    width:calc(100% - 153px);
+    max-width:282px
+  }
+  .touch .actionbar {
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:5px
+  }
+  .touch .action {
+    padding:9px 5px;
+    font-size:10px;
+    min-height:42px;
+    gap:4px
+  }
+  .touch .action:nth-child(4) {
+    grid-column:span 2
+  }
+  .touch #context {
+    width:100%;
+    padding:7px
+  }
+  .touch #log {
+    bottom:190px;
+    max-height:64px;
+    width:200px
+  }
+}
+@media(max-height:620px) and (min-width:721px) {
+  .vitals {
+    top:77px
+  }
+  .objectives {
+    top:77px
+  }
+  .map-panel {
+    bottom:15px
+  }
+  #log {
+    max-height:66px;
+    overflow:hidden
+  }
+  .bottom-center {
+    bottom:16px
+  }
+  #location {
+    top:81px
+  }
+  .topbar {
+    top:14px
+  }
+  .modal {
+    padding:24px 32px
+  }
+  .modal h1 {
+    font-size:32px
+  }
+  .modal .lede {
+    margin:12px 0
+  }
+  .modal .rule {
+    margin:15px 0
+  }
+  .instructions {
+    gap:8px
+  }
+  .seedrow {
+    margin-top:15px
+  }
+}
+@media(max-height:500px) {
+  .map-panel {
+    display:none
+  }
+  .identity {
+    display:none
+  }
+  .objectives {
+    display:none
+  }
+  .vitals {
+    width:154px;
+    padding:10px
+  }
+  .stat {
+    margin:9px 0
+  }
+  .bottom-center {
+    max-width:calc(100% - 210px);
+    left:auto;
+    right:20px;
+    transform:none
+  }
+  .touch .bottom-center {
+    left:auto;
+    right:14px;
+    max-width:480px
+  }
+  .touch #log {
+    display:none
+  }
+  #location {
+    top:76px;
+    left:60%
+  }
+  #notice {
+    top:113px
+  }
+  .overlay {
+    place-items:start center
+  }
+  .modal {
+    margin:auto 0
+  }
+  .control-tip {
+    display:none
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .fill,#notice {
+    transition:none
+  }
+}
+/* Compact layouts retain the latest message and keep world space readable. */ html {
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%
+}
+button {
+  -webkit-tap-highlight-color:transparent
+}
+@media(max-width:720px) {
+  .wordmark {
+    font-size:12px;
+    letter-spacing:.10em;
+    white-space:nowrap;
+    gap:8px
+  }
+  .brand {
+    flex:none
+  }
+  .timebox small {
+    display:none
+  }
+  .vitals .panel-head {
+    display:block
+  }
+  .vitals .panel-head strong {
+    white-space:nowrap
+  }
+  .vitals .tag {
+    display:block;
+    margin-top:4px;
+    white-space:nowrap
+  }
+  .vitals .identity {
+    display:none
+  }
+  #log div:not(:last-child) {
+    display:none
+  }
+}
+</style>
+</head>
+<body>
+<canvas id="world" tabindex="0" aria-label="Flatland game world. Move with WASD or arrow keys. Press H for controls."></canvas>
+<div id="hud" hidden>
+  <header class="topbar">
+    <div class="brand"><div class="wordmark"><span class="mark"></span>THE FLATLAND</div><div class="eyebrow">Phase 01 / A life in two dimensions</div></div>
+    <div class="topright"><div class="timebox"><strong id="dayText">Day 1 · Dawn</strong><small id="seedText"></small></div><button class="small-btn" id="helpBtn" aria-label="Help and controls">Help</button><button class="small-btn" id="pauseBtn" aria-label="Pause game">Pause</button></div>
+  </header>
+  <section class="panel vitals" aria-label="Survival status">
+    <div class="panel-head"><strong>Your condition</strong><span class="tag">Generation 0</span></div>
+    <div class="stat" id="healthStat"><div class="stat-label"><span>Health</span><span id="healthText">100</span></div><div class="track" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" id="healthBar"><div class="fill" id="healthFill" style="background:var(--coral)"></div></div></div>
+    <div class="stat" id="hungerStat"><div class="stat-label"><span>Food</span><span id="hungerText">84</span></div><div class="track" role="progressbar" aria-label="Food" aria-valuemin="0" aria-valuemax="100" id="hungerBar"><div class="fill" id="hungerFill" style="background:var(--green)"></div></div></div>
+    <div class="stat" id="thirstStat"><div class="stat-label"><span>Water</span><span id="thirstText">78</span></div><div class="track" role="progressbar" aria-label="Water" aria-valuemin="0" aria-valuemax="100" id="thirstBar"><div class="fill" id="thirstFill" style="background:var(--water)"></div></div></div>
+    <div class="stat" id="staminaStat"><div class="stat-label"><span>Stamina</span><span id="staminaText">100</span></div><div class="track" role="progressbar" aria-label="Stamina" aria-valuemin="0" aria-valuemax="100" id="staminaBar"><div class="fill" id="staminaFill" style="background:var(--gold)"></div></div></div>
+    <div class="identity"><span>Irregular triangle</span> · first generation<br>A shape is not a measure of worth.</div>
+  </section>
+  <section class="panel objectives" aria-label="Expedition goals"><div class="eyebrow" id="objectiveTitle">Your first expedition</div>
+    <div class="objective" id="goalDays"><span class="check"></span><span>Survive full days</span><span class="count" id="daysCount">0 / 3</span></div>
+    <div class="objective" id="goalGather"><span class="check"></span><span>Gather provisions</span><span class="count" id="gatherCount">0 / 12</span></div>
+    <div class="objective" id="goalRefuges"><span class="check"></span><span>Find refuges</span><span class="count" id="refugesCount">0 / 2</span></div>
+    <p class="objective-note">Keep yourself alive. Explore at your own pace. The world goes on around you.</p>
+  </section>
+  <div id="location"></div><div id="notice" class="panel" hidden></div>
+  <div id="log" role="status" aria-live="polite" aria-atomic="false"></div>
+  <section class="bottom-center" aria-label="Actions"><div id="context"></div><div class="actionbar">
+    <button class="action" id="gatherBtn" title="Hold E, or hold this button, to gather"><kbd>E</kbd><span>Gather</span></button>
+    <button class="action" id="eatBtn" title="F: eat one provision"><kbd>F</kbd><span>Eat</span><span class="qty" id="foodCount">1</span></button>
+    <button class="action water" id="drinkBtn" title="R: drink one flask"><kbd>R</kbd><span>Drink</span><span class="qty" id="waterCount">1</span></button>
+    <button class="action" id="restBtn" title="Space: toggle rest. Move to stop resting."><kbd>Space</kbd><span>Rest</span></button>
+    <button class="action" id="sprintBtn" title="Hold Shift, or hold this button, while moving"><kbd>Shift</kbd><span>Sprint</span></button>
+  </div><div class="control-tip">WASD / arrows to move · Hover to observe · P to pause</div></section>
+  <section class="panel map-panel" aria-label="World map"><div class="map-head"><span>FIELD MAP</span><span>N ↑</span></div><canvas id="minimap" width="336" height="224" aria-label="Map with your location and refuge markers"></canvas><div class="map-foot"><span>▲ You</span><span>◇ Refuge</span></div></section>
+  <div id="joystick" role="group" aria-label="Touch movement joystick"><div id="stick"></div></div>
+  <aside class="panel" id="tooltip" hidden></aside>
+</div>
+<section class="overlay" id="startScreen" aria-label="Start expedition"><div class="modal">
+  <div class="motif" aria-hidden="true"><i></i><i></i><i></i></div><div class="eyebrow">A small life in a living world</div><h1>THE FLATLAND</h1>
+  <p class="lede">You are an irregular triangle.<br>For now, forget the hierarchy. Stay alive.</p>
+  <div class="rule"></div><dl class="instructions"><dt>WASD / arrows</dt><dd>Move. Hold <b>Shift</b> to sprint.</dd><dt>Hold E</dt><dd>Gather green food or blue water nearby.</dd><dt>F / R</dt><dd>Eat / drink from your pack. Each holds 8.</dd><dt>Space</dt><dd>Rest. Refuges restore health when fed and hydrated.</dd></dl>
+  <div class="seedrow"><label for="seedInput">World seed</label><input id="seedInput" value="abbott-1884" maxlength="48" spellcheck="false" autocomplete="off" aria-label="World seed"></div>
+  <button class="primary" id="startBtn">Begin expedition →</button><p class="fine">Phase 1 prototype · No combat, courtship, inheritance, or saving yet.<br>Touch controls appear on touch input. Progress lasts until restart or closing this page.</p>
+</div></section>
+<section class="overlay" id="pauseScreen" aria-label="Paused" hidden><div class="modal"><div class="eyebrow">The world can wait</div><h2>Expedition paused</h2><p id="pauseReason">Take a breath. Nothing advances while paused.</p><button class="primary" id="resumeBtn">Resume expedition</button><div class="secondary-row"><button class="small-btn" id="pauseHelpBtn">Controls & field guide</button><button class="small-btn" id="restartBtn">Restart same seed</button></div><p class="fine">Restarting begins a new run and discards this run’s progress.</p></div></section>
+<section class="overlay" id="helpScreen" aria-label="Controls and field guide" hidden><div class="modal"><div class="eyebrow">Field guide / Phase 01</div><h2>Learn to stay alive.</h2><dl class="instructions"><dt>WASD / arrows</dt><dd>Move through the world. Buildings and natural obstacles are solid.</dd><dt>Shift</dt><dd>Sprint while moving. Costs stamina and extra food and water. Exhausted legs need a short recovery.</dd><dt>E · hold</dt><dd>Gather from a nearby green berry patch or blue spring. Depleted sources replenish over time.</dd><dt>F / R</dt><dd>Use one packed food / water. These restore 38 food / 45 water, up to 100.</dd><dt>Space</dt><dd>Toggle rest. Move to get up. In a refuge, resting heals when both food and water exceed 30.</dd><dt>Hover</dt><dd>Observe a citizen’s visible form and activity. Ancestry and hereditary traits stay unknown.</dd><dt>P / Escape</dt><dd>Pause or resume. H opens this guide. Switching away automatically pauses.</dd></dl><div class="rule"></div><p>Food and water slowly decrease. An empty meter costs health. One day lasts two minutes of unpaused play. Complete all three expedition goals, then keep exploring.</p><p class="fine">Refuges are dashed circles with diamond markers, also shown on the field map. There are no enemies or social restrictions in Phase 1. The seed reproduces the starting world, not different player actions.</p><button class="primary" id="closeHelpBtn">Return to expedition</button></div></section>
+<section class="overlay" id="deathScreen" aria-label="Expedition ended" hidden><div class="modal"><div class="eyebrow">The end of this expedition</div><h2>Even small lives matter.</h2><p class="lede" id="deathCause"></p><p id="deathStats"></p><div class="rule"></div><button class="primary" id="retryBtn">Try again · same world</button><div class="secondary-row"><button class="small-btn" id="menuBtn">Choose a different seed</button></div><p class="fine">Generational succession is planned for a later phase. For now, a new expedition starts as a new irregular triangle.</p></div></section>
+<script>
+'use strict';
+(() => {
+    // ─────────────────────────────────────────────────────────────────────────────
+    // 01. Small utilities. No network, external assets, dependencies, or wall-clock RNG.
+    // All simulation coordinates are WORLD units. Canvas coordinates are CSS pixels;
+    // devicePixelRatio affects only the backing store. Simulation uses fixed steps.
+    // ─────────────────────────────────────────────────────────────────────────────
+    const C = Object.freeze({ W: 3456, H: 2304, CELL: 64, DT: 1 / 60, DAY: 120, NPCS: 64, PACK: 8,
+        SPEED: 136, SPRINT: 1.65, GATHER_REACH: 58, GATHER_DELAY: .36, NAV_RADIUS: 27 });
+    const $ = id => document.getElementById(id);
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const dist2 = (ax, ay, bx, by) => (ax - bx) ** 2 + (ay - by) ** 2;
+    const hypot = Math.hypot;
+    const TAU = Math.PI * 2;
+    function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+    } return h >>> 0; }
+    class RNG {
+        constructor(seed) { this.state = typeof seed === 'number' ? seed >>> 0 : hash(seed); }
+        next() { this.state = (this.state + 0x6D2B79F5) >>> 0; let t = this.state; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
+        range(a, b) { return a + (b - a) * this.next(); }
+        int(a, b) { return Math.floor(this.range(a, b + 1)); }
+        pick(a) { return a[this.int(0, a.length - 1)]; }
+    }
+    function pointSegmentD2(px, py, ax, ay, bx, by) { const dx = bx - ax, dy = by - ay; const t = clamp(((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1), 0, 1); return dist2(px, py, ax + dx * t, ay + dy * t); }
+    function circleRect(x, y, r, o) { return dist2(x, y, clamp(x, o.x, o.x + o.w), clamp(y, o.y, o.y + o.h)) < r * r; }
+    function rectOverlap(a, b, pad = 0) { return a.x < b.x + b.w + pad && a.x + a.w > b.x - pad && a.y < b.y + b.h + pad && a.y + a.h > b.y - pad; }
+    function segmentRect(ax, ay, bx, by, r) { let lo = 0, hi = 1; for (const [a, d, mn, mx] of [[ax, bx - ax, r.x, r.x + r.w], [ay, by - ay, r.y, r.y + r.h]]) {
+        if (Math.abs(d) < 1e-9) {
+            if (a < mn || a > mx)
+                return false;
+        }
+        else {
+            let p = (mn - a) / d, q = (mx - a) / d;
+            if (p > q)
+                [p, q] = [q, p];
+            lo = Math.max(lo, p);
+            hi = Math.min(hi, q);
+            if (lo > hi)
+                return false;
+        }
+    } return true; }
+    function polygon(ctx, points) { ctx.beginPath(); points.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); }
+    function regularPoints(n, r, angle = 0) { return Array.from({ length: n }, (_, i) => [Math.cos(angle + i * TAU / n) * r, Math.sin(angle + i * TAU / n) * r]); }
+    function moveAngle(a, b, t) { return a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * clamp(t, 0, 1); }
+    // Spatial index for immutable world obstacles. Query results never depend on camera.
+    class SpatialHash {
+        constructor(size = 128) { this.size = size; this.buckets = new Map(); }
+        insert(o) { const b = o.kind === 'building' ? o : { x: o.x - o.r, y: o.y - o.r, w: o.r * 2, h: o.r * 2 }; for (let y = Math.floor(b.y / this.size); y <= Math.floor((b.y + b.h) / this.size); y++)
+            for (let x = Math.floor(b.x / this.size); x <= Math.floor((b.x + b.w) / this.size); x++) {
+                const key = x + ',' + y;
+                if (!this.buckets.has(key))
+                    this.buckets.set(key, []);
+                this.buckets.get(key).push(o);
+            } }
+        query(x, y, w, h) { const found = new Set(); for (let iy = Math.floor(y / this.size); iy <= Math.floor((y + h) / this.size); iy++)
+            for (let ix = Math.floor(x / this.size); ix <= Math.floor((x + w) / this.size); ix++) {
+                const bucket = this.buckets.get(ix + ',' + iy);
+                if (bucket)
+                    for (const o of bucket)
+                        found.add(o);
+            } return found; }
+    }
+    class MinHeap {
+        constructor() { this.a = []; }
+        push(v) { const a = this.a; let i = a.length; a.push(v); while (i) {
+            const p = (i - 1) >> 1;
+            if (a[p].f <= v.f)
+                break;
+            a[i] = a[p];
+            i = p;
+        } a[i] = v; }
+        pop() { const a = this.a, top = a[0], last = a.pop(); if (a.length) {
+            let i = 0;
+            while (true) {
+                let c = i * 2 + 1;
+                if (c >= a.length)
+                    break;
+                if (c + 1 < a.length && a[c + 1].f < a[c].f)
+                    c++;
+                if (a[c].f >= last.f)
+                    break;
+                a[i] = a[c];
+                i = c;
+            }
+            a[i] = last;
+        } return top; }
+        get length() { return this.a.length; }
+    }
+    // ─────────────────────────────────────────────────────────────────────────────
+    // 02. Characters: three deliberately separate layers, plus runtime state.
+    // actual: authoritative identity, latent genome, lineage (never handed to HUD).
+    // publicIdentity: the persona/claims the world may present in future social play.
+    // playerKnowledge: only observations/discoveries; NOT a copy of the actual genome.
+    // A line-form woman has the same complete genome schema as a polygon-form man.
+    // No inference of her sideCount/ancestry is made by the Phase 1 inspection UI.
+    // ─────────────────────────────────────────────────────────────────────────────
+    function createCharacter(id, genome, form, x, y, rng, isPlayer = false) {
+        const g = { sideCount: 3, regularity: .5, sharpness: .6, size: 1, mobility: 1, metabolism: 1, mutationTendency: .035, ...genome };
+        const bodyRadius = form === 'line' ? 17 : 17 * g.size;
+        const actual = { identity: { id, sex: form === 'line' ? 'female' : 'male', bodyForm: form }, genome: g,
+            life: { ageYears: isPlayer ? 19 : rng.int(18, 65), alive: true },
+            lineage: { generation: 0, motherId: null, fatherId: null, childrenIds: [] } };
+        const publicIdentity = { displayName: null, claimedOccupation: null, reputation: 0, claims: [] };
+        const playerKnowledge = { observed: {}, discoveredFacts: {}, rumors: [], relationship: { familiarity: 0, trust: 0 } };
+        const c = { id, actual, publicIdentity, playerKnowledge, isPlayer,
+            body: { form, radius: bodyRadius, points: [], visibleType: '', color: '' },
+            x, y, px: x, py: y, angle: rng.range(-Math.PI, Math.PI), prevAngle: 0,
+            vitals: { health: 100, hunger: isPlayer ? 84 : rng.range(54, 96), thirst: isPlayer ? 78 : rng.range(50, 96), stamina: 100 },
+            ai: isPlayer ? null : { intent: 'wander', activity: 'idle', path: [], pathIndex: 0, targetId: null,
+                wait: rng.range(.2, 3), think: rng.range(1, 3), stuck: 0, homeX: x, homeY: y },
+            runtime: { resting: false, moving: false, sprinting: false, exhausted: false, sprintRecovery: 0 } };
+        c.prevAngle = c.angle;
+        if (form === 'line') {
+            c.body.visibleType = 'Line-form citizen';
+            c.body.color = '#d5b1b7';
+            c.body.points = [[-16, -1.8], [16, -1.8], [16, 1.8], [-16, 1.8]];
+        }
+        else if (g.sideCount === 3) {
+            const r = bodyRadius;
+            if (g.regularity < .72) {
+                c.body.visibleType = 'Irregular triangle';
+                c.body.color = '#c9af93';
+                c.body.points = [[r, 0], [-r * .70, r * .53], [-r * .36, -r * .81]];
+            }
+            else if (g.sharpness > .72) {
+                c.body.visibleType = 'Isosceles triangle';
+                c.body.color = '#a4bbc8';
+                const w = lerp(.65, .22, g.sharpness);
+                c.body.points = [[r, 0], [-r * .85, r * w], [-r * .85, -r * w]];
+            }
+            else {
+                c.body.visibleType = 'Equilateral triangle';
+                c.body.color = '#b8c7ba';
+                c.body.points = regularPoints(3, r);
+            }
+        }
+        else {
+            c.body.visibleType = ({ 4: 'Square', 5: 'Pentagon', 6: 'Hexagon', 7: 'Heptagon', 8: 'Octagon' })[g.sideCount] || (g.sideCount >= 16 ? 'Near-circle' : g.sideCount + '-sided polygon');
+            c.body.color = g.sideCount >= 10 ? '#d5c39a' : g.sideCount >= 5 ? '#bbcbb4' : '#b4c5c5';
+            c.body.points = regularPoints(g.sideCount, bodyRadius);
+        }
+        if (isPlayer)
+            c.body.color = '#f1a38b';
+        return c;
+    }
+    // Return an intentionally small observation DTO. UI cannot accidentally enumerate
+    // actual identity, private genome, reputation, unverified claims, or lineage.
+    function observeCitizen(c) {
+        const visible = { form: c.body.visibleType, activity: c.ai?.activity || 'idle',
+            size: c.body.radius > 20 ? 'A large outline' : c.body.radius < 16 ? 'A small outline' : 'A medium-sized outline' };
+        c.playerKnowledge.observed = { ...visible };
+        return visible;
+    }
+    // ─────────────────────────────────────────────────────────────────────────────
+    // 03. Terrain, collision and pathfinding. A* uses a conservative clearance grid;
+    // diagonal corner cutting is forbidden. Actual movement also checks geometry.
+    // ─────────────────────────────────────────────────────────────────────────────
+    class Navigation {
+        constructor(world) {
+            this.world = world;
+            this.cols = C.W / C.CELL;
+            this.rows = C.H / C.CELL;
+            this.open = new Uint8Array(this.cols * this.rows);
+            this.free = [];
+            for (let y = 0; y < this.rows; y++)
+                for (let x = 0; x < this.cols; x++) {
+                    const i = y * this.cols + x;
+                    if (world.circleClear((x + .5) * C.CELL, (y + .5) * C.CELL, C.NAV_RADIUS)) {
+                        this.open[i] = 1;
+                        this.free.push(i);
+                    }
+                }
+            // Keep procedural citizens/resources in the player's connected component.
+            this.reachable = new Uint8Array(this.open.length);
+            const origin = this.index(1728, 1280);
+            const start = this.nearestOpen(origin);
+            const q = [start];
+            this.reachable[start] = 1;
+            for (let h = 0; h < q.length; h++)
+                for (const n of this.neighbors(q[h]))
+                    if (!this.reachable[n.i]) {
+                        this.reachable[n.i] = 1;
+                        q.push(n.i);
+                    }
+            this.free = q;
+        }
+        index(x, y) { return clamp(Math.floor(y / C.CELL), 0, this.rows - 1) * this.cols + clamp(Math.floor(x / C.CELL), 0, this.cols - 1); }
+        point(i) { return { x: (i % this.cols + .5) * C.CELL, y: (Math.floor(i / this.cols) + .5) * C.CELL }; }
+        nearestOpen(i) { if (this.open[i])
+            return i; const x = i % this.cols, y = Math.floor(i / this.cols); for (let r = 1; r < 9; r++)
+            for (let dy = -r; dy <= r; dy++)
+                for (let dx = -r; dx <= r; dx++) {
+                    const nx = x + dx, ny = y + dy;
+                    if (nx >= 0 && ny >= 0 && nx < this.cols && ny < this.rows && this.open[ny * this.cols + nx])
+                        return ny * this.cols + nx;
+                } return this.free[0] ?? 0; }
+        neighbors(i) {
+            const x = i % this.cols, y = Math.floor(i / this.cols), out = [];
+            for (let dy = -1; dy <= 1; dy++)
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (!dx && !dy)
+                        continue;
+                    const nx = x + dx, ny = y + dy;
+                    if (nx < 0 || ny < 0 || nx >= this.cols || ny >= this.rows)
+                        continue;
+                    const ni = ny * this.cols + nx;
+                    if (!this.open[ni])
+                        continue;
+                    if (dx && dy && (!this.open[y * this.cols + nx] || !this.open[ny * this.cols + x]))
+                        continue;
+                    // A circle can intrude into an edge between two otherwise clear cell centers.
+                    const a = this.point(i), b = this.point(ni);
+                    if (!this.world.segmentClear(a.x, a.y, b.x, b.y, C.NAV_RADIUS))
+                        continue;
+                    out.push({ i: ni, cost: dx && dy ? Math.SQRT2 : 1 });
+                }
+            return out;
+        }
+        path(ax, ay, bx, by) {
+            if (this.world.segmentClear(ax, ay, bx, by, C.NAV_RADIUS))
+                return [{ x: bx, y: by }];
+            const start = this.nearestOpen(this.index(ax, ay)), end = this.nearestOpen(this.index(bx, by));
+            if (!this.reachable[end])
+                return null;
+            const N = this.open.length, g = new Float64Array(N), parent = new Int32Array(N), closed = new Uint8Array(N);
+            g.fill(Infinity);
+            parent.fill(-1);
+            const ex = end % this.cols, ey = Math.floor(end / this.cols);
+            const heuristic = i => { const dx = Math.abs(i % this.cols - ex), dy = Math.abs(Math.floor(i / this.cols) - ey); return Math.max(dx, dy) + (Math.SQRT2 - 1) * Math.min(dx, dy); };
+            const heap = new MinHeap();
+            g[start] = 0;
+            heap.push({ i: start, f: heuristic(start) });
+            let found = false;
+            while (heap.length) {
+                const { i } = heap.pop();
+                if (closed[i])
+                    continue;
+                if (i === end) {
+                    found = true;
+                    break;
+                }
+                closed[i] = 1;
+                for (const n of this.neighbors(i)) {
+                    if (closed[n.i])
+                        continue;
+                    const cost = g[i] + n.cost;
+                    if (cost < g[n.i]) {
+                        g[n.i] = cost;
+                        parent[n.i] = i;
+                        heap.push({ i: n.i, f: cost + heuristic(n.i) });
+                    }
+                }
+            }
+            if (!found)
+                return null;
+            const raw = [];
+            for (let i = end; i !== -1; i = parent[i]) {
+                raw.push(this.point(i));
+                if (i === start)
+                    break;
+            }
+            raw.reverse();
+            // Starting and final connectors must also be collision-free.
+            if (!this.world.segmentClear(ax, ay, raw[0].x, raw[0].y, C.NAV_RADIUS))
+                return null;
+            const last = raw[raw.length - 1];
+            if (this.world.segmentClear(last.x, last.y, bx, by, C.NAV_RADIUS))
+                raw.push({ x: bx, y: by });
+            else
+                return null;
+            const smooth = [];
+            let anchor = { x: ax, y: ay }, j = 0;
+            while (j < raw.length) {
+                let k = j;
+                while (k + 1 < raw.length && this.world.segmentClear(anchor.x, anchor.y, raw[k + 1].x, raw[k + 1].y, C.NAV_RADIUS))
+                    k++;
+                smooth.push(raw[k]);
+                anchor = raw[k];
+                j = k + 1;
+            }
+            return smooth;
+        }
+    }
+    class World {
+        constructor(seed) {
+            this.seed = seed;
+            this.rng = new RNG(seed);
+            this.elapsed = 0;
+            this.obstacles = [];
+            this.resources = [];
+            this.npcs = [];
+            this.patches = [];
+            this.index = new SpatialHash();
+            this.refuges = [{ id: 'refuge-common', x: 1728, y: 1280, r: 96, name: 'Common refuge' }, { id: 'refuge-west', x: 576, y: 1600, r: 96, name: 'West hollow' }, { id: 'refuge-court', x: 2784, y: 576, r: 96, name: 'Quiet court' }];
+            this.roads = [[[192, 1152], [3264, 1152]], [[1728, 160], [1728, 2144]], [[576, 192], [576, 1984]], [[576, 1600], [1728, 1600]], [[1728, 576], [3040, 576]], [[2784, 320], [2784, 1664]], [[1728, 1920], [3072, 1920]]];
+            this.districts = [{ x: 128, y: 128, w: 1250, h: 840, name: 'THE ORCHARD', color: '#29433b' },
+                { x: 128, y: 1312, w: 1216, h: 800, name: 'LOWER COMMONS', color: '#283f3b' },
+                { x: 1920, y: 128, w: 1408, h: 880, name: 'UPPER WARD', color: '#3b4038' },
+                { x: 1920, y: 1312, w: 1408, h: 800, name: 'WORKERS’ YARD', color: '#373e40' }];
+            this.generateTerrain();
+            this.nav = new Navigation(this);
+            this.generateResources();
+            this.player = createCharacter('founder-000', { sideCount: 3, regularity: .44, sharpness: .61, size: 1.15, mobility: 1, metabolism: 1 }, 'polygon', 1728, 1308, this.rng, true);
+            this.player.angle = -.8;
+            this.player.prevAngle = -.8;
+            this.generateCitizens();
+        }
+        addObstacle(o) { o.id = 'obstacle-' + this.obstacles.length; this.obstacles.push(o); this.index.insert(o); }
+        circleClear(x, y, r) {
+            if (x < r + 16 || y < r + 16 || x > C.W - r - 16 || y > C.H - r - 16)
+                return false;
+            for (const o of this.index.query(x - r, y - r, r * 2, r * 2)) {
+                if (o.kind === 'building' ? circleRect(x, y, r, o) : dist2(x, y, o.x, o.y) < (r + o.r) ** 2)
+                    return false;
+            }
+            return true;
+        }
+        segmentClear(ax, ay, bx, by, r) {
+            if (!this.circleClear(ax, ay, r) || !this.circleClear(bx, by, r))
+                return false;
+            const minX = Math.min(ax, bx) - r, minY = Math.min(ay, by) - r;
+            for (const o of this.index.query(minX, minY, Math.abs(bx - ax) + r * 2, Math.abs(by - ay) + r * 2)) {
+                if (o.kind === 'building') {
+                    if (segmentRect(ax, ay, bx, by, { x: o.x - r, y: o.y - r, w: o.w + 2 * r, h: o.h + 2 * r }))
+                        return false;
+                }
+                else if (pointSegmentD2(o.x, o.y, ax, ay, bx, by) < (o.r + r) ** 2)
+                    return false;
+            }
+            return true;
+        }
+        nearRoad(x, y, pad) { return this.roads.some(([a, b]) => pointSegmentD2(x, y, ...a, ...b) < pad * pad); }
+        generateTerrain() {
+            const rng = this.rng;
+            for (let i = 0; i < 175; i++) {
+                this.patches.push({ x: rng.range(70, C.W - 70), y: rng.range(70, C.H - 70), rx: rng.range(20, 85), ry: rng.range(15, 60), angle: rng.range(0, TAU), tone: rng.int(0, 2) });
+            }
+            const regions = [{ x: 192, y: 1344, w: 1152, h: 704, n: 9, type: 'home' }, { x: 1952, y: 128, w: 1344, h: 832, n: 16, type: 'ward' }, { x: 1952, y: 1344, w: 1344, h: 768, n: 12, type: 'workshop' }, { x: 160, y: 128, w: 1120, h: 864, n: 5, type: 'home' }];
+            for (const zone of regions) {
+                let made = 0;
+                for (let attempt = 0; attempt < 450 && made < zone.n; attempt++) {
+                    const w = rng.pick([128, 128, 192]), h = rng.pick([128, 128, 192]);
+                    const o = { kind: 'building', x: Math.round(rng.range(zone.x, zone.x + zone.w - w) / 64) * 64, y: Math.round(rng.range(zone.y, zone.y + zone.h - h) / 64) * 64, w, h, type: zone.type };
+                    if (this.obstacles.some(b => rectOverlap(o, b, 44)))
+                        continue;
+                    if (this.roads.some(([a, b]) => segmentRect(...a, ...b, { x: o.x - 76, y: o.y - 76, w: w + 152, h: h + 152 })))
+                        continue;
+                    if (this.refuges.some(f => circleRect(f.x, f.y, f.r + 44, o)))
+                        continue;
+                    this.addObstacle(o);
+                    made++;
+                }
+            }
+            for (let i = 0, tries = 0; i < 106 && tries < 1400; tries++) {
+                const x = rng.range(100, C.W - 100), y = rng.range(100, C.H - 100), r = rng.range(18, 34);
+                if (this.nearRoad(x, y, 76) || this.refuges.some(f => hypot(x - f.x, y - f.y) < f.r + r + 52) || !this.circleClear(x, y, r + 35))
+                    continue;
+                const tree = x < 1480 ? rng.next() < .78 : rng.next() < .25;
+                this.addObstacle({ kind: tree ? 'tree' : 'rock', x, y, r, angle: rng.range(0, TAU), points: regularPoints(tree ? 6 : rng.int(5, 7), r, rng.range(0, TAU)) });
+                i++;
+            }
+        }
+        resourceSpot(x, y) { return this.circleClear(x, y, 30) && this.nav.reachable[this.nav.index(x, y)] && this.segmentClear(x, y, this.nav.point(this.nav.index(x, y)).x, this.nav.point(this.nav.index(x, y)).y, C.NAV_RADIUS); }
+        addResource(kind, x, y) { this.resources.push({ id: 'resource-' + this.resources.length, kind, x, y, capacity: 3, quantity: 3, respawn: 0, cycle: this.rng.range(kind === 'food' ? 80 : 55, kind === 'food' ? 125 : 90), phase: this.rng.range(0, TAU) }); }
+        generateResources() {
+            // Guaranteed, accessible supplies near the spawn; no overlap with the refuge icon.
+            this.addResource('food', 1650, 1300);
+            this.addResource('water', 1810, 1260);
+            for (const [kind, count] of [['food', 116], ['water', 58]]) {
+                let added = 0;
+                for (let tries = 0; tries < 6000 && added < count; tries++) {
+                    let x = this.rng.range(96, C.W - 96), y = this.rng.range(96, C.H - 96);
+                    if (kind === 'food' && this.rng.next() < .44) {
+                        x = this.rng.range(160, 1280);
+                        y = this.rng.range(160, 2080);
+                    }
+                    if (!this.resourceSpot(x, y) || this.resources.some(r => dist2(x, y, r.x, r.y) < 52 ** 2) || this.refuges.some(f => dist2(x, y, f.x, f.y) < 43 ** 2))
+                        continue;
+                    this.addResource(kind, x, y);
+                    added++;
+                }
+            }
+        }
+        generateCitizens() {
+            const rng = this.rng;
+            const types = [{ n: 3, r: .42, s: .6 }, { n: 3, r: .9, s: .94 }, { n: 3, r: 1, s: .55 }, { n: 4, r: 1, s: .5 }, { n: 5, r: 1, s: .4 }, { n: 6, r: 1, s: .4 }, { n: 8, r: 1, s: .3 }, { n: 20, r: 1, s: .2 }];
+            for (let i = 0; i < C.NPCS; i++) {
+                const t = types[i % types.length], form = (Math.floor(i / types.length) + i) % 4 === 1 ? 'line' : 'polygon';
+                let spot = null;
+                for (let attempt = 0; attempt < 120; attempt++) {
+                    const p = this.nav.point(rng.pick(this.nav.free));
+                    if (dist2(p.x, p.y, this.player.x, this.player.y) < 160 ** 2 || this.npcs.some(c => dist2(c.x, c.y, p.x, p.y) < 52 ** 2))
+                        continue;
+                    spot = p;
+                    break;
+                }
+                if (!spot)
+                    continue;
+                const g = { sideCount: t.n, regularity: t.r, sharpness: t.s, size: rng.range(.86, 1.23), mobility: rng.range(.82, 1.18), metabolism: rng.range(.86, 1.15), mutationTendency: rng.range(.015, .065) };
+                this.npcs.push(createCharacter('citizen-' + String(i + 1).padStart(3, '0'), g, form, spot.x, spot.y, rng));
+            }
+            // A visible neighbor near the start makes the living-world premise immediate.
+            const p = this.npcs[0];
+            if (p && this.circleClear(1728, 1092, p.body.radius)) {
+                p.x = p.px = 1728;
+                p.y = p.py = 1092;
+                p.ai.homeX = p.x;
+                p.ai.homeY = p.y;
+            }
+        }
+        move(c, dx, dy) {
+            const r = c.body.radius;
+            const steps = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) / (r * .6)));
+            dx /= steps;
+            dy /= steps;
+            for (let i = 0; i < steps; i++) {
+                const nx = clamp(c.x + dx, r + 16, C.W - r - 16);
+                if (this.circleClear(nx, c.y, r))
+                    c.x = nx;
+                const ny = clamp(c.y + dy, r + 16, C.H - r - 16);
+                if (this.circleClear(c.x, ny, r))
+                    c.y = ny;
+            }
+        }
+        takeResource(r) { if (r.quantity <= 0)
+            return false; r.quantity--; if (r.quantity === 0)
+            r.respawn = r.cycle; return true; }
+        refugeAt(x, y) { return this.refuges.find(f => dist2(x, y, f.x, f.y) < f.r * f.r) || null; }
+        districtAt(x, y) { return this.districts.find(d => x > d.x && y > d.y && x < d.x + d.w && y < d.y + d.h)?.name || 'THE CROSSROADS'; }
+        updateResources(dt) { for (const r of this.resources)
+            if (r.quantity === 0) {
+                r.respawn = Math.max(0, r.respawn - dt);
+                if (r.respawn === 0)
+                    r.quantity = r.capacity;
+            } }
+        choosePlan(c, force = null) {
+            const ai = c.ai, rng = this.rng;
+            ai.path = [];
+            ai.pathIndex = 0;
+            ai.targetId = null;
+            ai.stuck = 0;
+            const intent = force || (c.vitals.thirst < 46 ? 'water' : c.vitals.hunger < 46 ? 'food' : rng.next() < .19 ? 'rest' : 'wander');
+            ai.intent = intent;
+            if (intent === 'food' || intent === 'water') {
+                const choices = this.resources.filter(r => r.kind === intent && r.quantity > 0).sort((a, b) => dist2(c.x, c.y, a.x, a.y) - dist2(c.x, c.y, b.x, b.y));
+                for (const r of choices.slice(0, 12)) {
+                    const path = this.nav.path(c.x, c.y, r.x, r.y);
+                    if (path) {
+                        ai.path = path;
+                        ai.targetId = r.id;
+                        ai.activity = intent === 'food' ? 'seeking food' : 'seeking water';
+                        break;
+                    }
+                }
+            }
+            else if (intent === 'rest') {
+                const choices = [...this.refuges].sort((a, b) => dist2(c.x, c.y, a.x, a.y) - dist2(c.x, c.y, b.x, b.y));
+                for (const f of choices) {
+                    const a = rng.range(0, TAU), r = rng.range(15, 55), x = f.x + Math.cos(a) * r, y = f.y + Math.sin(a) * r;
+                    const path = this.nav.path(c.x, c.y, x, y);
+                    if (path) {
+                        ai.path = path;
+                        ai.targetId = f.id;
+                        ai.activity = 'walking';
+                        break;
+                    }
+                }
+            }
+            else {
+                for (let i = 0; i < 12; i++) {
+                    const p = this.nav.point(rng.pick(this.nav.free));
+                    if (i < 8 && dist2(c.x, c.y, p.x, p.y) > 800 ** 2)
+                        continue;
+                    const path = this.nav.path(c.x, c.y, p.x, p.y);
+                    if (path) {
+                        ai.path = path;
+                        ai.activity = 'wandering';
+                        break;
+                    }
+                }
+            }
+            if (!ai.path.length) {
+                ai.activity = 'idle';
+                ai.wait = rng.range(1, 3);
+            }
+        }
+        updateNPC(c, dt) {
+            const ai = c.ai, v = c.vitals, m = c.actual.genome.metabolism;
+            c.runtime.moving = false;
+            // Phase 1 needs drive NPC behavior; NPC mortality/aging is deliberately deferred.
+            v.hunger = clamp(v.hunger - .15 * m * dt, 0, 100);
+            v.thirst = clamp(v.thirst - .23 * m * dt, 0, 100);
+            ai.think -= dt;
+            if (ai.think <= 0) {
+                ai.think = this.rng.range(2, 4);
+                if (v.thirst < 27 && ai.intent !== 'water')
+                    this.choosePlan(c, 'water');
+                else if (v.hunger < 27 && ai.intent !== 'food' && v.thirst > 35)
+                    this.choosePlan(c, 'food');
+            }
+            if (ai.targetId?.startsWith('resource-')) {
+                const r = this.resources[Number(ai.targetId.slice(9))];
+                if (!r || r.quantity <= 0) {
+                    ai.path = [];
+                    ai.targetId = null;
+                    ai.activity = 'idle';
+                    ai.wait = .2;
+                }
+            }
+            if (ai.pathIndex < ai.path.length) {
+                const target = ai.path[ai.pathIndex], dx = target.x - c.x, dy = target.y - c.y, d = hypot(dx, dy);
+                const speed = 67 * c.actual.genome.mobility;
+                if (d < 5) {
+                    ai.pathIndex++;
+                    ai.stuck = 0;
+                }
+                else {
+                    const oldX = c.x, oldY = c.y, step = Math.min(d, speed * dt);
+                    this.move(c, dx / d * step, dy / d * step);
+                    c.angle = moveAngle(c.angle, Math.atan2(dy, dx), dt * 7);
+                    c.runtime.moving = true;
+                    if (hypot(c.x - oldX, c.y - oldY) < step * .18)
+                        ai.stuck += dt;
+                    else
+                        ai.stuck = Math.max(0, ai.stuck - dt * .5);
+                    if (ai.stuck > 1.6) {
+                        ai.path = [];
+                        ai.pathIndex = 0;
+                        ai.targetId = null;
+                        ai.activity = 'idle';
+                        ai.wait = .4;
+                        ai.stuck = 0;
+                    }
+                }
+                if (ai.pathIndex >= ai.path.length) {
+                    ai.path = [];
+                    ai.pathIndex = 0;
+                    if (ai.intent === 'food' || ai.intent === 'water') {
+                        ai.activity = 'gathering';
+                        ai.wait = 1.5;
+                    }
+                    else if (ai.intent === 'rest') {
+                        ai.activity = 'resting';
+                        ai.wait = this.rng.range(5, 13);
+                    }
+                    else {
+                        ai.activity = 'idle';
+                        ai.wait = this.rng.range(1, 5);
+                    }
+                }
+            }
+            else {
+                ai.wait -= dt;
+                if (ai.wait <= 0) {
+                    if (ai.activity === 'gathering' && ai.targetId) {
+                        const r = this.resources[Number(ai.targetId.slice(9))];
+                        if (r && dist2(c.x, c.y, r.x, r.y) < 46 ** 2 && this.takeResource(r)) {
+                            const key = r.kind === 'food' ? 'hunger' : 'thirst';
+                            v[key] = clamp(v[key] + 45, 0, 100);
+                        }
+                    }
+                    this.choosePlan(c);
+                }
+            }
+        }
+        separateCitizens() {
+            const chars = this.npcs;
+            for (let i = 0; i < chars.length; i++) {
+                const a = chars[i];
+                for (let j = i + 1; j < chars.length; j++) {
+                    const b = chars[j], min = (a.body.radius + b.body.radius) * .88, dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy;
+                    if (d2 >= min * min)
+                        continue;
+                    const d = Math.sqrt(d2), nx = d ? dx / d : 1, ny = d ? dy / d : 0, push = Math.min(.7, (min - d) * .3);
+                    this.move(a, -nx * push, -ny * push);
+                    this.move(b, nx * push, ny * push);
+                }
+                const p = this.player, dx = a.x - p.x, dy = a.y - p.y, d = hypot(dx, dy), min = a.body.radius + p.body.radius + 3;
+                if (d < min) {
+                    const push = Math.min(1.2, (min - d) * .3);
+                    this.move(a, (d ? dx / d : 1) * push, (d ? dy / d : 0) * push);
+                }
+            }
+        }
+    }
+    // ─────────────────────────────────────────────────────────────────────────────
+    // 04. Input. Reset every input source on pause, blur, death, restart or cancellation.
+    // Modifier shortcuts and seed text editing retain normal browser behavior.
+    // ─────────────────────────────────────────────────────────────────────────────
+    class Input {
+        constructor(game) {
+            this.game = game;
+            this.keys = new Set();
+            this.touch = { x: 0, y: 0 };
+            this.hold = { gather: false, sprint: false };
+            this.mouse = { x: 0, y: 0, inside: false };
+            this.joyPointer = null;
+            window.addEventListener('keydown', e => this.keyDown(e));
+            window.addEventListener('keyup', e => this.keys.delete(e.code));
+            window.addEventListener('blur', () => { this.clear(); game.pause('Paused because you switched away from the game.'); });
+            document.addEventListener('visibilitychange', () => { if (document.hidden) {
+                this.clear();
+                game.pause('Paused while this page is hidden.');
+            } });
+            game.canvas.addEventListener('pointermove', e => { const r = game.canvas.getBoundingClientRect(); this.mouse = { x: e.clientX - r.left, y: e.clientY - r.top, inside: e.pointerType !== 'touch' }; });
+            game.canvas.addEventListener('pointerleave', () => { this.mouse.inside = false; });
+            game.canvas.addEventListener('pointerdown', () => game.canvas.focus({ preventScroll: true }));
+            document.addEventListener('pointerdown', e => { if (e.pointerType === 'touch')
+                document.body.classList.add('touch'); }, { passive: true });
+            if (matchMedia('(pointer:coarse)').matches)
+                document.body.classList.add('touch');
+            this.bindHold('gatherBtn', 'gather', () => game.gather());
+            this.bindHold('sprintBtn', 'sprint');
+            const joy = $('joystick');
+            joy.addEventListener('pointerdown', e => { if (this.joyPointer !== null || game.state !== 'running')
+                return; this.joyPointer = e.pointerId; joy.setPointerCapture(e.pointerId); this.updateStick(e); e.preventDefault(); });
+            joy.addEventListener('pointermove', e => { if (e.pointerId === this.joyPointer)
+                this.updateStick(e); });
+            for (const event of ['pointerup', 'pointercancel', 'lostpointercapture'])
+                joy.addEventListener(event, e => { if (e.pointerId === this.joyPointer) {
+                    this.joyPointer = null;
+                    this.touch = { x: 0, y: 0 };
+                    $('stick').style.transform = '';
+                } });
+        }
+        bindHold(id, key, onStart) {
+            const b = $(id);
+            b.addEventListener('pointerdown', e => { if (this.game.state !== 'running' || b.disabled)
+                return; this.hold[key] = true; b.setPointerCapture(e.pointerId); if (onStart)
+                onStart(); e.preventDefault(); });
+            for (const event of ['pointerup', 'pointercancel', 'lostpointercapture'])
+                b.addEventListener(event, () => { this.hold[key] = false; });
+            b.addEventListener('click', e => { if (e.detail === 0) {
+                if (onStart)
+                    onStart();
+                else
+                    this.hold[key] = !this.hold[key];
+            } this.game.canvas.focus({ preventScroll: true }); });
+        }
+        updateStick(e) {
+            const r = $('joystick').getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2), d = hypot(dx, dy), scale = d > 37 ? 37 / d : 1;
+            const x = dx * scale, y = dy * scale;
+            this.touch = { x: x / 37, y: y / 37 };
+            if (d < 7)
+                this.touch = { x: 0, y: 0 };
+            $('stick').style.transform = `translate(${x}px,${y}px)`;
+        }
+        clear() { this.keys.clear(); this.hold.gather = this.hold.sprint = false; this.touch = { x: 0, y: 0 }; this.joyPointer = null; this.mouse.inside = false; $('stick').style.transform = ''; }
+        keyDown(e) {
+            if (e.ctrlKey || e.metaKey || e.altKey)
+                return;
+            const editing = e.target instanceof HTMLElement && (e.target.matches('input,textarea,select') || e.target.isContentEditable);
+            if (editing) {
+                if (e.code === 'Enter' && this.game.state === 'menu') {
+                    e.preventDefault();
+                    this.game.start($('seedInput').value);
+                }
+                return;
+            }
+            if (e.target instanceof HTMLButtonElement && (e.code === 'Space' || e.code === 'Enter'))
+                return;
+            const relevant = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'ShiftLeft', 'ShiftRight', 'KeyE', 'KeyF', 'KeyR', 'Space', 'Escape', 'KeyP', 'KeyH', 'Enter'];
+            if (!relevant.includes(e.code))
+                return;
+            e.preventDefault();
+            if (e.repeat)
+                return;
+            if (e.code === 'KeyP' || e.code === 'Escape') {
+                if (this.game.state === 'running')
+                    this.game.pause();
+                else if (this.game.state === 'paused')
+                    this.game.resume();
+                else if (this.game.state === 'help')
+                    this.game.closeHelp();
+                return;
+            }
+            if (e.code === 'KeyH') {
+                if (this.game.state === 'help')
+                    this.game.closeHelp();
+                else if (['running', 'paused'].includes(this.game.state))
+                    this.game.showHelp();
+                return;
+            }
+            if (e.code === 'Enter') {
+                if (this.game.state === 'menu')
+                    this.game.start($('seedInput').value);
+                else if (this.game.state === 'dead')
+                    this.game.start(this.game.world.seed);
+                return;
+            }
+            if (this.game.state !== 'running')
+                return;
+            this.keys.add(e.code);
+            if (e.code === 'KeyF')
+                this.game.consume('food');
+            if (e.code === 'KeyR')
+                this.game.consume('water');
+            if (e.code === 'Space')
+                this.game.toggleRest();
+            if (e.code === 'KeyE')
+                this.game.gather();
+        }
+        movement() {
+            let x = (this.keys.has('KeyD') || this.keys.has('ArrowRight') ? 1 : 0) - (this.keys.has('KeyA') || this.keys.has('ArrowLeft') ? 1 : 0) + this.touch.x;
+            let y = (this.keys.has('KeyS') || this.keys.has('ArrowDown') ? 1 : 0) - (this.keys.has('KeyW') || this.keys.has('ArrowUp') ? 1 : 0) + this.touch.y;
+            const d = hypot(x, y);
+            if (d > 1) {
+                x /= d;
+                y /= d;
+            }
+            return { x, y, magnitude: Math.min(d, 1) };
+        }
+        get sprint() { return this.hold.sprint || this.keys.has('ShiftLeft') || this.keys.has('ShiftRight'); }
+        get gather() { return this.hold.gather || this.keys.has('KeyE'); }
+    }
+    // ─────────────────────────────────────────────────────────────────────────────
+    // 05. Rendering. Static geometry is culled; no full-world high-DPI texture is held.
+    // UI updates at 8 Hz, map at 4 Hz, simulation at 60 Hz. Background tabs are paused.
+    // ─────────────────────────────────────────────────────────────────────────────
+    class Renderer {
+        constructor(game) {
+            this.game = game;
+            this.ctx = game.canvas.getContext('2d', { alpha: false });
+            if (!this.ctx)
+                throw new Error('Canvas 2D is unavailable.');
+            this.w = innerWidth;
+            this.h = innerHeight;
+            this.dpr = 1;
+            this.camera = { x: 1728, y: 1308 };
+            this.resize();
+            window.addEventListener('resize', () => this.resize());
+        }
+        resize() { const r = this.game.canvas.getBoundingClientRect(); this.w = Math.max(1, r.width); this.h = Math.max(1, r.height); this.dpr = Math.min(devicePixelRatio || 1, 2); this.game.canvas.width = Math.round(this.w * this.dpr); this.game.canvas.height = Math.round(this.h * this.dpr); this.clampCamera(); }
+        clampCamera() { this.camera.x = this.w >= C.W ? C.W / 2 : clamp(this.camera.x, this.w / 2, C.W - this.w / 2); this.camera.y = this.h >= C.H ? C.H / 2 : clamp(this.camera.y, this.h / 2, C.H - this.h / 2); }
+        snap() { const p = this.game.world.player; this.camera.x = p.x; this.camera.y = p.y; this.clampCamera(); }
+        screenToWorld(x, y) { return { x: x - this.w / 2 + this.camera.x, y: y - this.h / 2 + this.camera.y }; }
+        worldToScreen(x, y) { return { x: x - this.camera.x + this.w / 2, y: y - this.camera.y + this.h / 2 }; }
+        render(alpha, dt) {
+            const ctx = this.ctx, world = this.game.world;
+            ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+            ctx.fillStyle = '#101b21';
+            ctx.fillRect(0, 0, this.w, this.h);
+            if (!world)
+                return;
+            const p = world.player, px = lerp(p.px, p.x, alpha), py = lerp(p.py, p.y, alpha);
+            const t = 1 - Math.exp(-dt * 10);
+            this.camera.x = lerp(this.camera.x, px, t);
+            this.camera.y = lerp(this.camera.y, py, t);
+            this.clampCamera();
+            const ox = this.w / 2 - this.camera.x, oy = this.h / 2 - this.camera.y;
+            ctx.save();
+            ctx.translate(ox, oy);
+            const view = { x: -ox - 100, y: -oy - 100, w: this.w + 200, h: this.h + 200 };
+            const visible = (x, y, r = 0) => x + r > view.x && y + r > view.y && x - r < view.x + view.w && y - r < view.y + view.h;
+            ctx.fillStyle = '#182a2d';
+            ctx.fillRect(16, 16, C.W - 32, C.H - 32);
+            for (const d of world.districts) {
+                if (!rectOverlap(view, d))
+                    continue;
+                ctx.globalAlpha = .48;
+                ctx.fillStyle = d.color;
+                ctx.fillRect(d.x, d.y, d.w, d.h);
+            }
+            ctx.globalAlpha = 1;
+            for (const b of world.patches) {
+                if (!visible(b.x, b.y, 90))
+                    continue;
+                ctx.fillStyle = ['#2c413629', '#203a3b55', '#3f48402b'][b.tone];
+                ctx.beginPath();
+                ctx.ellipse(b.x, b.y, b.rx, b.ry, b.angle, 0, TAU);
+                ctx.fill();
+            }
+            // Restrained drafting grid and roads.
+            ctx.strokeStyle = '#96bca108';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let x = Math.max(0, Math.floor(view.x / 64) * 64); x < Math.min(C.W, view.x + view.w); x += 64) {
+                ctx.moveTo(x, Math.max(16, view.y));
+                ctx.lineTo(x, Math.min(C.H - 16, view.y + view.h));
+            }
+            for (let y = Math.max(0, Math.floor(view.y / 64) * 64); y < Math.min(C.H, view.y + view.h); y += 64) {
+                ctx.moveTo(Math.max(16, view.x), y);
+                ctx.lineTo(Math.min(C.W - 16, view.x + view.w), y);
+            }
+            ctx.stroke();
+            ctx.lineCap = 'round';
+            for (const [a, b] of world.roads) {
+                ctx.beginPath();
+                ctx.moveTo(...a);
+                ctx.lineTo(...b);
+                ctx.lineWidth = 57;
+                ctx.strokeStyle = '#45534b43';
+                ctx.stroke();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#9eb49a12';
+                ctx.setLineDash([3, 12]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+            ctx.lineCap = 'butt';
+            ctx.strokeStyle = '#64827750';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(16, 16, C.W - 32, C.H - 32);
+            for (const f of world.refuges) {
+                if (!visible(f.x, f.y, f.r + 30))
+                    continue;
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, f.r, 0, TAU);
+                ctx.fillStyle = '#a5d0a008';
+                ctx.fill();
+                ctx.strokeStyle = '#a6cfaa55';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 7]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.save();
+                ctx.translate(f.x, f.y);
+                polygon(ctx, [[0, -13], [13, 0], [0, 13], [-13, 0]]);
+                ctx.fillStyle = '#263d36';
+                ctx.fill();
+                ctx.strokeStyle = '#b1d0a8';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(-5, 0);
+                ctx.lineTo(5, 0);
+                ctx.moveTo(0, -5);
+                ctx.lineTo(0, 5);
+                ctx.stroke();
+                ctx.restore();
+                ctx.textAlign = 'center';
+                ctx.font = '10px ui-sans-serif, system-ui';
+                ctx.fillStyle = '#bed2b9';
+                ctx.fillText(f.name.toUpperCase(), f.x, f.y - 30);
+            }
+            for (const o of world.obstacles) {
+                if (o.kind === 'building') {
+                    if (rectOverlap(view, o))
+                        this.building(ctx, o);
+                }
+                else if (visible(o.x, o.y, o.r + 8))
+                    this.nature(ctx, o);
+            }
+            const nearest = this.game.nearestResource();
+            for (const r of world.resources)
+                if (visible(r.x, r.y, 30))
+                    this.resource(ctx, r, world.elapsed, r === nearest);
+            for (const c of world.npcs)
+                if (visible(c.x, c.y, 40))
+                    this.citizen(ctx, c, alpha, world.elapsed, false);
+            this.citizen(ctx, p, alpha, world.elapsed, true);
+            // Day/night is atmospheric only in this phase; it never conceals vital UI.
+            const phase = (world.elapsed % C.DAY) / C.DAY, night = Math.max(0, Math.sin((phase - .50) * TAU)) * .13;
+            if (night > 0) {
+                ctx.fillStyle = `rgba(6,13,28,${night})`;
+                ctx.fillRect(Math.max(16, view.x), Math.max(16, view.y), view.w, view.h);
+            }
+            for (const f of this.game.effects) {
+                ctx.globalAlpha = clamp(1 - f.age / 1.5, 0, 1);
+                ctx.textAlign = 'center';
+                ctx.font = '600 12px ui-sans-serif, system-ui';
+                ctx.fillStyle = f.color;
+                ctx.fillText(f.text, f.x, f.y - f.age * 22);
+            }
+            ctx.globalAlpha = 1;
+            ctx.restore();
+            if (p.vitals.health < 30) {
+                ctx.strokeStyle = `rgba(241,163,139,${.18 + (30 - p.vitals.health) / 100})`;
+                ctx.lineWidth = 6;
+                ctx.strokeRect(3, 3, this.w - 6, this.h - 6);
+            }
+        }
+        building(ctx, o) {
+            const { x, y, w, h } = o;
+            ctx.fillStyle = '#0f1e22';
+            ctx.fillRect(x + 4, y + 5, w, h);
+            ctx.fillStyle = o.type === 'ward' ? '#35423e' : o.type === 'workshop' ? '#2e3c40' : '#2b3e3b';
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = o.type === 'ward' ? '#849077' : '#617871';
+            ctx.lineWidth = 1.3;
+            ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
+            ctx.strokeStyle = '#8ca3922b';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x + 10, y + 10, w - 20, h - 20);
+            ctx.beginPath();
+            ctx.moveTo(x + 11, y + 11);
+            ctx.lineTo(x + w - 11, y + h - 11);
+            ctx.moveTo(x + w - 11, y + 11);
+            ctx.lineTo(x + 11, y + h - 11);
+            ctx.stroke();
+            ctx.fillStyle = '#708278';
+            ctx.fillRect(x + w / 2 - 10, y + h - 3, 20, 3);
+            ctx.fillStyle = '#a8b6a56b';
+            ctx.textAlign = 'center';
+            ctx.font = '9px ui-sans-serif, system-ui';
+            ctx.fillText(o.type === 'ward' ? 'RESIDENCE' : o.type === 'workshop' ? 'WORKSHOP' : 'DWELLING', x + w / 2, y + h / 2 + 3);
+        }
+        nature(ctx, o) {
+            ctx.save();
+            ctx.translate(o.x, o.y);
+            polygon(ctx, o.points);
+            ctx.fillStyle = o.kind === 'tree' ? '#2c4b3e' : '#3e4b4b';
+            ctx.fill();
+            ctx.strokeStyle = o.kind === 'tree' ? '#64866b' : '#768583';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.strokeStyle = o.kind === 'tree' ? '#6380667a' : '#91a09945';
+            ctx.beginPath();
+            if (o.kind === 'tree') {
+                for (let i = 0; i < 3; i++) {
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(...o.points[i * 2]);
+                }
+            }
+            else {
+                ctx.moveTo(...o.points[1]);
+                ctx.lineTo(-3, 3);
+                ctx.lineTo(...o.points[3]);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+        resource(ctx, r, time, highlight) {
+            ctx.save();
+            ctx.translate(r.x, r.y);
+            const active = r.quantity > 0;
+            ctx.globalAlpha = active ? 1 : .28;
+            if (highlight && active) {
+                ctx.beginPath();
+                ctx.arc(0, 0, 23 + Math.sin(time * 3) * 1.5, 0, TAU);
+                ctx.strokeStyle = r.kind === 'food' ? '#b3d49d99' : '#92d7de99';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+            if (r.kind === 'food') {
+                polygon(ctx, [[-13, 5], [-8, -8], [2, -12], [12, -4], [11, 8], [-2, 12]]);
+                ctx.fillStyle = '#35583e';
+                ctx.fill();
+                ctx.strokeStyle = '#7ca272';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.fillStyle = '#bdd298';
+                for (let i = 0; i < (active ? r.quantity : 1); i++) {
+                    const x = [-5, 4, 0][i], y = [-2, -4, 5][i];
+                    ctx.beginPath();
+                    ctx.arc(x, y, 2.5, 0, TAU);
+                    ctx.fill();
+                }
+            }
+            else {
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 15, 11, -.3, 0, TAU);
+                ctx.fillStyle = '#244950';
+                ctx.fill();
+                ctx.strokeStyle = '#71aeb7';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(0, 0, 5 + Math.sin(time * 1.8 + r.phase), .2, Math.PI * 1.6);
+                ctx.strokeStyle = '#a2d9dc';
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+        citizen(ctx, c, alpha, time, isPlayer) {
+            const x = lerp(c.px, c.x, alpha), y = lerp(c.py, c.y, alpha), a = moveAngle(c.prevAngle, c.angle, alpha);
+            ctx.save();
+            ctx.translate(x, y);
+            if (isPlayer) {
+                ctx.beginPath();
+                ctx.arc(0, 0, c.body.radius + 8, 0, TAU);
+                ctx.strokeStyle = c.runtime.resting ? '#a6cfaa80' : '#f1a38b35';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.font = '9px ui-sans-serif, system-ui';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#eac1ad';
+                ctx.fillText(c.runtime.resting ? 'RESTING' : 'YOU', 0, -c.body.radius - 16);
+            }
+            ctx.save();
+            ctx.rotate(a);
+            polygon(ctx, c.body.points);
+            ctx.fillStyle = isPlayer ? '#c57960' : c.body.form === 'line' ? '#bb929a' : '#293d3c';
+            ctx.fill();
+            ctx.strokeStyle = c.body.color;
+            ctx.lineWidth = isPlayer ? 2 : 1.6;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            if (c.body.form === 'polygon' && c.body.points.length >= 4) {
+                polygon(ctx, c.body.points.map(p => [p[0] * .68, p[1] * .68]));
+                ctx.strokeStyle = c.body.color + '40';
+                ctx.lineWidth = .8;
+                ctx.stroke();
+            }
+            ctx.restore();
+            if (c.ai?.activity === 'gathering') {
+                ctx.fillStyle = '#afcaaf';
+                for (let i = 0; i < 3; i++) {
+                    ctx.globalAlpha = .4 + .6 * ((Math.sin(time * 5 + i) + 1) / 2);
+                    ctx.beginPath();
+                    ctx.arc(-5 + i * 5, -c.body.radius - 7, 1.4, 0, TAU);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+            }
+            if (c.runtime.sprinting) {
+                ctx.strokeStyle = '#e1b39966';
+                ctx.lineWidth = 1;
+                const dx = -Math.cos(a), dy = -Math.sin(a);
+                ctx.beginPath();
+                ctx.moveTo(dx * 28, dy * 28);
+                ctx.lineTo(dx * 38, dy * 38);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+        map() {
+            const world = this.game.world;
+            if (!world)
+                return;
+            const c = $('minimap'), ctx = c.getContext('2d');
+            ctx.setTransform(c.width / C.W, 0, 0, c.height / C.H, 0, 0);
+            ctx.fillStyle = '#122328';
+            ctx.fillRect(0, 0, C.W, C.H);
+            for (const d of world.districts) {
+                ctx.fillStyle = d.color;
+                ctx.fillRect(d.x, d.y, d.w, d.h);
+            }
+            ctx.lineWidth = 24;
+            ctx.strokeStyle = '#5c716759';
+            for (const [a, b] of world.roads) {
+                ctx.beginPath();
+                ctx.moveTo(...a);
+                ctx.lineTo(...b);
+                ctx.stroke();
+            }
+            ctx.fillStyle = '#798f7860';
+            for (const o of world.obstacles)
+                if (o.kind === 'building')
+                    ctx.fillRect(o.x, o.y, o.w, o.h);
+            for (const f of world.refuges) {
+                ctx.save();
+                ctx.translate(f.x, f.y);
+                polygon(ctx, [[0, -52], [52, 0], [0, 52], [-52, 0]]);
+                ctx.fillStyle = this.game.progress.visited.has(f.id) ? '#bdd6ad' : '#91aaa2';
+                ctx.fill();
+                ctx.restore();
+            }
+            ctx.fillStyle = '#b7c9b46a';
+            for (const c of world.npcs) {
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, 9, 0, TAU);
+                ctx.fill();
+            }
+            const p = world.player;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.angle);
+            polygon(ctx, [[53, 0], [-35, 30], [-29, -33]]);
+            ctx.fillStyle = '#ffb197';
+            ctx.fill();
+            ctx.restore();
+            ctx.lineWidth = 12;
+            ctx.strokeStyle = '#d9e8d733';
+            ctx.strokeRect(this.camera.x - this.w / 2, this.camera.y - this.h / 2, this.w, this.h);
+        }
+    }
+    // ─────────────────────────────────────────────────────────────────────────────
+    // 06. Game controller and Phase 1 survival loop.
+    // ─────────────────────────────────────────────────────────────────────────────
+    class Game {
+        constructor() {
+            this.canvas = $('world');
+            this.state = 'menu';
+            this.world = null;
+            this.pack = { food: 1, water: 1 };
+            this.effects = [];
+            this.messages = [];
+            this.progress = { gathered: 0, visited: new Set(), complete: false };
+            this.gatherCooldown = 0;
+            this.warningLatch = {};
+            this.uiClock = 0;
+            this.mapClock = 0;
+            this.noticeUntil = 0;
+            this.accumulator = 0;
+            this.lastTime = null;
+            this.debugManual = false;
+            this.renderer = new Renderer(this);
+            this.input = new Input(this);
+            this.bindUI();
+            this.setScreen('menu');
+            requestAnimationFrame(t => this.frame(t));
+        }
+        bindUI() {
+            const bind = (id, fn) => $(id).addEventListener('click', () => { fn(); if (this.state === 'running')
+                this.canvas.focus({ preventScroll: true }); });
+            bind('startBtn', () => this.start($('seedInput').value));
+            bind('pauseBtn', () => this.pause());
+            bind('helpBtn', () => this.showHelp());
+            bind('resumeBtn', () => this.resume());
+            bind('pauseHelpBtn', () => this.showHelp());
+            bind('closeHelpBtn', () => this.closeHelp());
+            bind('restartBtn', () => this.start(this.world.seed));
+            bind('retryBtn', () => this.start(this.world.seed));
+            bind('menuBtn', () => { this.input.clear(); this.setScreen('menu'); });
+            bind('eatBtn', () => this.consume('food'));
+            bind('drinkBtn', () => this.consume('water'));
+            bind('restBtn', () => this.toggleRest());
+        }
+        setScreen(state) {
+            this.state = state;
+            const mapping = { menu: 'startScreen', paused: 'pauseScreen', help: 'helpScreen', dead: 'deathScreen' };
+            for (const id of ['startScreen', 'pauseScreen', 'helpScreen', 'deathScreen'])
+                $(id).hidden = mapping[state] !== id;
+            $('hud').hidden = state === 'menu';
+            $('tooltip').hidden = true;
+            if (state !== 'running') {
+                this.input?.clear();
+                this.accumulator = 0;
+                const first = state === 'menu' ? $('startBtn') : state === 'paused' ? $('resumeBtn') : state === 'help' ? $('closeHelpBtn') : $('retryBtn');
+                first?.focus({ preventScroll: true });
+            }
+        }
+        start(seed) {
+            seed = String(seed || 'abbott-1884').trim().slice(0, 48) || 'abbott-1884';
+            this.input.clear();
+            this.world = new World(seed);
+            this.pack = { food: 1, water: 1 };
+            this.effects = [];
+            this.messages = [];
+            this.progress = { gathered: 0, visited: new Set(), complete: false };
+            this.gatherCooldown = 0;
+            this.warningLatch = {};
+            this.accumulator = 0;
+            this.uiClock = 0;
+            this.mapClock = 0;
+            this.noticeUntil = 0;
+            $('notice').hidden = true;
+            $('seedInput').value = seed;
+            this.renderer.snap();
+            this.setScreen('running');
+            this.canvas.focus({ preventScroll: true });
+            this.log('Your pack holds 1 food and 1 water. Find more nearby.');
+            this.log('Green patches feed you. Blue springs fill your pack.');
+            this.refreshUI();
+            this.renderer.map();
+        }
+        pause(reason = 'Take a breath. Nothing advances while paused.') { if (this.state !== 'running')
+            return; $('pauseReason').textContent = reason; this.setScreen('paused'); }
+        resume() { if (this.state !== 'paused')
+            return; this.input.clear(); this.accumulator = 0; this.setScreen('running'); this.canvas.focus({ preventScroll: true }); }
+        showHelp() { if (!['running', 'paused'].includes(this.state))
+            return; this.helpReturn = this.state; this.setScreen('help'); }
+        closeHelp() { if (this.state !== 'help')
+            return; this.setScreen(this.helpReturn === 'paused' ? 'paused' : 'running'); if (this.state === 'running')
+            this.canvas.focus({ preventScroll: true }); }
+        log(text, warn = false) { this.messages.push({ text, warn, time: this.world?.elapsed || 0 }); this.messages = this.messages.slice(-4); this.renderLog(); }
+        renderLog() { const log = $('log'); log.replaceChildren(); for (const m of this.messages) {
+            if (this.world && this.world.elapsed - m.time > 17)
+                continue;
+            const e = document.createElement('div');
+            e.textContent = m.text;
+            if (m.warn)
+                e.className = 'warn';
+            log.appendChild(e);
+        } }
+        notify(text) { $('notice').textContent = text; $('notice').hidden = false; this.noticeUntil = this.world.elapsed + 8; }
+        nearestResource() { if (!this.world)
+            return null; const p = this.world.player; let best = null, bestD = Infinity; for (const r of this.world.resources) {
+            if (!r.quantity)
+                continue;
+            const d = dist2(p.x, p.y, r.x, r.y);
+            if (d > C.GATHER_REACH ** 2 || !this.world.segmentClear(p.x, p.y, r.x, r.y, 3))
+                continue;
+            const penalty = this.pack[r.kind] >= C.PACK ? 100000 : 0;
+            if (d + penalty < bestD) {
+                bestD = d + penalty;
+                best = r;
+            }
+        } return best; }
+        gather() {
+            if (this.state !== 'running' || this.gatherCooldown > 0)
+                return;
+            const r = this.nearestResource();
+            if (!r)
+                return;
+            if (this.pack[r.kind] >= C.PACK) {
+                this.gatherCooldown = .8;
+                this.log(`${r.kind === 'food' ? 'Food' : 'Water'} pack full (${C.PACK}/${C.PACK}). Use some before gathering more.`);
+                return;
+            }
+            if (this.world.takeResource(r)) {
+                this.pack[r.kind]++;
+                this.progress.gathered++;
+                this.gatherCooldown = C.GATHER_DELAY;
+                this.effects.push({ text: '+1 ' + r.kind, x: r.x, y: r.y - 18, age: 0, color: r.kind === 'food' ? '#c4dfb0' : '#a9e0e5' });
+                this.refreshUI();
+            }
+        }
+        consume(kind) {
+            if (this.state !== 'running')
+                return;
+            if (this.pack[kind] <= 0) {
+                this.log(`No ${kind} in your pack. Find ${kind === 'food' ? 'a green berry patch' : 'a blue spring'}.`, true);
+                return;
+            }
+            const v = this.world.player.vitals, key = kind === 'food' ? 'hunger' : 'thirst';
+            if (v[key] >= 99) {
+                this.log(kind === 'food' ? 'You are already well fed.' : 'You are already hydrated.');
+                return;
+            }
+            const before = v[key];
+            v[key] = Math.min(100, v[key] + (kind === 'food' ? 38 : 45));
+            this.pack[kind]--;
+            this.log(`${kind === 'food' ? 'Ate one provision' : 'Drank one flask'} · +${Math.round(v[key] - before)} ${kind}.`);
+            this.refreshUI();
+        }
+        toggleRest() {
+            if (this.state !== 'running')
+                return;
+            const p = this.world.player;
+            p.runtime.resting = !p.runtime.resting;
+            if (p.runtime.resting) {
+                const f = this.world.refugeAt(p.x, p.y);
+                this.log(f ? 'Resting at a refuge. Food and water must exceed 30 to heal.' : 'Resting in the open. Find a refuge to recover health.');
+            }
+            this.refreshUI();
+        }
+        updatePlayer(dt) {
+            const p = this.world.player, v = p.vitals, run = p.runtime, input = this.input, move = input.movement();
+            const moving = move.magnitude > .04;
+            if (moving)
+                run.resting = false;
+            if (run.exhausted && v.stamina >= 22)
+                run.exhausted = false;
+            const sprint = moving && input.sprint && !run.exhausted && v.stamina > 0 && !run.resting;
+            run.moving = moving;
+            run.sprinting = sprint;
+            run.sprintRecovery = Math.max(0, run.sprintRecovery - dt);
+            if (sprint) {
+                v.stamina = Math.max(0, v.stamina - 25 * dt);
+                run.sprintRecovery = .65;
+                if (v.stamina <= 0)
+                    run.exhausted = true;
+            }
+            else if (run.sprintRecovery === 0) {
+                v.stamina = Math.min(100, v.stamina + dt * (run.resting ? 27 : moving ? 9 : 15));
+            }
+            if (moving) {
+                const weakness = (v.hunger < 12 || v.thirst < 12) ? 0.83 : 1;
+                const speed = C.SPEED * p.actual.genome.mobility * (sprint ? C.SPRINT : 1) * weakness;
+                this.world.move(p, move.x * speed * dt, move.y * speed * dt);
+                p.angle = moveAngle(p.angle, Math.atan2(move.y, move.x), dt * 15);
+            }
+            const metabolism = p.actual.genome.metabolism;
+            v.hunger = Math.max(0, v.hunger - .30 * metabolism * dt * (sprint ? 1.65 : run.resting ? .65 : 1));
+            v.thirst = Math.max(0, v.thirst - .46 * metabolism * dt * (sprint ? 1.8 : run.resting ? .72 : 1));
+            if (v.hunger <= 0)
+                v.health -= 2.8 * dt;
+            if (v.thirst <= 0)
+                v.health -= 5 * dt;
+            if (run.resting && this.world.refugeAt(p.x, p.y) && v.hunger > 30 && v.thirst > 30)
+                v.health = Math.min(100, v.health + 1.8 * dt);
+            v.health = clamp(v.health, 0, 100);
+            for (const [key, label] of [['hunger', 'Food'], ['thirst', 'Water']]) {
+                if (v[key] < 23 && !this.warningLatch[key]) {
+                    this.warningLatch[key] = true;
+                    this.log(`${label} is low. ${key === 'hunger' ? 'Eat with F' : 'Drink with R'} before it runs out.`, true);
+                }
+                else if (v[key] > 35)
+                    this.warningLatch[key] = false;
+            }
+            const refuge = this.world.refugeAt(p.x, p.y);
+            if (refuge && !this.progress.visited.has(refuge.id)) {
+                this.progress.visited.add(refuge.id);
+                this.log('Found ' + refuge.name + '. Rest here to recover.');
+            }
+            if (v.health <= 0)
+                this.die();
+        }
+        die() {
+            const v = this.world.player.vitals;
+            this.world.player.actual.life.alive = false;
+            this.world.player.runtime.sprinting = false;
+            this.world.player.runtime.resting = false;
+            $('deathCause').textContent = v.thirst <= 0 ? 'Without water, your expedition came to an end.' : 'Without food, your expedition came to an end.';
+            $('deathStats').textContent = `Survived ${Math.floor(this.world.elapsed / 60)}m ${Math.floor(this.world.elapsed % 60)}s · ${this.progress.gathered} provisions gathered · ${this.progress.visited.size} refuges found. Your seed was “${this.world.seed}”.`;
+            this.setScreen('dead');
+        }
+        step(dt) {
+            if (this.state !== 'running')
+                return;
+            const w = this.world;
+            w.elapsed += dt;
+            for (const c of [w.player, ...w.npcs]) {
+                c.px = c.x;
+                c.py = c.y;
+                c.prevAngle = c.angle;
+            }
+            this.gatherCooldown = Math.max(0, this.gatherCooldown - dt);
+            w.updateResources(dt);
+            this.updatePlayer(dt);
+            if (this.state !== 'running')
+                return;
+            if (this.input.gather)
+                this.gather();
+            for (const c of w.npcs)
+                w.updateNPC(c, dt);
+            w.separateCitizens();
+            for (const f of this.effects)
+                f.age += dt;
+            this.effects = this.effects.filter(f => f.age < 1.5);
+            if (!this.progress.complete && w.elapsed >= C.DAY * 3 && this.progress.gathered >= 12 && this.progress.visited.size >= 2) {
+                this.progress.complete = true;
+                this.notify('Three days alive. Expedition complete. There is no next generation yet—but this life can continue.');
+                this.log('Expedition complete. Keep exploring for as long as you can.');
+            }
+        }
+        frame(timestamp) {
+            const dt = this.lastTime === null ? 0 : Math.min(.10, Math.max(0, (timestamp - this.lastTime) / 1000));
+            this.lastTime = timestamp;
+            if (this.state === 'running' && !this.debugManual) {
+                this.accumulator += dt;
+                let steps = 0;
+                while (this.accumulator >= C.DT && steps < 6) {
+                    this.accumulator -= C.DT;
+                    this.step(C.DT);
+                    steps++;
+                    if (this.state !== 'running') {
+                        this.accumulator = 0;
+                        break;
+                    }
+                }
+            }
+            const alpha = this.state === 'running' && !this.debugManual ? clamp(this.accumulator / C.DT, 0, 1) : 1;
+            this.renderer.render(alpha, dt);
+            this.uiClock += dt;
+            this.mapClock += dt;
+            if (this.uiClock >= .125) {
+                this.uiClock = 0;
+                if (this.world) {
+                    this.refreshUI();
+                    this.updateInspection();
+                }
+            }
+            if (this.mapClock >= .25) {
+                this.mapClock = 0;
+                if (this.world)
+                    this.renderer.map();
+            }
+            requestAnimationFrame(t => this.frame(t));
+        }
+        refreshUI() {
+            const w = this.world;
+            if (!w)
+                return;
+            const p = w.player;
+            for (const key of ['health', 'hunger', 'thirst', 'stamina']) {
+                const value = clamp(p.vitals[key], 0, 100), num = Math.ceil(value);
+                $(key + 'Text').textContent = num;
+                $(key + 'Fill').style.width = value + '%';
+                $(key + 'Stat').classList.toggle('low', value < 23);
+                $(key + 'Bar').setAttribute('aria-valuenow', num);
+            }
+            const fraction = (w.elapsed % C.DAY) / C.DAY, phase = fraction < .18 ? 'Dawn' : fraction < .58 ? 'Daylight' : fraction < .76 ? 'Dusk' : 'Night';
+            $('dayText').textContent = `Day ${Math.floor(w.elapsed / C.DAY) + 1} · ${phase}`;
+            $('seedText').textContent = 'Seed ' + w.seed;
+            $('foodCount').textContent = this.pack.food + '/' + C.PACK;
+            $('waterCount').textContent = this.pack.water + '/' + C.PACK;
+            $('eatBtn').disabled = this.pack.food === 0;
+            $('drinkBtn').disabled = this.pack.water === 0;
+            $('restBtn').classList.toggle('active', p.runtime.resting);
+            $('restBtn').querySelector('span').textContent = p.runtime.resting ? 'Get up' : 'Rest';
+            $('sprintBtn').classList.toggle('active', p.runtime.sprinting);
+            $('sprintBtn').querySelector('span').textContent = p.runtime.exhausted ? 'Recover' : 'Sprint';
+            const r = this.nearestResource(), f = w.refugeAt(p.x, p.y);
+            $('gatherBtn').disabled = !r || this.pack[r.kind] >= C.PACK;
+            let context = 'Explore · collect food and water · keep your meters filled';
+            if (p.runtime.resting)
+                context = f ? (p.vitals.hunger > 30 && p.vitals.thirst > 30 ? 'Resting in refuge · recovering health' : 'Eat and drink above 30 to recover health') : 'Resting · recovering stamina, but not health';
+            else if (r)
+                context = this.pack[r.kind] >= C.PACK ? `${r.kind === 'food' ? 'Food' : 'Water'} pack full · use supplies first` : `Hold E to gather ${r.kind} · ${r.quantity} remaining`;
+            else if (f)
+                context = 'Safe refuge · Space to rest and recover health';
+            $('context').textContent = context;
+            $('location').textContent = w.districtAt(p.x, p.y);
+            const days = Math.min(3, Math.floor(w.elapsed / C.DAY));
+            $('daysCount').textContent = days + ' / 3';
+            $('gatherCount').textContent = Math.min(12, this.progress.gathered) + ' / 12';
+            $('refugesCount').textContent = Math.min(2, this.progress.visited.size) + ' / 2';
+            for (const [id, done] of [['goalDays', days >= 3], ['goalGather', this.progress.gathered >= 12], ['goalRefuges', this.progress.visited.size >= 2]]) {
+                $(id).classList.toggle('done', done);
+                $(id).querySelector('.check').textContent = done ? '✓' : '';
+            }
+            $('objectiveTitle').textContent = this.progress.complete ? 'Expedition complete' : 'Your first expedition';
+            if (this.noticeUntil && w.elapsed >= this.noticeUntil)
+                $('notice').hidden = true;
+            this.renderLog();
+        }
+        updateInspection() {
+            const tooltip = $('tooltip'), mouse = this.input.mouse;
+            if (this.state !== 'running' || !mouse.inside) {
+                tooltip.hidden = true;
+                return;
+            }
+            const point = this.renderer.screenToWorld(mouse.x, mouse.y);
+            let target = null, best = Infinity;
+            for (const c of this.world.npcs) {
+                const d = dist2(c.x, c.y, point.x, point.y);
+                if (d < (c.body.radius + 9) ** 2 && d < best) {
+                    best = d;
+                    target = c;
+                }
+            }
+            if (!target) {
+                tooltip.hidden = true;
+                return;
+            }
+            const o = observeCitizen(target);
+            tooltip.replaceChildren();
+            const title = document.createElement('strong');
+            title.textContent = o.form;
+            const body = document.createElement('p');
+            body.textContent = o.size + ' · ' + o.activity + '.';
+            const note = document.createElement('small');
+            note.textContent = 'Name unknown. Family history and inherited traits have not been discovered.';
+            tooltip.append(title, body, note);
+            tooltip.hidden = false;
+            const left = clamp(mouse.x + 17, 8, Math.max(8, this.renderer.w - tooltip.offsetWidth - 10)), top = clamp(mouse.y + 18, 8, Math.max(8, this.renderer.h - tooltip.offsetHeight - 10));
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+        }
+    }
+    const game = new Game();
+    // ─────────────────────────────────────────────────────────────────────────────
+    // 07. Opt-in deterministic QA hooks. Absent unless the URL contains ?debug=1.
+    // This is a local client game, not a security boundary. UI discovery rules are
+    // separate from a developer's ability to inspect their own local JavaScript.
+    // ─────────────────────────────────────────────────────────────────────────────
+    if (new URLSearchParams(location.search).get('debug') === '1') {
+        const clone = x => JSON.parse(JSON.stringify(x));
+        window.FlatlandDebug = Object.freeze({
+            start(seed = 'abbott-1884') { game.start(seed); },
+            manual(value = true) { game.debugManual = !!value; game.accumulator = 0; },
+            advance(seconds) { if (!Number.isFinite(seconds) || seconds < 0 || seconds > 3600)
+                throw new RangeError('Use 0–3600 seconds.'); for (let i = 0, n = Math.round(seconds / C.DT); i < n && game.state === 'running'; i++)
+                game.step(C.DT); game.renderer.snap(); game.refreshUI(); return this.snapshot(); },
+            snapshot() { const w = game.world; return w ? clone({ state: game.state, seed: w.seed, time: w.elapsed, rng: w.rng.state, player: w.player, pack: game.pack, progress: { gathered: game.progress.gathered, visited: [...game.progress.visited], complete: game.progress.complete }, npcs: w.npcs, resources: w.resources, obstacles: w.obstacles, refuges: w.refuges, camera: game.renderer.camera, viewport: { w: game.renderer.w, h: game.renderer.h, dpr: game.renderer.dpr }, keys: [...game.input.keys], holds: game.input.hold, touch: game.input.touch }) : { state: game.state }; },
+            teleport(x, y) { const p = game.world.player; if (!Number.isFinite(x) || !Number.isFinite(y) || !game.world.circleClear(x, y, p.body.radius))
+                throw new Error('Teleport destination is blocked.'); p.x = p.px = x; p.y = p.py = y; game.renderer.snap(); game.refreshUI(); },
+            vitals(values) { for (const k of ['health', 'hunger', 'thirst', 'stamina'])
+                if (Object.hasOwn(values, k)) {
+                    if (!Number.isFinite(values[k]))
+                        throw new TypeError('Non-finite vital');
+                    game.world.player.vitals[k] = clamp(values[k], 0, 100);
+                } game.refreshUI(); },
+            setResource(id, quantity) { const r = game.world.resources.find(r => r.id === id); if (!r)
+                throw new Error('Unknown resource'); r.quantity = clamp(Math.floor(quantity), 0, r.capacity); r.respawn = r.quantity === 0 ? r.cycle : 0; },
+            pause() { game.pause(); }, resume() { game.resume(); },
+            worldToScreen(x, y) { return game.renderer.worldToScreen(x, y); }, screenToWorld(x, y) { return game.renderer.screenToWorld(x, y); },
+            path(ax, ay, bx, by) { return game.world.nav.path(ax, ay, bx, by); },
+            validate() {
+                const w = game.world, errors = [];
+                if (!w)
+                    return ['No world'];
+                for (const c of [w.player, ...w.npcs]) {
+                    if (!Number.isFinite(c.x) || !Number.isFinite(c.y))
+                        errors.push('Non-finite actor ' + c.id);
+                    if (!w.circleClear(c.x, c.y, c.body.radius - .01))
+                        errors.push('Actor overlaps terrain ' + c.id);
+                    for (const v of Object.values(c.vitals))
+                        if (!Number.isFinite(v) || v < 0 || v > 100)
+                            errors.push('Invalid vital ' + c.id);
+                }
+                for (const r of w.resources) {
+                    if (r.quantity < 0 || r.quantity > r.capacity)
+                        errors.push('Resource quantity ' + r.id);
+                    if (!w.resourceSpot(r.x, r.y))
+                        errors.push('Unreachable resource ' + r.id);
+                }
+                return errors;
+            },
+            config: C
+        });
+    }
+})();
+</script>
+</body>
+</html>
