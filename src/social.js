@@ -65,7 +65,7 @@ class SocialSystem {
         world.player.playerKnowledge.relationship = emptyRelationship();
         world.player.publicIdentity.standing = apparentStanding(world.player);
     }
-    citizen(id) { return this.world.npcs.find(c => c.id === id) || null; }
+    citizen(id) { const c=this.world.registry.get(id); return c && c.id!==this.world.player.id && c.actual.life.alive ? c : null; }
     nearby(c) {
         const p = this.world.player;
         return !!c && c.actual.life.alive && dist2(p.x, p.y, c.x, c.y) <= SOCIAL.reach ** 2 && this.world.segmentClear(p.x, p.y, c.x, c.y, 3);
@@ -179,7 +179,7 @@ class SocialSystem {
                 return this.response(c, topic, `“${k.discoveredFacts.family.value} ${p.background.ambition}”${stage >= 4 ? ' They share a private concern; anything else remains their choice.' : ''} Family stories are claims, not genetic evidence.`, 4 * factor, 4 * trustGain, .15, 'positive');
             case 'rumor': {
                 if (r.trust < 3 || p.preferences.dislikes === 'idle gossip') return this.response(c, topic, '“I would rather not pass stories along just now.”', 0, 0, 0, 'refused');
-                const others = this.world.npcs.filter(other => other.id !== c.id);
+                const others = this.world.registry.all().filter(other => other.id !== c.id && other.id !== this.world.player.id);
                 const subject = this.rng.pick(others), accurate = this.rng.next() > .35;
                 const value = accurate ? subject.actual.profile.preferences.likes : 'collecting ceremonial seals';
                 const text = `${subject.publicIdentity.displayName} is said to enjoy ${value}.`;
@@ -205,20 +205,20 @@ class SocialSystem {
     importState(data, envelopeVersion) {
         if (data === null && envelopeVersion === 1) {
             // Phase 1.1 had no social discoveries; preserve its simulation, add fresh identities.
-            for (const c of [this.world.player, ...this.world.npcs]) c.playerKnowledge.relationship = { ...emptyRelationship(), ...c.playerKnowledge.relationship };
+            for (const c of this.world.registry.all()) c.playerKnowledge.relationship = { ...emptyRelationship(), ...c.playerKnowledge.relationship };
             return;
         }
         insist(plain(data) && data.version === 1 && integerIn(data.rngState, 0, 4294967295), 'Invalid society state.');
         const rep = data.reputation;
         insist(plain(rep) && numberIn(rep.score, -100, 100) && Array.isArray(rep.events) && rep.events.length <= 48, 'Invalid reputation.');
-        insist(rep.events.every(e => plain(e) && numberIn(e.delta, -100, 100) && shortText(e.reason, 100) && [this.world.player,...this.world.npcs].some(c=>c.id===e.witnessId) && numberIn(e.at, 0, this.world.elapsed + .001)), 'Invalid reputation history.');
+        insist(rep.events.every(e => plain(e) && numberIn(e.delta, -100, 100) && shortText(e.reason, 100) && this.world.registry.get(e.witnessId) && numberIn(e.at, 0, this.world.elapsed + .001)), 'Invalid reputation history.');
         this.rng.state = data.rngState; this.reputation = copyJSON(rep);
     }
     static validateKnowledge(k, elapsed, world) {
         for (const [key, f] of Object.entries(k.discoveredFacts)) {
-            insist(Object.hasOwn(SOCIAL.factLabels, key) && plain(f) && shortText(f.value, 1000) && ['claim', 'observation', 'confirmed'].includes(f.kind) && (f.sourceId === 'player' || [world.player,...world.npcs].some(c => c.id === f.sourceId)) && numberIn(f.at, 0, elapsed + .001), 'Invalid discovered fact.');
+            insist(Object.hasOwn(SOCIAL.factLabels, key) && plain(f) && shortText(f.value, 1000) && ['claim', 'observation', 'confirmed'].includes(f.kind) && (f.sourceId === 'player' || world.registry.get(f.sourceId)) && numberIn(f.at, 0, elapsed + .001), 'Invalid discovered fact.');
         }
-        insist(k.rumors.length <= 12 && k.rumors.every(r => plain(r) && shortText(r.id, 100) && shortText(r.sourceName, 100) && shortText(r.text, 600) && [world.player,...world.npcs].some(c => c.id === r.subjectId) && [world.player,...world.npcs].some(c => c.id === r.sourceId) && r.status === 'unverified' && numberIn(r.at, 0, elapsed + .001)), 'Invalid rumor record.');
+        insist(k.rumors.length <= 12 && k.rumors.every(r => plain(r) && shortText(r.id, 100) && shortText(r.sourceName, 100) && shortText(r.text, 600) && world.registry.get(r.subjectId) && world.registry.get(r.sourceId) && r.status === 'unverified' && numberIn(r.at, 0, elapsed + .001)), 'Invalid rumor record.');
         const r = k.relationship;
         if (r.lastAt === undefined) { insist(!Object.keys(k.discoveredFacts).length && !k.rumors.length && r.familiarity === 0 && r.trust === 0, 'Invalid legacy relationship.'); return; }
         insist(numberIn(r.lastAt, -999, elapsed + .001) && integerIn(r.day, -1, Math.floor(elapsed / C.DAY)) && integerIn(r.today, 0, SOCIAL.dailyLimit) && plain(r.topics) && Array.isArray(r.history) && r.history.length <= SOCIAL.historyLimit, 'Invalid relationship timing/history.');

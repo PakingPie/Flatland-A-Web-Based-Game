@@ -98,7 +98,7 @@ class SaveStore {
         const g = this.game, w = g.world;
         insist(w, 'No expedition to save.');
         return { runId: g.runId, seed: w.seed, elapsed: w.elapsed, rngState: w.rng.state, currentPlayerId: w.player.id,
-            ended: !w.player.actual.life.alive, characters: [w.player, ...w.npcs].map(captureCharacter),
+            ended: !w.player.actual.life.alive, characters: w.registry.all().map(captureCharacter),
             resources: w.resources.map(r => ({ id: r.id, quantity: r.quantity, respawn: r.respawn })),
             pack: copyJSON(g.pack), progress: { gathered: g.progress.gathered, visited: [...g.progress.visited], complete: g.progress.complete },
             gatherCooldown: g.gatherCooldown, warningLatch: copyJSON(g.warningLatch), effects: copyJSON(g.effects), messages: copyJSON(g.messages),

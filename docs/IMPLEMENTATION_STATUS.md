@@ -1,5 +1,18 @@
 # Phase 2B + 3 implementation checkpoints
 
+## Phase 3.5 registry checkpoint
+
+One private `CharacterRegistry` owns all persistent records by stable ID. World
+NPCs are a living projection; deceased characters remain available to genealogy,
+kinship checks, observer sources, marriage history and complete v4 snapshots.
+Births register identities, succession changes the selected ID, and candidate
+restoration replaces the registry only after duplicate checks. No IDs are reused.
+
+All 51 deterministic cases and all four Chromium scripts pass, including the
+exact released-v4 payload, dead-founder succession, deceased knowledge sources,
+duplicate-ID rejection and transactional registry replacement. Build/document
+checks pass; action bubbles and legacy fixtures remain compatible.
+
 ## Phase 3.5 baseline and released-save checkpoint (2026-10-15)
 
 Started clean on `codex/phase-2b-3-generations` at `87feb3c`. Build agreement,

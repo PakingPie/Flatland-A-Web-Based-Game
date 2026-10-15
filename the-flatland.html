@@ -1353,6 +1353,39 @@ function observeCitizen(c) {
 // diagonal corner cutting is forbidden. Actual movement also checks geometry.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ---- registry.js ----
+// Authoritative private records, keyed by persistent identity. Never expose this
+// collection to presentation code: observers consume social/family DTOs instead.
+// Death removes an actor from the living projection, never from genealogy.
+class CharacterRegistry {
+    constructor() { this.byId = new Map(); this.currentId = null; }
+    get(id) { return this.byId.get(id) || null; }
+    add(character) {
+        insist(character && typeof character.id === 'string' && !this.byId.has(character.id), 'Duplicate or missing character ID.');
+        this.byId.set(character.id, character);
+        return character;
+    }
+    all() {
+        const current = this.get(this.currentId);
+        return current ? [current, ...[...this.byId.values()].filter(c => c.id !== this.currentId)] : [...this.byId.values()];
+    }
+    living() { return this.all().filter(c => c.actual.life.alive); }
+    npcs() { return this.living().filter(c => c.id !== this.currentId); }
+    select(id) {
+        insist(this.get(id), 'Current player is missing.');
+        // Preserve released NPC/save order when the old player joins the society.
+        const previous = this.get(this.currentId);
+        if (previous && previous.id !== id) { this.byId.delete(previous.id); this.byId.set(previous.id, previous); }
+        this.currentId = id;
+    }
+    replace(records, currentId) {
+        const candidate = new CharacterRegistry();
+        for (const c of records) candidate.add(c);
+        candidate.select(currentId);
+        this.byId = candidate.byId; this.currentId = candidate.currentId;
+    }
+}
+
 // ---- navigation.js ----
 class Navigation {
     constructor(world) {
@@ -1489,7 +1522,7 @@ class World {
         this.elapsed = 0;
         this.obstacles = [];
         this.resources = [];
-        this.npcs = [];
+        this.registry = new CharacterRegistry();
         this.patches = [];
         this.index = new SpatialHash();
         this.refuges = [{ id: 'refuge-common', x: 1728, y: 1280, r: 96, name: 'Common refuge' }, { id: 'refuge-west', x: 576, y: 1600, r: 96, name: 'West hollow' }, { id: 'refuge-court', x: 2784, y: 576, r: 96, name: 'Quiet court' }];
@@ -1501,7 +1534,8 @@ class World {
         this.generateTerrain();
         this.nav = new Navigation(this);
         this.generateResources();
-        this.player = createCharacter('founder-000', { sideCount: 3, regularity: .44, sharpness: .61, size: 1.15, mobility: 1, metabolism: 1 }, 'polygon', 1728, 1308, this.rng, true);
+        this.registry.add(createCharacter('founder-000', { sideCount: 3, regularity: .44, sharpness: .61, size: 1.15, mobility: 1, metabolism: 1 }, 'polygon', 1728, 1308, this.rng, true));
+        this.registry.select('founder-000');
         this.player.angle = -.8;
         this.player.prevAngle = -.8;
         this.generateCitizens();
@@ -1510,6 +1544,8 @@ class World {
         this.family = new FamilySystem(this);
         this.conversationId = null;
     }
+    get player() { return this.registry.get(this.registry.currentId); }
+    get npcs() { return this.registry.npcs(); }
     addObstacle(o) { o.id = 'obstacle-' + this.obstacles.length; this.obstacles.push(o); this.index.insert(o); }
     circleClear(x, y, r) {
         if (x < r + 16 || y < r + 16 || x > C.W - r - 16 || y > C.H - r - 16)
@@ -1602,7 +1638,7 @@ class World {
             if (!spot)
                 continue;
             const g = { sideCount: t.n, regularity: t.r, sharpness: t.s, size: rng.range(.86, 1.23), mobility: rng.range(.82, 1.18), metabolism: rng.range(.86, 1.15), mutationTendency: rng.range(.015, .065) };
-            this.npcs.push(createCharacter('citizen-' + String(i + 1).padStart(3, '0'), g, form, spot.x, spot.y, rng));
+            this.registry.add(createCharacter('citizen-' + String(i + 1).padStart(3, '0'), g, form, spot.x, spot.y, rng));
         }
         // A visible neighbor near the start makes the living-world premise immediate.
         const p = this.npcs[0];
@@ -1864,7 +1900,7 @@ class SocialSystem {
         world.player.playerKnowledge.relationship = emptyRelationship();
         world.player.publicIdentity.standing = apparentStanding(world.player);
     }
-    citizen(id) { return this.world.npcs.find(c => c.id === id) || null; }
+    citizen(id) { const c=this.world.registry.get(id); return c && c.id!==this.world.player.id && c.actual.life.alive ? c : null; }
     nearby(c) {
         const p = this.world.player;
         return !!c && c.actual.life.alive && dist2(p.x, p.y, c.x, c.y) <= SOCIAL.reach ** 2 && this.world.segmentClear(p.x, p.y, c.x, c.y, 3);
@@ -1978,7 +2014,7 @@ class SocialSystem {
                 return this.response(c, topic, `“${k.discoveredFacts.family.value} ${p.background.ambition}”${stage >= 4 ? ' They share a private concern; anything else remains their choice.' : ''} Family stories are claims, not genetic evidence.`, 4 * factor, 4 * trustGain, .15, 'positive');
             case 'rumor': {
                 if (r.trust < 3 || p.preferences.dislikes === 'idle gossip') return this.response(c, topic, '“I would rather not pass stories along just now.”', 0, 0, 0, 'refused');
-                const others = this.world.npcs.filter(other => other.id !== c.id);
+                const others = this.world.registry.all().filter(other => other.id !== c.id && other.id !== this.world.player.id);
                 const subject = this.rng.pick(others), accurate = this.rng.next() > .35;
                 const value = accurate ? subject.actual.profile.preferences.likes : 'collecting ceremonial seals';
                 const text = `${subject.publicIdentity.displayName} is said to enjoy ${value}.`;
@@ -2004,20 +2040,20 @@ class SocialSystem {
     importState(data, envelopeVersion) {
         if (data === null && envelopeVersion === 1) {
             // Phase 1.1 had no social discoveries; preserve its simulation, add fresh identities.
-            for (const c of [this.world.player, ...this.world.npcs]) c.playerKnowledge.relationship = { ...emptyRelationship(), ...c.playerKnowledge.relationship };
+            for (const c of this.world.registry.all()) c.playerKnowledge.relationship = { ...emptyRelationship(), ...c.playerKnowledge.relationship };
             return;
         }
         insist(plain(data) && data.version === 1 && integerIn(data.rngState, 0, 4294967295), 'Invalid society state.');
         const rep = data.reputation;
         insist(plain(rep) && numberIn(rep.score, -100, 100) && Array.isArray(rep.events) && rep.events.length <= 48, 'Invalid reputation.');
-        insist(rep.events.every(e => plain(e) && numberIn(e.delta, -100, 100) && shortText(e.reason, 100) && [this.world.player,...this.world.npcs].some(c=>c.id===e.witnessId) && numberIn(e.at, 0, this.world.elapsed + .001)), 'Invalid reputation history.');
+        insist(rep.events.every(e => plain(e) && numberIn(e.delta, -100, 100) && shortText(e.reason, 100) && this.world.registry.get(e.witnessId) && numberIn(e.at, 0, this.world.elapsed + .001)), 'Invalid reputation history.');
         this.rng.state = data.rngState; this.reputation = copyJSON(rep);
     }
     static validateKnowledge(k, elapsed, world) {
         for (const [key, f] of Object.entries(k.discoveredFacts)) {
-            insist(Object.hasOwn(SOCIAL.factLabels, key) && plain(f) && shortText(f.value, 1000) && ['claim', 'observation', 'confirmed'].includes(f.kind) && (f.sourceId === 'player' || [world.player,...world.npcs].some(c => c.id === f.sourceId)) && numberIn(f.at, 0, elapsed + .001), 'Invalid discovered fact.');
+            insist(Object.hasOwn(SOCIAL.factLabels, key) && plain(f) && shortText(f.value, 1000) && ['claim', 'observation', 'confirmed'].includes(f.kind) && (f.sourceId === 'player' || world.registry.get(f.sourceId)) && numberIn(f.at, 0, elapsed + .001), 'Invalid discovered fact.');
         }
-        insist(k.rumors.length <= 12 && k.rumors.every(r => plain(r) && shortText(r.id, 100) && shortText(r.sourceName, 100) && shortText(r.text, 600) && [world.player,...world.npcs].some(c => c.id === r.subjectId) && [world.player,...world.npcs].some(c => c.id === r.sourceId) && r.status === 'unverified' && numberIn(r.at, 0, elapsed + .001)), 'Invalid rumor record.');
+        insist(k.rumors.length <= 12 && k.rumors.every(r => plain(r) && shortText(r.id, 100) && shortText(r.sourceName, 100) && shortText(r.text, 600) && world.registry.get(r.subjectId) && world.registry.get(r.sourceId) && r.status === 'unverified' && numberIn(r.at, 0, elapsed + .001)), 'Invalid rumor record.');
         const r = k.relationship;
         if (r.lastAt === undefined) { insist(!Object.keys(k.discoveredFacts).length && !k.rumors.length && r.familiarity === 0 && r.trust === 0, 'Invalid legacy relationship.'); return; }
         insist(numberIn(r.lastAt, -999, elapsed + .001) && integerIn(r.day, -1, Math.floor(elapsed / C.DAY)) && integerIn(r.today, 0, SOCIAL.dailyLimit) && plain(r.topics) && Array.isArray(r.history) && r.history.length <= SOCIAL.historyLimit, 'Invalid relationship timing/history.');
@@ -2034,8 +2070,8 @@ const ROMANCE = Object.freeze({ affectionToMarry: 42, trustToMarry: 18,
         outing: 'Invite a quiet walk', commitment: 'Discuss a shared future', propose: 'Propose marriage', separate: 'End this marriage' } });
 class RomanceSystem {
     constructor(world) { this.world = world; this.pairs = {}; this.marriages = []; }
-    actors() { return [this.world.player, ...this.world.npcs]; }
-    character(id) { return this.actors().find(c => c.id === id); }
+    actors() { return this.world.registry.all(); }
+    character(id) { return this.world.registry.get(id); }
     preferences(c) {
         const rng = new RNG(`${this.world.seed}:romance:${c.id}`), roll = rng.next();
         return { sexes: roll < .55 ? ['male', 'female'] : [roll < .8 ? (c.actual.identity.sex === 'male' ? 'female' : 'male') : c.actual.identity.sex],
@@ -2154,8 +2190,8 @@ class FamilySystem {
         this.births = []; this.history = []; this.playableIds = [world.player.id]; this.notebooks = {};
         for (const c of this.actors()) { c.actual.lineage.generation = 1; c.actual.genome.generation = 1; }
     }
-    actors() { return [this.world.player, ...this.world.npcs]; }
-    character(id) { return this.actors().find(c=>c.id===id); }
+    actors() { return this.world.registry.all(); }
+    character(id) { return this.world.registry.get(id); }
     get year() { return this.world.elapsed / C.DAY; }
     birthEligibility() {
         const a = this.world.player, b = this.world.romance.spouse(a);
@@ -2182,7 +2218,7 @@ class FamilySystem {
             c.actual.identity.name=`${sex==='female'?'Lina':'Ari'} ${id.slice(11)}`; c.publicIdentity.displayName=c.actual.identity.name;
             c.actual.life={ageYears:0,alive:true}; c.actual.lineage={generation,motherId:mother.id,fatherId:father.id,childrenIds:[],ancestryKnownToSelf:false};
             c.playerKnowledge.relationship=emptyRelationship(); w.social.learn(c,'name',c.actual.identity.name,'confirmed','player');
-            w.npcs.push(c); mother.actual.lineage.childrenIds.push(id); father.actual.lineage.childrenIds.push(id); ids.push(id);
+            w.registry.add(c); mother.actual.lineage.childrenIds.push(id); father.actual.lineage.childrenIds.push(id); ids.push(id);
         }
         this.world.romance.pair(a,b).lastBirthYear=this.year;
         const record={id:`birth-${this.births.length+1}`,motherId:mother.id,fatherId:father.id,childIds:ids,at:w.elapsed};
@@ -2199,7 +2235,7 @@ class FamilySystem {
         for(const m of this.world.romance.marriages.filter(m=>m.endedAt===null && m.ids.includes(c.id))) this.world.romance.endMarriage(m,'death');
     }
     age(years) {
-        for(const c of this.actors()) if(c.actual.life.alive) {
+        for(const c of this.world.registry.living()) {
             c.actual.life.ageYears+=years;
             if(c.actual.life.ageYears>=this.deathAge(c)) this.markDeath(c);
         }
@@ -2213,7 +2249,7 @@ class FamilySystem {
             w.elapsed+=C.DAY; w.updateResources(C.DAY); this.age(1);
             // Community subsistence covers the abstract interval. Pack contents
             // are preserved; no ordinary survival frames or AI paths are replayed.
-            for(const c of this.actors()) if(c.actual.life.alive) {
+            for(const c of w.registry.living()) {
                 c.vitals.hunger=Math.max(55,c.vitals.hunger); c.vitals.thirst=Math.max(55,c.vitals.thirst); c.vitals.stamina=100;
             }
         }
@@ -2236,7 +2272,7 @@ class FamilySystem {
         old.isPlayer=false; old.ai=ai;
         old.body=createCharacter(old.id,old.actual.genome,old.actual.identity.bodyForm,old.x,old.y,new RNG(old.id)).body;
         next.isPlayer=true; next.ai=null; next.body.color='#f1a38b'; next.runtime.resting=false;
-        w.npcs=w.npcs.filter(c=>c.id!==next.id); w.npcs.push(old); w.player=next; w.conversationId=null;
+        w.registry.select(next.id); w.conversationId=null;
         const book=this.notebooks[next.id];
         for(const c of this.actors()) c.playerKnowledge=book?.knowledge[c.id] ? copyJSON(book.knowledge[c.id]) : {observed:{},discoveredFacts:{},rumors:[],relationship:emptyRelationship()};
         // Birth and marriage records are shared household knowledge; unrelated
@@ -2295,7 +2331,7 @@ class FamilySystem {
     }
 }
 function restoreFamilyPopulation(w, records, currentId) {
-    const baseIds=[w.player,...w.npcs].map(c=>c.id);
+    const baseIds=w.registry.all().map(c=>c.id);
     insist(Array.isArray(records) && records.length>=baseIds.length && records.length<=FAMILY.maxPopulation, 'Invalid saved population.');
     const ids=new Set();
     insist(shortText(currentId,100), 'Missing current player ID.');
@@ -2318,7 +2354,7 @@ function restoreFamilyPopulation(w, records, currentId) {
     });
     insist(baseIds.every(id=>ids.has(id)), 'Seeded citizens are missing.');
     insist(ids.has(currentId), 'Current player is missing.');
-    w.player=actors.find(c=>c.id===currentId); w.npcs=actors.filter(c=>c.id!==currentId);
+    w.registry.replace(actors,currentId);
     records.forEach((s,i)=>restoreCharacter(actors[i],s,w));
 }
 
@@ -2464,7 +2500,7 @@ class SaveStore {
         const g = this.game, w = g.world;
         insist(w, 'No expedition to save.');
         return { runId: g.runId, seed: w.seed, elapsed: w.elapsed, rngState: w.rng.state, currentPlayerId: w.player.id,
-            ended: !w.player.actual.life.alive, characters: [w.player, ...w.npcs].map(captureCharacter),
+            ended: !w.player.actual.life.alive, characters: w.registry.all().map(captureCharacter),
             resources: w.resources.map(r => ({ id: r.id, quantity: r.quantity, respawn: r.respawn })),
             pack: copyJSON(g.pack), progress: { gathered: g.progress.gathered, visited: [...g.progress.visited], complete: g.progress.complete },
             gatherCooldown: g.gatherCooldown, warningLatch: copyJSON(g.warningLatch), effects: copyJSON(g.effects), messages: copyJSON(g.messages),

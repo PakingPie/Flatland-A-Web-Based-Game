@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
-const files = ['core','genetics','characters','navigation','world','social','romance','family','approach','persistence'];
+const files = ['core','genetics','characters','registry','navigation','world','social','romance','family','approach','persistence'];
 const storage=new Map();
 const context = vm.createContext({ console, document: { getElementById: () => ({textContent:'', hidden:true}), querySelectorAll:()=>[] }, performance, structuredClone,
     localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}, confirm:()=>true });
@@ -30,6 +30,39 @@ test('frozen released v4 family, daughter observer and deceased ancestors round-
     assert.equal(restored.world.player.actual.identity.sex,'female');
     assert.equal(restored.world.family.character('founder-000').actual.life.alive,false);
     assert.ok(restored.world.family.notebooks['founder-000']);
+});
+test('registry keeps deceased identities and observer sources outside living NPC simulation', () => {
+    const {w,c}=familyWorld(); const children=w.family.birth().ids;
+    w.social.learn(w.npcs[1],'occupation','A recorded claim','claim',c.id);
+    const total=w.registry.all().length, oldId=c.id, genome=json(c.actual.genome);
+    w.family.markDeath(c);
+    assert.equal(w.registry.all().length,total);
+    assert.equal(w.registry.get(oldId),c); assert.equal(w.family.character(oldId),c);
+    assert.ok(!w.npcs.includes(c)); assert.ok(!w.registry.living().includes(c));
+    assert.equal(w.social.citizen(oldId),null);
+    assert.equal(w.romance.spouse(w.player),null);
+    assert.throws(()=>w.registry.add(c),/Duplicate/);
+    const before=w.registry.all().map(c=>c.id);
+    assert.throws(()=>w.registry.replace([w.player,w.player],w.player.id));
+    assert.deepEqual(w.registry.all().map(c=>c.id),before);
+    const restored=saveFor(w).decode(saveFor(w).encode()).world;
+    assert.ok(!restored.npcs.some(c=>c.id===oldId));
+    assert.deepEqual(json(restored.registry.get(oldId).actual.genome),genome);
+    for(const id of children) assert.equal(restored.family.character(id).actual.lineage.motherId,oldId);
+});
+test('registry preserves dead founder genealogy, kinship and notebooks through daughter succession', () => {
+    const {w}=familyWorld(); const children=w.family.birth().ids; mature(w);
+    const old=w.player; w.family.markDeath(old); const next=w.family.character(children[0]);
+    assert.equal(w.family.succeed(next.id).ok,true);
+    assert.equal(w.player,next); assert.ok(!w.npcs.includes(old));
+    assert.equal(w.registry.get(old.id),old); assert.ok(w.family.notebooks[old.id]);
+    assert.equal(w.romance.isCloseKin(next,w.family.character(children[1])),true);
+    const dto=JSON.stringify(w.family.view());
+    assert.ok(dto.includes('Founder')); assert.ok(!dto.includes('latentIrregularAncestry')); assert.ok(!dto.includes('sideCount'));
+    const restored=saveFor(w).decode(saveFor(w).encode()).world;
+    assert.equal(restored.family.character(old.id).actual.life.alive,false);
+    assert.equal(restored.player.id,next.id);
+    assert.equal(restored.registry.all().length,w.registry.all().length);
 });
 test('excellent trust does not guarantee attraction; proposals can fail', () => {
     const w=new World('romance'); const c=w.npcs.find(c=>!w.romance.preferences(c).sexes.includes('male')); prepare(w,c); c.playerKnowledge.relationship.trust=100;

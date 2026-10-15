@@ -5,8 +5,8 @@ const ROMANCE = Object.freeze({ affectionToMarry: 42, trustToMarry: 18,
         outing: 'Invite a quiet walk', commitment: 'Discuss a shared future', propose: 'Propose marriage', separate: 'End this marriage' } });
 class RomanceSystem {
     constructor(world) { this.world = world; this.pairs = {}; this.marriages = []; }
-    actors() { return [this.world.player, ...this.world.npcs]; }
-    character(id) { return this.actors().find(c => c.id === id); }
+    actors() { return this.world.registry.all(); }
+    character(id) { return this.world.registry.get(id); }
     preferences(c) {
         const rng = new RNG(`${this.world.seed}:romance:${c.id}`), roll = rng.next();
         return { sexes: roll < .55 ? ['male', 'female'] : [roll < .8 ? (c.actual.identity.sex === 'male' ? 'female' : 'male') : c.actual.identity.sex],

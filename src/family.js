@@ -5,8 +5,8 @@ class FamilySystem {
         this.births = []; this.history = []; this.playableIds = [world.player.id]; this.notebooks = {};
         for (const c of this.actors()) { c.actual.lineage.generation = 1; c.actual.genome.generation = 1; }
     }
-    actors() { return [this.world.player, ...this.world.npcs]; }
-    character(id) { return this.actors().find(c=>c.id===id); }
+    actors() { return this.world.registry.all(); }
+    character(id) { return this.world.registry.get(id); }
     get year() { return this.world.elapsed / C.DAY; }
     birthEligibility() {
         const a = this.world.player, b = this.world.romance.spouse(a);
@@ -33,7 +33,7 @@ class FamilySystem {
             c.actual.identity.name=`${sex==='female'?'Lina':'Ari'} ${id.slice(11)}`; c.publicIdentity.displayName=c.actual.identity.name;
             c.actual.life={ageYears:0,alive:true}; c.actual.lineage={generation,motherId:mother.id,fatherId:father.id,childrenIds:[],ancestryKnownToSelf:false};
             c.playerKnowledge.relationship=emptyRelationship(); w.social.learn(c,'name',c.actual.identity.name,'confirmed','player');
-            w.npcs.push(c); mother.actual.lineage.childrenIds.push(id); father.actual.lineage.childrenIds.push(id); ids.push(id);
+            w.registry.add(c); mother.actual.lineage.childrenIds.push(id); father.actual.lineage.childrenIds.push(id); ids.push(id);
         }
         this.world.romance.pair(a,b).lastBirthYear=this.year;
         const record={id:`birth-${this.births.length+1}`,motherId:mother.id,fatherId:father.id,childIds:ids,at:w.elapsed};
@@ -50,7 +50,7 @@ class FamilySystem {
         for(const m of this.world.romance.marriages.filter(m=>m.endedAt===null && m.ids.includes(c.id))) this.world.romance.endMarriage(m,'death');
     }
     age(years) {
-        for(const c of this.actors()) if(c.actual.life.alive) {
+        for(const c of this.world.registry.living()) {
             c.actual.life.ageYears+=years;
             if(c.actual.life.ageYears>=this.deathAge(c)) this.markDeath(c);
         }
@@ -64,7 +64,7 @@ class FamilySystem {
             w.elapsed+=C.DAY; w.updateResources(C.DAY); this.age(1);
             // Community subsistence covers the abstract interval. Pack contents
             // are preserved; no ordinary survival frames or AI paths are replayed.
-            for(const c of this.actors()) if(c.actual.life.alive) {
+            for(const c of w.registry.living()) {
                 c.vitals.hunger=Math.max(55,c.vitals.hunger); c.vitals.thirst=Math.max(55,c.vitals.thirst); c.vitals.stamina=100;
             }
         }
@@ -87,7 +87,7 @@ class FamilySystem {
         old.isPlayer=false; old.ai=ai;
         old.body=createCharacter(old.id,old.actual.genome,old.actual.identity.bodyForm,old.x,old.y,new RNG(old.id)).body;
         next.isPlayer=true; next.ai=null; next.body.color='#f1a38b'; next.runtime.resting=false;
-        w.npcs=w.npcs.filter(c=>c.id!==next.id); w.npcs.push(old); w.player=next; w.conversationId=null;
+        w.registry.select(next.id); w.conversationId=null;
         const book=this.notebooks[next.id];
         for(const c of this.actors()) c.playerKnowledge=book?.knowledge[c.id] ? copyJSON(book.knowledge[c.id]) : {observed:{},discoveredFacts:{},rumors:[],relationship:emptyRelationship()};
         // Birth and marriage records are shared household knowledge; unrelated
@@ -146,7 +146,7 @@ class FamilySystem {
     }
 }
 function restoreFamilyPopulation(w, records, currentId) {
-    const baseIds=[w.player,...w.npcs].map(c=>c.id);
+    const baseIds=w.registry.all().map(c=>c.id);
     insist(Array.isArray(records) && records.length>=baseIds.length && records.length<=FAMILY.maxPopulation, 'Invalid saved population.');
     const ids=new Set();
     insist(shortText(currentId,100), 'Missing current player ID.');
@@ -169,6 +169,6 @@ function restoreFamilyPopulation(w, records, currentId) {
     });
     insist(baseIds.every(id=>ids.has(id)), 'Seeded citizens are missing.');
     insist(ids.has(currentId), 'Current player is missing.');
-    w.player=actors.find(c=>c.id===currentId); w.npcs=actors.filter(c=>c.id!==currentId);
+    w.registry.replace(actors,currentId);
     records.forEach((s,i)=>restoreCharacter(actors[i],s,w));
 }
