@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
-const files = ['core','genetics','characters','registry','navigation','world','social','romance','family','approach','save-format','save-validation','save-migrations','save-codec','persistence'];
+const files = ['core','genetics','characters','registry','navigation','world','social','romance','household','family-invariants','observer-notebooks','family-view','family','approach','save-format','save-validation','save-migrations','save-codec','persistence'];
 const storage=new Map();
 const context = vm.createContext({ console, document: { getElementById: () => ({textContent:'', hidden:true}), querySelectorAll:()=>[] }, performance, structuredClone,
     localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}, confirm:()=>true });
@@ -88,6 +88,20 @@ test('registry preserves dead founder genealogy, kinship and notebooks through d
     assert.equal(restored.family.character(old.id).actual.life.alive,false);
     assert.equal(restored.player.id,next.id);
     assert.equal(restored.registry.all().length,w.registry.all().length);
+});
+test('observer transfer archives discoveries without sharing private claims with an heir', () => {
+    const {w}=familyWorld(); const children=w.family.birth().ids; mature(w);
+    const subject=w.npcs.find(c=>!children.includes(c.id) && !w.family.knownFamily().includes(c));
+    w.social.learn(subject,'privateHistory','A private founder conversation','claim',subject.id);
+    const founder=w.player.id;
+    assert.equal(w.family.succeed(children[0]).ok,true);
+    const archived=w.family.notebooks[founder].knowledge[subject.id];
+    assert.equal(archived.discoveredFacts.privateHistory.value,'A private founder conversation');
+    assert.equal(subject.playerKnowledge.discoveredFacts.privateHistory,undefined);
+    w.social.learn(subject,'name','A fresh observation','confirmed','player');
+    assert.notEqual(archived.discoveredFacts.name?.value,'A fresh observation');
+    assert.ok(!JSON.stringify(w.family.view()).includes('A private founder conversation'));
+    saveFor(w).decode(saveFor(w).encode());
 });
 test('excellent trust does not guarantee attraction; proposals can fail', () => {
     const w=new World('romance'); const c=w.npcs.find(c=>!w.romance.preferences(c).sexes.includes('male')); prepare(w,c); c.playerKnowledge.relationship.trust=100;
@@ -212,6 +226,11 @@ test('saving preserves all three RNG streams and the next birth exactly',()=>{
     assert.deepEqual(json(w.family.birth()),json(other.family.birth()));assert.deepEqual(json(w.family.exportState()),json(other.family.exportState()));
 });
 const invalidCases={
+    'one-sided spouse bond':s=>s.characters[0].actual.bonds.partnerIds=[],
+    'invented spouse bond':s=>s.characters.find(c=>!c.actual.bonds.partnerIds.length).actual.bonds.partnerIds=[s.characters[0].id],
+    'missing marriage history bond':s=>s.characters[0].actual.bonds.marriageIds=[],
+    'duplicate spouse bond':s=>s.characters[0].actual.bonds.partnerIds.push(s.characters[0].actual.bonds.partnerIds[0]),
+    'ancestor cycle':s=>{const c=s.characters.at(-1);c.actual.lineage.childrenIds.push(s.characters[0].id);s.characters[0].actual.lineage.motherId=c.id;s.characters[0].actual.genome.motherId=c.id;},
     'genome sides':s=>s.characters[0].actual.genome.sideCount=100,
     'geometry stage':s=>s.characters[0].actual.genome.geometryStage='circle',
     'vertex proportions':s=>s.characters[0].actual.genome.vertexProportions=[1],

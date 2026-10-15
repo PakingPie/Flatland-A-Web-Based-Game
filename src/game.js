@@ -238,7 +238,7 @@ class Game {
         if (v.thirst <= 0)
             v.health -= 5 * dt;
         if (run.resting && this.world.refugeAt(p.x, p.y) && v.hunger > 30 && v.thirst > 30)
-            v.health = Math.min(100, v.health + (this.world.romance.spouse(p) ? 2.1 : 1.8) * dt);
+            v.health = Math.min(100, v.health + householdSupport(this.world,p).refugeHealing * dt);
         v.health = clamp(v.health, 0, 100);
         for (const [key, label] of [['hunger', 'Food'], ['thirst', 'Water']]) {
             if (v[key] < 23 && !this.warningLatch[key]) {

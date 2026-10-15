@@ -80,7 +80,7 @@ class FamilySystem {
     succeed(id) {
         const w=this.world, old=w.player, next=this.candidates().find(c=>c.id===id);
         if(!next || !this.canSucceed()) return {ok:false,text:'Choose a living adult descendant after age 40 retirement or upon death.'};
-        this.notebooks[old.id]={knowledge:Object.fromEntries(this.actors().filter(c=>Object.keys(c.playerKnowledge.discoveredFacts).length || c.playerKnowledge.rumors.length || c.playerKnowledge.relationship.familiarity || c.playerKnowledge.relationship.trust).map(c=>[c.id,copyJSON(c.playerKnowledge)])),reputation:copyJSON(w.social.reputation)};
+        this.notebooks[old.id]=captureObserverNotebook(w);
         if(old.actual.life.alive) this.history.push({kind:'retirement',ids:[old.id],at:w.elapsed});
         const ai={intent:'wander',activity:'idle',path:[],pathIndex:0,targetId:null,wait:1,think:1,stuck:0,homeX:old.x,homeY:old.y};
         if(!old.actual.profile) { populateSocialIdentity(w,old,0); old.actual.identity.name='Founder'; old.publicIdentity.displayName='Founder'; }
@@ -88,12 +88,10 @@ class FamilySystem {
         old.body=createCharacter(old.id,old.actual.genome,old.actual.identity.bodyForm,old.x,old.y,new RNG(old.id)).body;
         next.isPlayer=true; next.ai=null; next.body.color='#f1a38b'; next.runtime.resting=false;
         w.registry.select(next.id); w.conversationId=null;
-        const book=this.notebooks[next.id];
-        for(const c of this.actors()) c.playerKnowledge=book?.knowledge[c.id] ? copyJSON(book.knowledge[c.id]) : {observed:{},discoveredFacts:{},rumors:[],relationship:emptyRelationship()};
+        restoreObserverNotebook(w,this.notebooks[next.id]);
         // Birth and marriage records are shared household knowledge; unrelated
         // friendships and private claims are specific to the new observer.
         for(const c of this.knownFamily()) if(c.id!==next.id) w.social.learn(c,'name',this.name(c),'confirmed','player');
-        w.social.reputation=book ? copyJSON(book.reputation) : {score:0,events:[]};
         w.romance.syncBonds(); this.playableIds.push(next.id); this.history.push({kind:'succession',ids:[old.id,next.id],at:w.elapsed});
         return {ok:true,text:`${this.name(next)} now carries the playable lineage, Generation ${next.actual.lineage.generation}. The same world continues.`};
     }
@@ -103,20 +101,7 @@ class FamilySystem {
         for(const m of this.world.romance.marriages) if(m.ids.some(id=>ids.has(id))) m.ids.forEach(id=>ids.add(id));
         return this.actors().filter(c=>ids.has(c.id));
     }
-    view() {
-        const known=this.knownFamily(), knownIds=new Set(known.map(c=>c.id)), candidates=new Set(this.candidates().map(c=>c.id));
-        return { generation:this.world.player.actual.lineage.generation, canSucceed:this.canSucceed(),
-            spouse:this.world.romance.spouse(this.world.player) ? this.name(this.world.romance.spouse(this.world.player)) : 'None',
-            birthReason:this.birthEligibility(), members:known.map(c=>({id:c.id,name:this.name(c),age:Math.floor(c.actual.life.ageYears),sex:c.actual.identity.sex,
-                form:c.body.visibleType,alive:c.actual.life.alive,generation:c.actual.lineage.generation,current:c.isPlayer,eligible:candidates.has(c.id),
-                parents:[c.actual.lineage.motherId,c.actual.lineage.fatherId].filter(id=>knownIds.has(id)).map(id=>this.name(this.character(id))),
-                children:c.actual.lineage.childrenIds.filter(id=>knownIds.has(id)).map(id=>this.name(this.character(id))),
-                siblings:known.filter(other=>other.id!==c.id && c.actual.lineage.motherId && other.actual.lineage.motherId===c.actual.lineage.motherId && other.actual.lineage.fatherId===c.actual.lineage.fatherId).map(other=>this.name(other)),
-                traits:this.births.some(b=>b.childIds.includes(c.id)) ? `Observed in family life: ${c.body.radius>20?'large':'medium'} outline, ${c.actual.genome.mobility>1.03?'brisk':c.actual.genome.mobility<.97?'measured':'steady'} pace, ${c.actual.genome.metabolism>1.03?'hearty':c.actual.genome.metabolism<.97?'light':'moderate'} appetite. ${c.body.form==='line'?'Latent geometry remains undiscovered.':'Visible geometry: '+c.body.visibleType+'.'}` : 'Private hereditary ancestry remains undiscovered.',
-                death:c.actual.life.alive ? '' : `${c.actual.life.deathCause || 'death'} · family year ${Math.floor((c.actual.life.deathAt||0)/C.DAY)}` })),
-            marriages:this.world.romance.marriages.filter(m=>m.ids.every(id=>knownIds.has(id))).map(m=>({names:m.ids.map(id=>this.name(this.character(id))),at:Math.floor(m.at/C.DAY),end:m.endedAt===null?'ongoing':`${m.reason} in year ${Math.floor(m.endedAt/C.DAY)}`})),
-            events:this.history.filter(e=>e.ids.every(id=>knownIds.has(id))).map(e=>({kind:e.kind,names:e.ids.map(id=>this.name(this.character(id))),year:Math.floor(e.at/C.DAY)})) };
-    }
+    view() { return familyView(this); }
     exportState() { return copyJSON({rngState:this.rng.state,nextId:this.nextId,births:this.births,history:this.history,playableIds:this.playableIds,notebooks:this.notebooks}); }
     importState(data) {
         insist(plain(data) && integerIn(data.rngState,0,4294967295) && integerIn(data.nextId,1,100000) && Array.isArray(data.births) && data.births.length<=256 && Array.isArray(data.history) && data.history.length<=2000 && Array.isArray(data.playableIds) && data.playableIds.length<=256 && data.playableIds.length>0 && new Set(data.playableIds).size===data.playableIds.length && data.playableIds.every(id=>this.character(id)) && data.playableIds.at(-1)===this.world.player.id && plain(data.notebooks), 'Invalid dynasty state.');
@@ -125,14 +110,7 @@ class FamilySystem {
             insist(plain(b) && shortText(b.id,100) && !birthIds.has(b.id) && numberIn(b.at,0,this.world.elapsed+.001) && this.character(b.motherId)?.actual.identity.sex==='female' && this.character(b.fatherId)?.actual.identity.sex==='male' && Array.isArray(b.childIds) && b.childIds.length>=2 && b.childIds.length<=4, 'Invalid birth event.'); birthIds.add(b.id);
             for(const id of b.childIds) { const c=this.character(id); insist(c && !childIds.has(id) && c.actual.lineage.motherId===b.motherId && c.actual.lineage.fatherId===b.fatherId, 'Birth does not match genealogy.'); childIds.add(id); }
         }
-        for(const c of this.actors()) {
-            const l=c.actual.lineage, g=c.actual.genome;
-            insist(plain(l) && integerIn(l.generation,1,1000) && Array.isArray(l.childrenIds) && l.childrenIds.length<=256 && new Set(l.childrenIds).size===l.childrenIds.length && l.motherId===g.motherId && l.fatherId===g.fatherId && l.generation===g.generation, 'Invalid genealogy.');
-            const parents=[l.motherId,l.fatherId].filter(Boolean); insist(parents.length===0 || parents.length===2,'Incomplete biological parentage.');
-            for(const id of parents) { const p=this.character(id); insist(p && p.actual.lineage.generation<l.generation && p.actual.lineage.childrenIds.includes(c.id), 'Broken parent link.'); }
-            if(parents.length) insist(childIds.has(c.id) && l.generation===Math.max(...parents.map(id=>this.character(id).actual.lineage.generation))+1,'Missing birth or wrong generation.');
-            for(const id of l.childrenIds) { const child=this.character(id); insist(child && [child.actual.lineage.motherId,child.actual.lineage.fatherId].includes(c.id),'Broken child link.'); }
-        }
+        validateGenerationDAG(this.world.registry,childIds);
         insist(data.playableIds[0]==='founder-000', 'Dynasty founder is invalid.');
         for(let i=1;i<data.playableIds.length;i++) insist(this.descendants(this.character(data.playableIds[i-1])).some(c=>c.id===data.playableIds[i]), 'Playable succession does not follow biological descendants.');
         insist(data.history.every(e=>plain(e) && ['birth','death','retirement','succession'].includes(e.kind) && Array.isArray(e.ids) && e.ids.length>0 && e.ids.every(id=>this.character(id)) && numberIn(e.at,0,this.world.elapsed+.001)), 'Invalid family history.');

@@ -93,12 +93,12 @@ class RomanceSystem {
             if (m.endedAt === null) c.actual.bonds.partnerIds.push(m.ids.find(other => other !== id));
         }
     }
-    household(c) { return this.spouse(c)?.actual.life.alive ? .88 : 1; }
+    household(c) { return householdSupport(this.world,c).metabolism; }
     view(c) { const p = this.pair(this.world.player, c); return { affection: p.affection, status: p.status,
         preferences: p.knownBy.includes(this.world.player.id) ? this.preferenceText(c) : 'Undiscovered · discuss partnership preferences',
         spouse: this.spouse(this.world.player)?.playerKnowledge.discoveredFacts.name?.value || (this.spouse(this.world.player) ? 'Your spouse' : 'None') }; }
     exportState() { return copyJSON({ pairs: this.pairs, marriages: this.marriages }); }
-    importState(data) {
+    importState(data, validateBonds = false) {
         insist(plain(data) && plain(data.pairs) && Array.isArray(data.marriages) && data.marriages.length <= 1000, 'Invalid romance state.');
         const validIds = ids => Array.isArray(ids) && ids.length === 2 && ids[0] !== ids[1] && ids.every(id => this.character(id));
         for (const [key, p] of Object.entries(data.pairs)) {
@@ -113,6 +113,7 @@ class RomanceSystem {
             if (m.endedAt === null) { insist(pair.status === 'married' && m.ids.every(id => !married.has(id) && this.character(id).actual.life.alive && this.character(id).actual.life.ageYears>=18) && !this.isCloseKin(this.character(m.ids[0]),this.character(m.ids[1])), 'Conflicting marriage.'); m.ids.forEach(id => married.add(id)); }
         }
         for (const p of Object.values(data.pairs)) if (p.status === 'married') insist(data.marriages.some(m => m.endedAt === null && [...m.ids].sort().join('|') === [...p.ids].sort().join('|')), 'Missing active marriage.');
+        if(validateBonds) validateSpouseBonds(this.world.registry,data.marriages);
         this.pairs = copyJSON(data.pairs); this.marriages = copyJSON(data.marriages); this.syncBonds();
     }
 }

@@ -25,7 +25,7 @@ function migrateSaveSystems(w, s, version) {
         case 3:
             w.social.importState(s.social,3); w.romance.importState(s.romance); break;
         case 4:
-            w.social.importState(s.social,4); w.romance.importState(s.romance); w.family.importState(s.family); break;
+            w.social.importState(s.social,4); w.family.importState(s.family); w.romance.importState(s.romance,true); break;
         default: throw new Error('No system migration for save version.');
     }
 }

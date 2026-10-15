@@ -1,5 +1,20 @@
 # Phase 2B + 3 implementation checkpoints
 
+## Phase 3.5 family boundaries and integrity checkpoint
+
+Family commands remain in `FamilySystem`; pure genetics, observer notebooks,
+household support and the family presentation DTO now have separate boundaries.
+Succession archives personal discoveries without sharing them with a new observer.
+Explicit genealogy validation enforces reciprocal parent/child links and strictly
+increasing generations, ruling out ancestry cycles. V4 imports now reject stored
+spouse/history bonds that disagree with reciprocal marriage records; legacy
+marriage imports still acquire bonds through their schema migration.
+
+All 59 deterministic cases and all four Chromium suites pass. New corruption
+cases cover invented, duplicated and one-sided spouse bonds, missing marriage
+history and ancestry cycles. Observer-isolation and the frozen v4 payload pass.
+Household rates, inheritance, courtship and population rules are unchanged.
+
 ## Phase 3.5 save-boundary checkpoint
 
 `SaveCodec` parses and validates candidates without a DOM, browser storage or an
