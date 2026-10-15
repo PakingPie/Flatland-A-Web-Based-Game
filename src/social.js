@@ -10,6 +10,7 @@ const SOCIAL = Object.freeze({ reach: 108, cooldown: 3, dailyLimit: 6, historyLi
 function apparentStanding(c) {
     const form = c.body.visibleType;
     if (c.body.form === 'line') return { tier: 0, label: 'Restricted civic status · line-form woman' };
+    if (form.startsWith('Irregular ')) return { tier: 0, label: 'Outcast' };
     return ({ 'Irregular triangle': { tier: 0, label: 'Outcast' }, 'Isosceles triangle': { tier: 1, label: 'Soldier / laboring class' },
         'Equilateral triangle': { tier: 2, label: 'Respectable working class' }, Square: { tier: 3, label: 'Gentleman class' },
         Pentagon: { tier: 4, label: 'Professional class' }, Hexagon: { tier: 5, label: 'Prestigious citizen' },

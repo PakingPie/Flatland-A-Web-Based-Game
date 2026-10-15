@@ -75,3 +75,29 @@ QA hooks controlled proximity, clock and needs, and located consenting partners;
 relationship gains, births and succession used game rules and UI buttons.
 Desktop 1440×900 and phone-width 390×844 family screenshots were inspected locally.
 No page exceptions were observed. Artifacts remain in ignored local output.
+
+## Checkpoint E — final build, migrations and regression hardening
+
+Version 0.3.0 is assembled from source with schema v4 and unchanged generator/slot
+keys. Portable native JSON export/import validates transactionally and preserves
+browser slots until saving. Genuine v2 and v3 fixtures are committed, plus a clearly
+identified synthetic v1 migration test. Hidden female carrier defaults use an
+independent identity stream without perturbing terrain or survival RNG.
+
+Final deterministic result: 44 passed, zero failed. Three real Chromium scripts
+pass: native smoke, eight generation/storage/death check groups, and nine survival,
+touch and migration check groups. The latter includes twelve viewport/corner
+clearance cases. Full current characters, including retired NPC appearances, round
+trip after succession. Refusing an outing cannot corrupt an existing marriage.
+Death with pending heir selection is restorable after a full browser shutdown.
+
+README, roadmap, current/historical QA, balance rules and Phase 3.5 handoff are
+updated. The recovered manual read-only workflow now also runs documentation and
+deterministic rules checks. The untouched Phase 1 baseline has no diff. Local
+generated evidence and browser profiles remain ignored.
+
+Known limitations: finite aging founding population (no autonomous reproduction or
+immigration), abstract immediate births, compact register, 256-individual/2 MB
+budgets, and no Firefox/Safari/physical-phone or long unassisted human session
+validation. These limits do not affect the verified Generation 2 control and
+Generation 3 births. See [current QA](QA_REPORT.md) and [handoff](PHASE35_HANDOFF.md).

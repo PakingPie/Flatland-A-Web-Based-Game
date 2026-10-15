@@ -32,6 +32,13 @@ class Game {
         bind('continueBtn', () => this.requestLoad('latest'));
         bind('saveBtn', () => this.saves.save('manual'));
         bind('loadBtn', () => this.requestLoad('manual'));
+        bind('exportSaveBtn', () => this.saves.download());
+        for(const id of ['importSaveBtn','startImportBtn']) bind(id, () => $('saveFileInput').click());
+        $('saveFileInput').addEventListener('change', async e => {
+            const file=e.target.files[0]; e.target.value=''; if(!file) return;
+            if(file.size>SaveFormat.maxBytes) { this.saves.report('Import rejected: save file is too large.',true); return; }
+            try { this.saves.importRaw(await file.text()); } catch(error) { this.saves.report(`Import failed: ${error.message}`,true); }
+        });
         bind('newSeedBtn', () => { this.setScreen('menu'); this.saves.refreshMenu(); });
         bind('pauseBtn', () => this.pause());
         bind('helpBtn', () => this.showHelp());

@@ -90,6 +90,8 @@ class SocialUI {
         const romance = this.game.world.romance.view(citizen);
         $('romanceStatus').textContent = `${romance.status} · Affection ${Math.round(romance.affection)}/100 · Your spouse: ${romance.spouse}`;
         $('romancePreferences').textContent = romance.preferences;
+        $('birthBtn').disabled = this.game.world.romance.spouse(this.game.world.player)?.id !== citizen.id || !!this.game.world.family.birthEligibility();
+        $('birthBtn').title = this.game.world.family.birthEligibility() || 'A consensual, abstract household birth event.';
         for (const b of $('romanceOptions').querySelectorAll('button')) b.disabled = !v.inRange || v.cooldown > .01 || v.remaining <= 0;
         for (const b of $('conversationOptions').querySelectorAll('button')) {
             b.disabled = !v.inRange || v.cooldown > .01 || v.remaining <= 0 || (b.dataset.topic === 'introduce' && v.introduced);

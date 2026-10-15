@@ -207,7 +207,7 @@ class World {
     }
     updateNPC(c, dt) {
         if (!c.actual.life.alive) return;
-        const ai = c.ai, v = c.vitals, m = c.actual.genome.metabolism;
+        const ai = c.ai, v = c.vitals, m = c.actual.genome.metabolism * this.romance.household(c);
         c.runtime.moving = false;
         // Needs still drive NPC navigation. FamilySystem handles aging and mortality.
         v.hunger = clamp(v.hunger - .15 * m * dt, 0, 100);

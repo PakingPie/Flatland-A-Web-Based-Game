@@ -97,7 +97,7 @@ class SaveStore {
     capture() {
         const g = this.game, w = g.world;
         insist(w, 'No expedition to save.');
-        return { runId: g.runId, seed: w.seed, elapsed: w.elapsed, rngState: w.rng.state,
+        return { runId: g.runId, seed: w.seed, elapsed: w.elapsed, rngState: w.rng.state, currentPlayerId: w.player.id,
             ended: !w.player.actual.life.alive, characters: [w.player, ...w.npcs].map(captureCharacter),
             resources: w.resources.map(r => ({ id: r.id, quantity: r.quantity, respawn: r.respawn })),
             pack: copyJSON(g.pack), progress: { gathered: g.progress.gathered, visited: [...g.progress.visited], complete: g.progress.complete },
@@ -129,7 +129,7 @@ class SaveStore {
         insist(numberIn(s.elapsed, 0, 1e10) && integerIn(s.rngState, 0, 4294967295) && typeof s.ended === 'boolean', 'Invalid simulation time or random state.');
         const w = new World(s.seed); // Candidate only. Failed validation never touches the live world.
         w.elapsed = s.elapsed;
-        if (envelope.version >= 4) restoreFamilyPopulation(w, s.characters);
+        if (envelope.version >= 4) restoreFamilyPopulation(w, s.characters, s.currentPlayerId ?? s.family?.playableIds?.at(-1));
         else {
             insist(Array.isArray(s.characters) && s.characters.length === w.npcs.length + 1, 'Saved population does not match.');
             const chars = [w.player, ...w.npcs];
@@ -229,6 +229,24 @@ class SaveStore {
             this.lastAuto = this.game.world.elapsed; // Rate-limit retries when storage is unavailable.
             this.save('auto', true);
         }
+    }
+    download() {
+        try {
+            const raw=this.encode(); insist(raw.length<=SaveFormat.maxBytes,'Save exceeds the export budget.');
+            const url=URL.createObjectURL(new Blob([raw],{type:'application/json'})), link=document.createElement('a');
+            link.href=url; link.download=`flatland-${this.game.world.seed.replace(/[^a-z0-9_-]/gi,'-')}-generation-${this.game.world.player.actual.lineage.generation}.json`;
+            link.click(); setTimeout(()=>URL.revokeObjectURL(url),5000);
+            this.report('Exported a portable save file. Keep it somewhere safe.'); return true;
+        } catch(error) { this.report(`Export failed: ${error.message}`,true); return false; }
+    }
+    importRaw(raw, ask=true) {
+        try {
+            const restored=this.decode(raw); // Validate everything before touching active progress or storage.
+            if(ask && this.game.world && !confirm('Import this validated expedition? Unsaved active progress will be replaced. Your browser save slots are kept until you explicitly save.')) return false;
+            const expected={}; for(const slot of ['manual','auto']) expected[slot]=localStorage.getItem(SaveFormat.keys[slot]);
+            this.game.installSave(restored); this.expected=expected; this.revision=restored.envelope.revision; this.lastAuto=restored.world.elapsed; this.blocked=false;
+            this.report('Imported and paused. Existing browser slots are unchanged; save when you are ready.'); return true;
+        } catch(error) { this.report(`Import failed. Active progress and saved slots are unchanged. ${error.message}`,true); return false; }
     }
     newRun() {
         this.blocked = false; this.lastAuto = 0; this.revision = 0;

@@ -67,7 +67,7 @@ class RomanceSystem {
         if (this.spouse(a)?.id !== b.id && (this.spouse(a) || this.spouse(b))) return finish('An existing marriage must be resolved first.');
         if (r.trust < 7) return finish('I would like to know you better before courtship.');
         const compatible = this.compatibility(a, b);
-        if (!compatible.ok) { pair.status = 'declined'; return finish(compatible.reason); }
+        if (!compatible.ok) { if (pair.status !== 'married') pair.status = 'declined'; return finish(compatible.reason); }
         if (topic === 'propose') {
             if (this.spouse(a)?.id === b.id) return finish('We are already married.');
             if (pair.affection < ROMANCE.affectionToMarry || r.trust < ROMANCE.trustToMarry || pair.status !== 'courting')
@@ -108,9 +108,9 @@ class RomanceSystem {
         }
         const married = new Set(), ids = new Set();
         for (const m of data.marriages) {
-            insist(plain(m) && shortText(m.id, 100) && !ids.has(m.id) && validIds(m.ids) && numberIn(m.at, 0, this.world.elapsed + .001) && (m.endedAt === null || numberIn(m.endedAt, m.at, this.world.elapsed + .001)) && [null,'death','separation'].includes(m.reason), 'Invalid marriage record.'); ids.add(m.id);
+            insist(plain(m) && shortText(m.id, 100) && !ids.has(m.id) && validIds(m.ids) && numberIn(m.at, 0, this.world.elapsed + .001) && (m.endedAt === null || numberIn(m.endedAt, m.at, this.world.elapsed + .001)) && [null,'death','separation'].includes(m.reason) && (m.endedAt===null)===(m.reason===null), 'Invalid marriage record.'); ids.add(m.id);
             const pair = data.pairs[[...m.ids].sort().join('|')]; insist(pair, 'Marriage has no relationship.');
-            if (m.endedAt === null) { insist(pair.status === 'married' && m.ids.every(id => !married.has(id) && this.character(id).actual.life.alive), 'Conflicting marriage.'); m.ids.forEach(id => married.add(id)); }
+            if (m.endedAt === null) { insist(pair.status === 'married' && m.ids.every(id => !married.has(id) && this.character(id).actual.life.alive && this.character(id).actual.life.ageYears>=18) && !this.isCloseKin(this.character(m.ids[0]),this.character(m.ids[1])), 'Conflicting marriage.'); m.ids.forEach(id => married.add(id)); }
         }
         for (const p of Object.values(data.pairs)) if (p.status === 'married') insist(data.marriages.some(m => m.endedAt === null && [...m.ids].sort().join('|') === [...p.ids].sort().join('|')), 'Missing active marriage.');
         this.pairs = copyJSON(data.pairs); this.marriages = copyJSON(data.marriages); this.syncBonds();

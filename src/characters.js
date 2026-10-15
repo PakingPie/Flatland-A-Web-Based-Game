@@ -1,6 +1,8 @@
 function createCharacter(id, genome, form, x, y, rng, isPlayer = false) {
     const legacyGenome = { sideCount: 3, regularity: .5, sharpness: .6, size: 1, mobility: 1, metabolism: 1, mutationTendency: .035, ...genome };
     const g = normalizeGenome(legacyGenome);
+    if (form === 'line' && genome.latentIrregularAncestry === undefined)
+        g.latentIrregularAncestry ||= new RNG(`latent-ancestry:${id}`).next() < .3;
     const bodyRadius = form === 'line' ? 17 : 17 * g.size;
     const actual = { identity: { id, sex: form === 'line' ? 'female' : 'male', bodyForm: form }, genome: g,
         life: { ageYears: isPlayer ? 19 : rng.int(18, 65), alive: true },

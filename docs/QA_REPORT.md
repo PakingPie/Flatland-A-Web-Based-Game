@@ -1,65 +1,132 @@
-# QA report — Phase 1.1 + Phase 2A
+# QA report — Phase 2B + Phase 3 (v0.3.0)
 
-Date: 2026-10-15. Current-build testing used Chromium 144.0.7559.96 on Linux, Playwright 1.57.0 and Python 3.13.5. This is a report of executed checks, not a promise of universal browser compatibility.
+Executed 2026-10-15 on Windows with Node 24.12.0, Python 3.14.2 and real Chromium
+149.0.7827.55 using the bundled Playwright runtime. The
+[historical Phase 1.1/2A report](QA_PHASE2A_HISTORICAL.md) remains separately
+preserved; its old counts are **not** added to current results.
 
-## Final automated outcomes
+## Current executed results
 
-| Suite | Passed | Failed | Blocked / unverified |
-|---|---:|---:|---:|
-| Current Phase 1 regression | 27 | 0 | 0 |
-| Persistence and camera/rest acceptance | 15 | 0 | 0 |
-| Phase 2A social and responsive UI | 17 | 0 | 0 |
-| Recovery/input edge cases | 7 | 0 | 0 |
-| Native localStorage browser-close/reopen | 0 | 0 | 1 |
-| **Total** | **66** | **0** | **1** |
+| Suite | Result | Scope |
+|---|---|---|
+| Dependency-free deterministic suite | 44 passed, 0 failed | Rules, family integration, migration, malformed-save rejection |
+| Native browser smoke | Passed | Manual save, full Chromium shutdown, reopen, Continue, identical payload |
+| Browser generation scenario | 8 check groups passed | UI courtship through daughters, further births, storage and death cases |
+| Browser preservation regressions | 9 check groups passed | Survival, native v2 migration, touch, Canvas and standalone opening |
+| Build agreement / documentation links | Passed | Generated HTML matches source; local document references resolve |
 
-The original machine-readable results, earlier Phase 1.1 checkpoint artifacts, and historical Phase 1 report are absent from this repository and were unavailable for this cleanup. The table preserves the existing recorded results; those checks were not rerun during the cleanup. Earlier Phase 1.1 checkpoint results are **not counted again**. See [Known gaps](../README.md#known-gaps).
+Browser check groups contain multiple assertions; they are not represented as an
+inflated count of individual gameplay cases. The twelve world-corner checks are
+included within the preservation suite. Test scripts and fixtures are committed;
+raw test JSON, screenshots, exported test saves and isolated profiles remain local
+in the ignored output directory.
 
-**Native-persistence note:** The native localStorage row above retains its original blocked result. See [Independent playtest (2026-10-15)](#independent-playtest-2026-10-15) for a separate, limited close/reopen observation; it does not mark the original acceptance test as fully passed.
+## Reproduction
 
-## Critical environment limitation
+Run the commands in the [README validation section](../README.md#source-and-validation)
+from the repository root. The committed scripts are [rules](../tools/test.cjs),
+[browser smoke](../tools/browser-smoke.cjs), [generations](../tools/browser-generations.cjs)
+and [survival/touch regressions](../tools/browser-regressions.cjs).
 
-The environment denied file and localhost browser navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`. The game was therefore loaded as the exact built HTML with Playwright set_content on `about:blank?debug=1`. This is real Chromium executing real Canvas, DOM, mouse/keyboard and emulated touch, not a mocked rendering engine.
+The browser scripts require Playwright and an installed Chromium. Set
+`FLATLAND_NODE_MODULES` and/or `FLATLAND_CHROMIUM` when using a bundled package
+directory or explicit browser executable. The scripts start ephemeral local static
+servers and isolated browser contexts/profiles; no normal player saves are loaded.
+Initial sandbox launch/socket restrictions were resolved by running the isolated
+browser checks outside the sandbox with authorization. No storage adapter was used
+for browser persistence. The pure rule suite uses an explicit in-memory storage
+stub only for slot fallback and transactional-error tests.
 
-On that opaque origin, native localStorage access is denied. Persistence/social tests **explicitly install a memory-backed localStorage adapter**. They exercise the actual game's save capture, validation, restore, migration, error handling and slot-selection logic, but **do not prove native on-disk persistence**. The fresh-document test restores an adapter fixture, not data read from a reopened physical browser profile. The unmodified unavailable-storage case was tested separately and remained playable.
+## Rule and integration coverage
 
-The original native-storage test attempted a genuine localhost, native localStorage, persistent browser-profile close/reopen sequence without a storage adapter. It was run in the original environment and blocked at navigation; the existing report records `nativePersistenceVerified: false`. No policy bypass was attempted. That test script, runner, and raw report are absent from this repository, so there is no included command to rerun that acceptance test. Native disk durability remains an acceptance check for the target environment, subject to the separate limited observation below.
+- Seed reproducibility, actor/geometry validity across twelve seeds and complete
+  current snapshots; deterministic inheritance without a renderer.
+- Attraction independent of excellent trust; rejected courtship/proposals;
+  acceptance after varied courtship; shared social cooldown, repetition penalties,
+  diminished gains and daily limits.
+- Same-sex marriage, equal household support, marriage history, separation,
+  widowhood, retained children after remarriage, and no joint same-sex births.
+- Multiple individually persistent children with distinct genomes and stable
+  biological parents; female latent genomes and privacy-safe DTOs.
+- Irregular → isosceles → equilateral staging without skipped stages or premature
+  side increases; unchanged offspring; regular progression by at most one side;
+  maternal carrier expression and side-locked irregular polygon repair.
+- Refuge years, adulthood, old-age death, retirement gates, male/female heirs,
+  independent siblings, archived observers, later-generation parentage, and the
+  explicit death-with-minors extinction policy.
+- RNG continuation, current family round trips, malformed age/identity/genome,
+  ancestry/child reciprocity, generation, birth, AI, inventory and knowledge records;
+  checksum/version/JSON failures and fallback to an older valid slot.
 
-### Independent playtest (2026-10-15)
+## Migration evidence
 
-- **Tester:** Claude, using headless Chromium (puppeteer chrome-headless-shell 131) on Linux, served from http://127.0.0.1 with a persistent browser profile.
-- **Verified:** one manual save from the Pause menu, full browser close, reopen of the same profile, Continue. Time, position, vitals, pack, gather count, refuge progress and social state matched exactly.
-- **Also observed:** conversations and trust gating, the 50x same-topic spam produced no gains, camera/player clearance at all world edges, and field vs refuge rest messages.
-- **Not verified:** Firefox, Safari, file:// origin, mobile devices, multiple saves or reopen cycles, and long real-time sessions.
+The v2 fixture was generated by executing stable `6e565b7` source, with controlled
+inventory, depleted resource, trust, knowledge and reputation state. The v3 fixture
+was generated by executing marriage checkpoint `0d34434` source with a same-sex
+marriage. Both migrate using the legacy generator signature; marriage and social
+state survive. The v1 test is explicitly a **synthetic legacy-schema fixture**,
+because no original v1 save was recoverable.
 
-## Executed coverage
+The browser preservation suite additionally installs the original v2 fixture in
+**native localStorage**, reopens the page and uses Continue. Inventory, resources
+and trust match. The original slot remains v2 until explicit Save, which writes v4.
+Failed loads/imports are validated against a separate candidate and preserve active
+progress and browser slots. The generated HTML and source remain deterministic.
 
-**Survival regression:** reproducible complete snapshots after 5,400 fixed simulation steps; 24 seeds with valid actors/resources and connected refuges; normalized movement, sprint/stamina and collisions; gathering, inventory caps, eating/drinking and resource renewal; field and refuge resting/healing; pause/resume, blur/input clearing, death/restart; objective completion and continuing sandbox; hover privacy, seed input and literal-safe text; resizing, production debug exclusion, emulated joystick; no observed JavaScript exceptions or game network requests.
+## Real browser gameplay evidence
 
-The six-minute simulated NPC soak observed 63 citizens moving over 100 units, 62 replenishing needs, and all expected seeking/walking/gathering/resting activity categories. Controlled player needs kept the run alive. It was an accelerated simulation test, not a six-minute real-time human playthrough. Objective completion also used controlled positioning/resources/needs rather than claiming natural difficulty was fully balanced.
+The generation script uses actual UI buttons for introduction, conversation,
+courtship, proposal, birth, family years and heir selection:
 
-**Persistence:** full mutable-state round trips and identical continuation including active AI paths/timers and RNG; independent manual/auto slots; 30-second autosave and pause save; fresh-document adapter restoration; malformed JSON, incompatible versions, wrong checksums, invalid IDs/counts/positions/vitals/paths/inventory/resources and unsafe properties; unchanged active progress on failed loads; full/denied storage; death and explicit recovery from the separate manual slot; latest-invalid fallback; a late storage-read failure before installation; synthetic cross-tab change notification and pre-write conflict detection.
+1. Start as an irregular founder, meet a compatible female citizen, grow trust and
+   affection, marry and produce at least two distinct children.
+2. Open the family register, inspect observations and privacy, advance twenty family
+   years and select an adult daughter after retirement opens.
+3. Continue as Generation 2 in the existing seed/world with independent siblings
+   and the retired founder. Save, fully close Chromium, reopen the same isolated
+   profile and Continue with an identical saved payload.
+4. Move and survive as the daughter; court a male, marry and bear Generation 3
+   children with correct biological links. Save, close/reopen and compare again.
+5. Export a native JSON download, reject malformed input transactionally, and import
+   the valid file while verifying browser slots remain untouched.
+6. Form a same-sex marriage through UI, verify its household and biological rules,
+   die without descendants and inspect the final dynasty summary.
+7. Restore the pre-retirement family scenario, die with adult heirs, save while
+   selection is pending, fully close/reopen, restore that choice and select an heir.
 
-Save-cost sampling over 20 Phase 2A saves measured approximately **0.85 ms mean / 1.2 ms maximum**, with a **52,583-character** representative save. These are serialization plus adapter-write measurements on this runner, not native storage latency, low-end phone performance or a maximum-save-size guarantee.
+**Controls used:** opt-in QA hooks locate a willing unrelated candidate, teleport
+to safe speaking/refuge positions, maintain needs and control the fixed clock.
+All relationship gains, refusals, birth/genetic logic and control transfer run
+through the real implementation. These are controlled integration scenarios,
+not a claim that an unassisted human travel/courtship playthrough was completed.
 
-**Camera/rest:** all four boundaries at 1440×900, 1280×720, 390×844, 844×390 and 4000×2600, checking the player's padding against measured major HUD bounds (20 cases). Eight additional boundary checks use touch-enabled portrait/landscape contexts at DPR 2 and confirm reversible world/screen transforms. Field/refuge text explicitly states stamina/metabolic benefits and the healing gate.
+The preservation script exercises native keyboard movement/sprint, collision,
+resource gathering, eating/drinking, field versus refuge rest, NPC movement,
+pause/resume and actor validity. It checks HUD clearance at all four world corners
+at 1440×900, 390×844 and 844×390. A touch-enabled DPR-2 context uses actual emulated
+touch events for the joystick and taps Pause → Family in portrait and landscape.
+Production debug exclusion and opening the standalone HTML as a local file pass.
 
-**Social:** 64 unique reproducible names/IDs; stranger-safe views with no authoritative private fields; line-form geometry independent of latent side count; native hover/click, accepted introductions, keyboard topics and claimed work; intrusive-family penalties; 50 immediate clicks with no cooldown gains; daily caps and repeated-topic penalties; trust development over days with explicit family disclosure; max-trust reserved citizen still refusing; deceptive occupation remaining a claim; generated inaccurate rumors remaining unverified; controlled reputation comparison; persisted discoveries/relationship/social RNG; genuine version-1 save migration; distant inspection cannot perform remote social actions; normal AI/survival continue while a speaker is selected; native restart-confirmation cancellation.
+Desktop and phone family screenshots were visually inspected. The narrower touch
+HUD intentionally hides the detailed identity block; Family remains accessible
+through Pause. No page exceptions remained in executed browser scenarios.
 
-**Responsive interaction:** conversation/notes at 1440×900, 1280×720, 390×844 and 844×390. Emulated touch opened Talk, introduced a citizen, scrolled to the personal-family option, changed to discovered notes and closed the panel. Key screenshots were reported as visually inspected in the original results; those screenshots are absent from this repository and were unavailable for this cleanup.
+## Limits and remaining work
 
-## Review and hardening
+- No physical-phone, Firefox, Safari, assistive technology or long unassisted human
+  session testing. Native durability was observed in Chromium under normal close;
+  abrupt process-kill, power-loss and simultaneous-tab atomicity are unverified.
+- File-origin opening passed, but file-origin save shutdown/reopen was not tested.
+  Use a stable served origin and exported files for important progress.
+- No autonomous NPC families, immigration or adoption. Unrelated fertile founding
+  citizens eventually age out; indefinite population renewal is not implemented.
+- Immediate abstract births have no scheduled pregnancy events. No hidden-genome
+  investigation system is added; marriage cannot reveal carrier status.
+- The compact family register is functional but has no graphical layout. Current
+  budgets are 256 total individuals and a 2 MB envelope, with visible refusal at
+  limits. Large/very long dynasties have not been performance tested.
+- Browser quota/denial and multi-tab handling retain the existing error paths;
+  current browser suites do not simulate every original historical failure mode.
 
-Reviewed coordinate transforms, world-edge clamping, HUD occlusion, minimap overhang, input held across modals, keyboard focus, conversation distance, held speaker needs, knowledge provenance, claim/rumor handling, seed/RNG separation and save installation order. Changes include cached HUD-safe camera anchoring, clipped minimap viewport, inert underlying HUD under pause modals, touch landscape joystick adjustment, scroll hints, independent save slots, bounded candidate validation and acquiring storage state before installing a load. Required build fragments are no longer silently optional.
-
-Intermediate harness errors were corrected and affected suites rerun before archiving passing results. Some isolated cases deliberately modify valid save fixtures or use debug teleport/vital hooks. Those controls are disclosed rather than represented as ordinary player behavior.
-
-## Remaining limitations and untested areas
-
-Native persistence after actual browser shutdown is blocked here, as explained above. Firefox, Safari, physical mobile devices, gamepad/accessibility assistive-technology testing, long real-time sessions, low-memory devices, process-kill durability and truly simultaneous multi-tab writes are unverified. Multi-tab safeguards are best-effort, not atomic locking. Only completed saves can survive an abrupt termination.
-
-There is one manual slot and one automatic slot per browser origin; no cloud sync, save-management UI or save-file export/import. Social templates and balance are intentionally small; there is no global contact-search journal, independent rumor verification, simulated family tree, NPC-to-NPC social network, or operative later-phase family/evolution mechanic. No runtime exception remained in the executed scenarios, but this report does not claim an absence of all possible bugs.
-
-## Local acceptance before the next milestone
-
-Run the native persistence test in the intended browser environment, then manually play with the same hostname/port/profile: introduce a citizen, gather resources, save, close the browser, reopen and Continue. Confirm needs, location, named citizen notes and depleted resources; inspect all boundaries and rotate a physical mobile device. Keep native durability as a required gate before adding family state in Phase 2B.
+See [Phase 3.5 recommendations](PHASE35_HANDOFF.md) and
+[implemented balance rules](FAMILY_RULES.md).

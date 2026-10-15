@@ -5,7 +5,9 @@ const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const files = ['core','genetics','characters','navigation','world','social','romance','family','persistence'];
-const context = vm.createContext({ console, document: { getElementById: () => ({textContent:'', hidden:true}) }, performance, structuredClone });
+const storage=new Map();
+const context = vm.createContext({ console, document: { getElementById: () => ({textContent:'', hidden:true}), querySelectorAll:()=>[] }, performance, structuredClone,
+    localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}, confirm:()=>true });
 vm.runInContext(files.map(f => fs.readFileSync(`src/${f}.js`, 'utf8')).join('\n') + '\nglobalThis.rules = {World,RNG,SaveStore,hash,ROMANCE,emptyRelationship,inheritGenome,normalizeGenome,validateGenome,GENETICS,FAMILY};', context);
 const { World, RNG, SaveStore, hash, emptyRelationship } = context.rules;
 const { inheritGenome, normalizeGenome, validateGenome } = context.rules;
@@ -64,10 +66,10 @@ test('same-sex households do not create joint biological children; children surv
 });
 test('triangle stages never skip, improve by reshaping before sides and can remain unchanged', () => {
     const regular=normalizeGenome({regularity:1,sharpness:.5,latentIrregularAncestry:false});
-    for(const [stage,reg,sharp] of [['irregular',.68,.7],['isosceles',.85,.94]]) {
+    for(const [stage,reg,sharp] of [['irregular',.68,.7],['isosceles',.85,.8]]) {
         const base=normalizeGenome({geometryStage:stage,regularity:reg,sharpness:sharp,latentIrregularAncestry:false}), stages=new Set();
         for(let i=0;i<600;i++) { const g=inheritGenome(base,base,regular,new RNG(i),{motherId:'m',fatherId:'f'},2); validateGenome(g); assert.equal(g.sideCount,3); stages.add(g.geometryStage); if(stage==='irregular') assert.notEqual(g.geometryStage,'regular'); }
-        assert.ok(stages.has(stage)); assert.ok(stages.has(stage==='irregular'?'isosceles':'regular') || stage==='isosceles');
+        assert.ok(stages.has(stage)); assert.ok(stages.has(stage==='irregular'?'isosceles':'regular'));
     }
 });
 test('regular progression is probabilistic, regular and at most one side; physical traits vary independently', () => {
@@ -107,6 +109,7 @@ for(const sex of ['female','male']) test(`Generation 2 ${sex} successor continue
     assert.equal(w.player.actual.lineage.generation,2); assert.equal(old.isPlayer,false); assert.ok(old.ai);
     assert.ok(w.npcs.find(c=>c.id===sibling)?.ai); assert.ok(w.family.notebooks[old.id]);
     const restored=saveFor(w).decode(saveFor(w).encode()).world; assert.equal(restored.player.id,selected.id); assert.deepEqual(json(restored.family.exportState()),json(w.family.exportState()));
+    assert.deepEqual(json(restored.player),json(w.player));assert.deepEqual(json(restored.npcs),json(w.npcs));
     w.updateNPC(w.npcs.find(c=>c.id===sibling),1/60);
 });
 test('female successor can court a male and produce Generation 3 with correct parents', () => {
@@ -125,4 +128,68 @@ test('death offers adult heirs; no adult descendants means extinction, including
 test('retirement eligibility, unrelated adulthood and distant time advance are enforced', () => {
     const {w,c}=familyWorld(); const id=w.family.birth().ids[0]; assert.equal(w.family.succeed(id).ok,false); assert.equal(w.family.succeed(c.id).ok,false);
     w.player.x=1600;w.player.y=1100; const year=w.family.year; assert.equal(w.family.advance(5).ok,false); assert.equal(w.family.year,year);
+});
+test('genuine v3 marriage checkpoint migrates with preferences, affection and history',()=>{
+    const raw=fs.readFileSync('tools/fixtures/phase2b-v3.json','utf8'), original=JSON.parse(raw).payload;
+    const w=saveFor(new World('unused')).decode(raw).world;
+    assert.deepEqual(json(w.romance.exportState()),original.romance);assert.ok(w.romance.spouse(w.player));assert.equal(w.family.births.length,0);
+});
+test('synthetic v1 schema migrates and retains inventory/resource state',()=>{
+    const data=JSON.parse(fs.readFileSync('tools/fixtures/phase2a-v2.json','utf8'));data.version=1;data.payload.social=null;
+    for(const c of data.payload.characters) c.playerKnowledge={observed:{},discoveredFacts:{},rumors:[],relationship:{familiarity:0,trust:0}};
+    data.checksum=hash(JSON.stringify(data.payload));const result=saveFor(new World('unused')).decode(JSON.stringify(data));assert.equal(result.saved.pack.food,4);assert.equal(result.world.resources[0].quantity,0);assert.equal(result.world.npcs[0].playerKnowledge.relationship.lastAt,-999);
+});
+test('saving preserves all three RNG streams and the next birth exactly',()=>{
+    const {w}=familyWorld();w.family.birth();w.family.advance(5);const store=saveFor(w),other=store.decode(store.encode()).world;
+    assert.equal(w.rng.state,other.rng.state);assert.equal(w.social.rng.state,other.social.rng.state);assert.equal(w.family.rng.state,other.family.rng.state);
+    assert.deepEqual(json(w.family.birth()),json(other.family.birth()));assert.deepEqual(json(w.family.exportState()),json(other.family.exportState()));
+});
+const invalidCases={
+    'genome sides':s=>s.characters[0].actual.genome.sideCount=100,
+    'geometry stage':s=>s.characters[0].actual.genome.geometryStage='circle',
+    'vertex proportions':s=>s.characters[0].actual.genome.vertexProportions=[1],
+    'negative age':s=>s.characters[0].actual.life.ageYears=-1,
+    'duplicate identity':s=>s.characters[1].id=s.characters[0].id,
+    'missing parent':s=>s.characters.at(-1).actual.lineage.motherId='missing',
+    'broken children':s=>s.characters[0].actual.lineage.childrenIds=[],
+    'wrong generation':s=>s.characters.at(-1).actual.lineage.generation=1,
+    'invalid playable lineage':s=>s.family.playableIds=['citizen-001',s.characters[0].id],
+    'birth record':s=>s.family.births[0].childIds=[s.characters[0].id,s.characters[1].id],
+    'family RNG':s=>s.family.rngState=-1,
+    'alive with no health':s=>s.characters[0].vitals.health=0,
+    'invalid inventory':s=>s.pack.food=99,
+    'invalid AI':s=>s.characters[1].ai.path=[{x:-1,y:0}],
+    'hidden knowledge forgery':s=>s.characters[1].playerKnowledge.discoveredFacts.genome={value:'everything',kind:'confirmed',sourceId:'player',at:0},
+};
+const malformedFixture=(()=>{const {w}=familyWorld();w.family.birth();return saveFor(w).encode();})();
+for(const [label,damage] of Object.entries(invalidCases)) test(`transactional rejection: ${label}`,()=>{
+    const store=saveFor(new World('live')), live=store.game.world, data=JSON.parse(malformedFixture);damage(data.payload);data.checksum=hash(JSON.stringify(data.payload));
+    assert.throws(()=>store.decode(JSON.stringify(data)));assert.equal(store.game.world,live);assert.equal(store.importRaw(JSON.stringify(data),false),false);assert.equal(store.game.world,live);
+});
+test('damaged newest slot falls back to an older valid save without overwriting either slot',()=>{
+    storage.clear();const store=saveFor(new World('valid'));const valid=store.encode('manual'), data=JSON.parse(valid);data.savedAt+=10;data.payload.characters[0].actual.life.ageYears=-1;data.checksum=hash(JSON.stringify(data.payload));const broken=JSON.stringify(data);
+    storage.set('flatland.manual.v1',valid);storage.set('flatland.auto.v1',broken);store.game.installSave=restored=>{store.game.world=restored.world;};assert.equal(store.load(),true);assert.equal(store.game.world.seed,'valid');assert.equal(storage.get('flatland.auto.v1'),broken);assert.equal(storage.get('flatland.manual.v1'),valid);
+});
+test('checksum, unsafe keys, unsupported versions and invalid JSON fail safely',()=>{
+    const store=saveFor(new World('valid')), data=JSON.parse(store.encode());data.checksum=0;assert.throws(()=>store.decode(JSON.stringify(data)));
+    data.version=999;assert.throws(()=>store.decode(JSON.stringify(data)));assert.throws(()=>store.decode('{bad'));assert.throws(()=>store.decode('{"__proto__":{}}'));
+});
+test('seeded citizens and all visible geometry remain valid over multiple seeds',()=>{
+    for(let i=0;i<12;i++){const w=new World(`seed-regression-${i}`);assert.equal(w.npcs.length,64);for(const c of [w.player,...w.npcs]){validateGenome(c.actual.genome);assert.ok(w.circleClear(c.x,c.y,c.body.radius-.001));assert.ok(c.body.points.every(p=>p.every(Number.isFinite)));}saveFor(w).decode(saveFor(w).encode());}
+});
+test('a married partner can refuse an outing without corrupting marital state',()=>{
+    const w=new World('romance');w.social.reputation.score=5;
+    const c=w.npcs.find(c=>w.romance.compatibility(w.player,c).ok && w.romance.preferences(c).reputation>.75);assert.ok(c);marry(w,c);
+    w.social.reputation.score=-10;w.elapsed+=120;const r=action(w,c,'outing');assert.equal(r.ok,false);assert.equal(w.romance.pair(w.player,c).status,'married');assert.equal(w.romance.spouse(w.player).id,c.id);saveFor(w).decode(saveFor(w).encode());
+});
+test('quota failure and a changed slot preserve the previous stored data',()=>{
+    storage.clear();const store=saveFor(new World('storage')), previous=store.encode();storage.set('flatland.manual.v1',previous);store.expected={manual:previous};
+    const write=context.localStorage.setItem;context.localStorage.setItem=()=>{const e=new Error('full');e.name='QuotaExceededError';throw e;};
+    try{assert.equal(store.save('manual'),false);assert.equal(storage.get('flatland.manual.v1'),previous);}finally{context.localStorage.setItem=write;}
+    store.expected.manual='outdated';assert.equal(store.save('manual'),false);assert.equal(storage.get('flatland.manual.v1'),previous);
+});
+test('current player identity follows a stable ID rather than a population array index',()=>{
+    const {w}=familyWorld();const children=w.family.birth().ids;mature(w);assert.equal(w.family.succeed(children[0]).ok,true);
+    const store=saveFor(w),data=JSON.parse(store.encode());data.payload.characters.reverse();data.checksum=hash(JSON.stringify(data.payload));
+    const restored=store.decode(JSON.stringify(data)).world;assert.equal(restored.player.id,w.player.id);assert.deepEqual(json(restored.player.actual),json(w.player.actual));assert.equal(restored.player.ai,null);
 });

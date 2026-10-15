@@ -12,7 +12,7 @@ class FamilyUI {
         $('familySaveBtn').addEventListener('click',()=>game.saves.save('manual'));
     }
     open(save=true) {
-        const g=this.game; if(!g.world || !['running','paused','dead','family'].includes(g.state)) return;
+        const g=this.game; if(!g.world || (save && !['running','paused','dead','family'].includes(g.state))) return;
         if(g.state!=='family') this.returnState=g.state;
         g.setScreen('family'); this.refresh(); if(save) g.saves.save('auto',true);
     }

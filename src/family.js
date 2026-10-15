@@ -80,12 +80,12 @@ class FamilySystem {
     succeed(id) {
         const w=this.world, old=w.player, next=this.candidates().find(c=>c.id===id);
         if(!next || !this.canSucceed()) return {ok:false,text:'Choose a living adult descendant after age 40 retirement or upon death.'};
-        this.notebooks[old.id]={knowledge:Object.fromEntries(this.actors().map(c=>[c.id,copyJSON(c.playerKnowledge)])),reputation:copyJSON(w.social.reputation)};
+        this.notebooks[old.id]={knowledge:Object.fromEntries(this.actors().filter(c=>Object.keys(c.playerKnowledge.discoveredFacts).length || c.playerKnowledge.rumors.length || c.playerKnowledge.relationship.familiarity || c.playerKnowledge.relationship.trust).map(c=>[c.id,copyJSON(c.playerKnowledge)])),reputation:copyJSON(w.social.reputation)};
         if(old.actual.life.alive) this.history.push({kind:'retirement',ids:[old.id],at:w.elapsed});
         const ai={intent:'wander',activity:'idle',path:[],pathIndex:0,targetId:null,wait:1,think:1,stuck:0,homeX:old.x,homeY:old.y};
         if(!old.actual.profile) { populateSocialIdentity(w,old,0); old.actual.identity.name='Founder'; old.publicIdentity.displayName='Founder'; }
         old.isPlayer=false; old.ai=ai;
-        old.body.color=old.body.form==='line'?'#d5b1b7':'#c9af93';
+        old.body=createCharacter(old.id,old.actual.genome,old.actual.identity.bodyForm,old.x,old.y,new RNG(old.id)).body;
         next.isPlayer=true; next.ai=null; next.body.color='#f1a38b'; next.runtime.resting=false;
         w.npcs=w.npcs.filter(c=>c.id!==next.id); w.npcs.push(old); w.player=next; w.conversationId=null;
         const book=this.notebooks[next.id];
@@ -133,6 +133,8 @@ class FamilySystem {
             if(parents.length) insist(childIds.has(c.id) && l.generation===Math.max(...parents.map(id=>this.character(id).actual.lineage.generation))+1,'Missing birth or wrong generation.');
             for(const id of l.childrenIds) { const child=this.character(id); insist(child && [child.actual.lineage.motherId,child.actual.lineage.fatherId].includes(c.id),'Broken child link.'); }
         }
+        insist(data.playableIds[0]==='founder-000', 'Dynasty founder is invalid.');
+        for(let i=1;i<data.playableIds.length;i++) insist(this.descendants(this.character(data.playableIds[i-1])).some(c=>c.id===data.playableIds[i]), 'Playable succession does not follow biological descendants.');
         insist(data.history.every(e=>plain(e) && ['birth','death','retirement','succession'].includes(e.kind) && Array.isArray(e.ids) && e.ids.length>0 && e.ids.every(id=>this.character(id)) && numberIn(e.at,0,this.world.elapsed+.001)), 'Invalid family history.');
         for(const [id,book] of Object.entries(data.notebooks)) {
             insist(this.character(id) && plain(book) && plain(book.knowledge) && plain(book.reputation), 'Invalid family notebook.');
@@ -143,10 +145,12 @@ class FamilySystem {
         insist(this.actors().filter(c=>c.id.startsWith('descendant-')).every(c=>Number(c.id.slice(11))<this.nextId),'Invalid next descendant ID.');
     }
 }
-function restoreFamilyPopulation(w, records) {
-    insist(Array.isArray(records) && records.length>=65 && records.length<=FAMILY.maxPopulation, 'Invalid saved population.');
+function restoreFamilyPopulation(w, records, currentId) {
+    const baseIds=[w.player,...w.npcs].map(c=>c.id);
+    insist(Array.isArray(records) && records.length>=baseIds.length && records.length<=FAMILY.maxPopulation, 'Invalid saved population.');
     const ids=new Set();
-    const actors=records.map((s,index)=> {
+    insist(shortText(currentId,100), 'Missing current player ID.');
+    const actors=records.map(s=> {
         const a=s.actual, pub=s.publicIdentity;
         insist(plain(s) && shortText(s.id,100) && /^(founder-000|citizen-\d{3}|descendant-[1-9]\d*)$/.test(s.id) && !ids.has(s.id), 'Invalid or duplicate character ID.'); ids.add(s.id);
         insist(plain(a) && plain(a.identity) && a.identity.id===s.id && ['male','female'].includes(a.identity.sex) && a.identity.bodyForm===(a.identity.sex==='female'?'line':'polygon') && shortText(a.identity.name,100), 'Invalid character identity.');
@@ -158,12 +162,13 @@ function restoreFamilyPopulation(w, records) {
             insist(plain(p) && shortText(p.occupation,100) && plain(p.personality) && ['warmth','candor','reserve','curiosity','prejudice'].every(k=>numberIn(p.personality[k],0,1)) && plain(p.preferences) && ['likes','dislikes'].every(k=>shortText(p.preferences[k],100)) && numberIn(p.disposition,-3,5) && plain(p.background), 'Invalid social profile.');
             insist(['origin','family','ambition','concern','sensitive'].every(k=>shortText(p.background[k],1000)) && ['knowsFamily','discloseSensitive'].every(k=>typeof p.background[k]==='boolean'), 'Invalid background.');
         } else insist(s.id==='founder-000','Citizen is missing a social profile.');
-        insist(plain(pub) && (pub.displayName===null || shortText(pub.displayName,100)) && (pub.claimedOccupation===null || shortText(pub.claimedOccupation,100)) && numberIn(pub.reputation,-100,100) && Array.isArray(pub.claims) && pub.claims.length<=30 && plain(pub.standing) && integerIn(pub.standing.tier,0,7) && shortText(pub.standing.label,160), 'Invalid public identity.');
-        const c=createCharacter(s.id,a.genome,a.identity.bodyForm,s.x,s.y,new RNG(s.id),index===0);
+        insist(plain(pub) && (pub.displayName===null || shortText(pub.displayName,100)) && (pub.claimedOccupation===null || shortText(pub.claimedOccupation,100)) && numberIn(pub.reputation,-100,100) && Array.isArray(pub.claims) && pub.claims.length<=30 && pub.claims.every(claim=>plain(claim) && shortText(claim.key,100) && shortText(claim.value,1000)) && plain(pub.standing) && integerIn(pub.standing.tier,0,7) && shortText(pub.standing.label,160), 'Invalid public identity.');
+        const c=createCharacter(s.id,a.genome,a.identity.bodyForm,s.x,s.y,new RNG(s.id),s.id===currentId);
         c.actual=copyJSON(a); c.publicIdentity=copyJSON(pub);
         return c;
     });
-    insist(ids.has('founder-000') && Array.from({length:64},(_,i)=>`citizen-${String(i+1).padStart(3,'0')}`).every(id=>ids.has(id)), 'Seeded citizens are missing.');
-    w.player=actors[0]; w.npcs=actors.slice(1);
+    insist(baseIds.every(id=>ids.has(id)), 'Seeded citizens are missing.');
+    insist(ids.has(currentId), 'Current player is missing.');
+    w.player=actors.find(c=>c.id===currentId); w.npcs=actors.filter(c=>c.id!==currentId);
     records.forEach((s,i)=>restoreCharacter(actors[i],s,w));
 }
