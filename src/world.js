@@ -206,9 +206,10 @@ class World {
         }
     }
     updateNPC(c, dt) {
+        if (!c.actual.life.alive) return;
         const ai = c.ai, v = c.vitals, m = c.actual.genome.metabolism;
         c.runtime.moving = false;
-        // Phase 1 needs drive NPC behavior; NPC mortality/aging is deliberately deferred.
+        // Needs still drive NPC navigation. FamilySystem handles aging and mortality.
         v.hunger = clamp(v.hunger - .15 * m * dt, 0, 100);
         v.thirst = clamp(v.thirst - .23 * m * dt, 0, 100);
         // A nearby speaker briefly stays with you, but still needs supplies. Other NPCs remain autonomous.
@@ -287,7 +288,7 @@ class World {
         }
     }
     separateCitizens() {
-        const chars = this.npcs;
+        const chars = this.npcs.filter(c=>c.actual.life.alive);
         for (let i = 0; i < chars.length; i++) {
             const a = chars[i];
             for (let j = i + 1; j < chars.length; j++) {

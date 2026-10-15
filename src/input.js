@@ -92,6 +92,7 @@ class Input {
             if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowLeft','ArrowDown','ArrowRight'].includes(e.code)) this.game.socialUI.close(false);
         }
         if (e.code === 'KeyT' && this.game.state === 'running') { this.game.socialUI.openNearest(); return; }
+        if (e.code === 'Escape' && this.game.state === 'family') { this.game.familyUI.close(); return; }
         if (e.code === 'KeyP' || e.code === 'Escape') {
             if (this.game.state === 'running')
                 this.game.pause();

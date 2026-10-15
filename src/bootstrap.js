@@ -57,6 +57,12 @@ if (new URLSearchParams(location.search).get('debug') === '1') {
         socialView(id) { const c = game.world.social.citizen(id); if (!c) throw new Error('Unknown citizen'); return game.world.social.view(c); },
         interact(id, topic) { return game.world.social.interact(id, topic); },
         romance(id, topic) { return game.world.romance.interact(id, topic); },
+        familyView() { return game.world.family.view(); },
+        courtshipCandidate(sex='female') { const w=game.world; return w.npcs.find(c=>c.actual.life.alive && c.actual.identity.sex===sex && c.actual.life.ageYears>=18 && c.actual.life.ageYears<=55 && c.actual.profile?.personality.warmth>.5 && !w.romance.isCloseKin(w.player,c) && w.romance.compatibility(w.player,c).ok && w.romance.preferences(c).familyLife>=.3)?.id || null; },
+        familyBirth() { return game.world.family.birth(); },
+        advanceYears(years) { const r=game.world.family.advance(years); if(!game.world.player.actual.life.alive) game.die(); game.refreshUI(); return r; },
+        successor(id) { game.familyUI.choose(id); return this.snapshot(); },
+        importSave(raw) { try { const restored=game.saves.decode(raw); game.installSave(restored); return true; } catch { return false; } },
         openCitizen(id) { game.socialUI.open(id); }, closeCitizen() { game.socialUI.close(); },
         socialState() { return game.world.social.exportState(); },
         config: C

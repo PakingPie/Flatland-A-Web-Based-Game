@@ -88,3 +88,41 @@ test('female line forms carry complete latent genomes and do not disclose them',
     assert.ok(!JSON.stringify(w.social.view(daughter)).includes('sideCount')); assert.ok(!JSON.stringify(w.romance.view(daughter)).includes('latentIrregularAncestry'));
 });
 test('inheritance is deterministic without rendering', () => { const b=normalizeGenome({}); assert.deepEqual(json(inheritGenome(b,b,b,new RNG(42),{motherId:'m',fatherId:'f'},2)),json(inheritGenome(b,b,b,new RNG(42),{motherId:'m',fatherId:'f'},2))); });
+function mature(w) { for(let i=0;i<4;i++) assert.equal(w.family.advance(5).ok,true); assert.equal(w.family.advance(1).ok,true); }
+test('refuge years mature children, preserve supplies, process NPC deaths and close marriages', () => {
+    const {w,c}=familyWorld(), ids=w.family.birth().ids, pack=gameFor(w).pack;
+    const elder=w.npcs.find(n=>!ids.includes(n.id) && n!==c); elder.actual.life.ageYears=w.family.deathAge(elder)-.5;
+    mature(w); assert.ok(ids.every(id=>w.family.character(id).actual.life.ageYears===21));
+    assert.equal(elder.actual.life.alive,false); assert.ok(w.family.history.some(e=>e.kind==='death' && e.ids.includes(elder.id)));
+    assert.deepEqual(pack,{food:2,water:3}); assert.ok(w.player.vitals.hunger>=55 && w.player.vitals.thirst>=55);
+    w.family.markDeath(c); assert.equal(w.romance.spouse(w.player),null); assert.equal(w.romance.marriages[0].reason,'death');
+    saveFor(w).decode(saveFor(w).encode());
+});
+for(const sex of ['female','male']) test(`Generation 2 ${sex} successor continues same world with independent siblings and saves`, () => {
+    const {w}=familyWorld(), result=w.family.birth(), worldRef=w, resources=w.resources;
+    mature(w); const selected=result.ids.map(id=>w.family.character(id)).find(c=>c.actual.identity.sex===sex); assert.ok(selected);
+    const old=w.player, sibling=result.ids.find(id=>id!==selected.id), rng=w.rng.state;
+    assert.equal(w.family.succeed(selected.id).ok,true); assert.equal(w,worldRef); assert.equal(w.resources,resources); assert.equal(w.rng.state,rng);
+    assert.equal(w.player.id,selected.id); assert.equal(w.player.ai,null); assert.equal(w.player.isPlayer,true);
+    assert.equal(w.player.actual.lineage.generation,2); assert.equal(old.isPlayer,false); assert.ok(old.ai);
+    assert.ok(w.npcs.find(c=>c.id===sibling)?.ai); assert.ok(w.family.notebooks[old.id]);
+    const restored=saveFor(w).decode(saveFor(w).encode()).world; assert.equal(restored.player.id,selected.id); assert.deepEqual(json(restored.family.exportState()),json(w.family.exportState()));
+    w.updateNPC(w.npcs.find(c=>c.id===sibling),1/60);
+});
+test('female successor can court a male and produce Generation 3 with correct parents', () => {
+    const {w}=familyWorld(); const ids=w.family.birth().ids; mature(w); const daughter=ids.map(id=>w.family.character(id)).find(c=>c.actual.identity.sex==='female'); assert.equal(w.family.succeed(daughter.id).ok,true);
+    w.social.reputation.score=5;
+    const spouse=w.npcs.find(c=>c.actual.life.alive && c.actual.identity.sex==='male' && c.actual.life.ageYears<=55 && !w.romance.isCloseKin(w.player,c) && w.romance.compatibility(w.player,c).ok && w.romance.preferences(c).familyLife>=.3); assert.ok(spouse); marry(w,spouse);
+    const born=w.family.birth(); assert.equal(born.ok,true);
+    for(const id of born.ids) { const child=w.family.character(id); assert.equal(child.actual.lineage.motherId,daughter.id); assert.equal(child.actual.lineage.fatherId,spouse.id); assert.equal(child.actual.lineage.generation,3); }
+    const restored=saveFor(w).decode(saveFor(w).encode()).world; assert.equal(restored.player.actual.lineage.generation,2); assert.ok(restored.family.view().members.some(m=>m.generation===3));
+});
+test('death offers adult heirs; no adult descendants means extinction, including minors', () => {
+    const {w}=familyWorld(); w.family.birth(); assert.equal(w.family.candidates().length,0); w.family.markDeath(w.player,'thirst'); assert.equal(w.family.candidates().length,0); assert.equal(w.family.canSucceed(),true);
+    const {w:adults}=familyWorld(); adults.family.birth(); mature(adults); adults.family.markDeath(adults.player); const heirs=adults.family.candidates(); assert.ok(heirs.length>=2); assert.equal(adults.family.succeed(heirs[0].id).ok,true); saveFor(adults).decode(saveFor(adults).encode());
+    const none=new World('no-heir'); none.family.markDeath(none.player); assert.equal(none.family.candidates().length,0);
+});
+test('retirement eligibility, unrelated adulthood and distant time advance are enforced', () => {
+    const {w,c}=familyWorld(); const id=w.family.birth().ids[0]; assert.equal(w.family.succeed(id).ok,false); assert.equal(w.family.succeed(c.id).ok,false);
+    w.player.x=1600;w.player.y=1100; const year=w.family.year; assert.equal(w.family.advance(5).ok,false); assert.equal(w.family.year,year);
+});

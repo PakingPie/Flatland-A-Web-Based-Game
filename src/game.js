@@ -20,6 +20,7 @@ class Game {
         this.saves = new SaveStore(this);
         this.bindUI();
         this.socialUI = new SocialUI(this);
+        this.familyUI = new FamilyUI(this);
         this.setScreen('menu');
         this.saves.refreshMenu();
         requestAnimationFrame(t => this.frame(t));
@@ -47,8 +48,8 @@ class Game {
     setScreen(state) {
         if (state !== 'running') this.socialUI?.close(false);
         this.state = state;
-        const mapping = { menu: 'startScreen', paused: 'pauseScreen', help: 'helpScreen', dead: 'deathScreen' };
-        for (const id of ['startScreen', 'pauseScreen', 'helpScreen', 'deathScreen'])
+        const mapping = { menu: 'startScreen', paused: 'pauseScreen', help: 'helpScreen', dead: 'deathScreen', family: 'familyScreen' };
+        for (const id of ['startScreen', 'pauseScreen', 'helpScreen', 'deathScreen', 'familyScreen'])
             $(id).hidden = mapping[state] !== id;
         $('hud').hidden = state === 'menu';
         $('tooltip').hidden = true;
@@ -57,7 +58,7 @@ class Game {
         if (state !== 'running') {
             this.input?.clear();
             this.accumulator = 0;
-            const first = state === 'menu' ? $('startBtn') : state === 'paused' ? $('resumeBtn') : state === 'help' ? $('closeHelpBtn') : $('retryBtn');
+            const first = state === 'menu' ? $('startBtn') : state === 'paused' ? $('resumeBtn') : state === 'help' ? $('closeHelpBtn') : state === 'family' ? $('familySaveBtn') : $('retryBtn');
             first?.focus({ preventScroll: true });
         }
     }
@@ -249,14 +250,13 @@ class Game {
             this.die();
     }
     die(persist = true) {
-        const v = this.world.player.vitals;
-        this.world.player.actual.life.alive = false;
-        this.world.player.runtime.sprinting = false;
-        this.world.player.runtime.resting = false;
-        $('deathCause').textContent = v.thirst <= 0 ? 'Without water, your expedition came to an end.' : 'Without food, your expedition came to an end.';
-        $('deathStats').textContent = `Survived ${Math.floor(this.world.elapsed / 60)}m ${Math.floor(this.world.elapsed % 60)}s · ${this.progress.gathered} provisions gathered · ${this.progress.visited.size} refuges found. Your seed was “${this.world.seed}”.`;
-        this.setScreen('dead');
-        if (persist) this.saves.save('auto', true);
+        const w=this.world,p=w.player,v=p.vitals;
+        w.family.markDeath(p,p.actual.life.deathCause || (v.thirst<=0?'thirst':v.hunger<=0?'hunger':'poor health'));
+        $('deathCause').textContent=`${w.family.name(p)} died from ${p.actual.life.deathCause}. No living adult descendant can continue the playable lineage.`;
+        $('deathStats').textContent=`Dynasty: ${w.family.playableIds.length} playable lives · Generation ${p.actual.lineage.generation} · ${w.family.births.reduce((n,b)=>n+b.childIds.length,0)} children born · ${this.progress.gathered} provisions gathered. Seed “${w.seed}”.`;
+        if(w.family.candidates().length) this.familyUI.open(false);
+        else this.setScreen('dead');
+        if(persist) this.saves.save('auto',true);
     }
     step(dt) {
         if (this.state !== 'running')
@@ -270,6 +270,8 @@ class Game {
         }
         this.gatherCooldown = Math.max(0, this.gatherCooldown - dt);
         w.updateResources(dt);
+        w.family.age(dt / C.DAY);
+        if (!w.player.actual.life.alive) { this.die(); return; }
         this.updatePlayer(dt);
         if (this.state !== 'running')
             return;
@@ -283,7 +285,7 @@ class Game {
         this.effects = this.effects.filter(f => f.age < 1.5);
         if (!this.progress.complete && w.elapsed >= C.DAY * 3 && this.progress.gathered >= 12 && this.progress.visited.size >= 2) {
             this.progress.complete = true;
-            this.notify('Three days alive. Expedition complete. There is no next generation yet—but this life can continue.');
+            this.notify('Three days alive. Expedition complete. Continue building your family and future generations.');
             this.log('Expedition complete. Keep exploring for as long as you can.');
         }
     }
@@ -327,6 +329,8 @@ class Game {
         if (!w)
             return;
         const p = w.player;
+        $('generationTag').textContent = `Generation ${p.actual.lineage.generation}`;
+        $('playerIdentity').textContent = `${p.body.visibleType} · age ${Math.floor(p.actual.life.ageYears)}`;
         for (const key of ['health', 'hunger', 'thirst', 'stamina']) {
             const value = clamp(p.vitals[key], 0, 100), num = Math.ceil(value);
             $(key + 'Text').textContent = num;
@@ -381,6 +385,7 @@ class Game {
         const point = this.renderer.screenToWorld(x, y);
         let target = null, best = Infinity;
         for (const c of this.world.npcs) {
+            if (!c.actual.life.alive) continue;
             const d = dist2(c.x, c.y, point.x, point.y);
             if (d < (c.body.radius + 9) ** 2 && d < best) { best = d; target = c; }
         }

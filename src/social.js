@@ -210,14 +210,14 @@ class SocialSystem {
         insist(plain(data) && data.version === 1 && integerIn(data.rngState, 0, 4294967295), 'Invalid society state.');
         const rep = data.reputation;
         insist(plain(rep) && numberIn(rep.score, -100, 100) && Array.isArray(rep.events) && rep.events.length <= 48, 'Invalid reputation.');
-        insist(rep.events.every(e => plain(e) && numberIn(e.delta, -100, 100) && shortText(e.reason, 100) && this.citizen(e.witnessId) && numberIn(e.at, 0, this.world.elapsed + .001)), 'Invalid reputation history.');
+        insist(rep.events.every(e => plain(e) && numberIn(e.delta, -100, 100) && shortText(e.reason, 100) && [this.world.player,...this.world.npcs].some(c=>c.id===e.witnessId) && numberIn(e.at, 0, this.world.elapsed + .001)), 'Invalid reputation history.');
         this.rng.state = data.rngState; this.reputation = copyJSON(rep);
     }
     static validateKnowledge(k, elapsed, world) {
         for (const [key, f] of Object.entries(k.discoveredFacts)) {
-            insist(Object.hasOwn(SOCIAL.factLabels, key) && plain(f) && shortText(f.value, 1000) && ['claim', 'observation', 'confirmed'].includes(f.kind) && (f.sourceId === 'player' || world.npcs.some(c => c.id === f.sourceId)) && numberIn(f.at, 0, elapsed + .001), 'Invalid discovered fact.');
+            insist(Object.hasOwn(SOCIAL.factLabels, key) && plain(f) && shortText(f.value, 1000) && ['claim', 'observation', 'confirmed'].includes(f.kind) && (f.sourceId === 'player' || [world.player,...world.npcs].some(c => c.id === f.sourceId)) && numberIn(f.at, 0, elapsed + .001), 'Invalid discovered fact.');
         }
-        insist(k.rumors.length <= 12 && k.rumors.every(r => plain(r) && shortText(r.id, 100) && shortText(r.sourceName, 100) && shortText(r.text, 600) && world.npcs.some(c => c.id === r.subjectId) && world.npcs.some(c => c.id === r.sourceId) && r.status === 'unverified' && numberIn(r.at, 0, elapsed + .001)), 'Invalid rumor record.');
+        insist(k.rumors.length <= 12 && k.rumors.every(r => plain(r) && shortText(r.id, 100) && shortText(r.sourceName, 100) && shortText(r.text, 600) && [world.player,...world.npcs].some(c => c.id === r.subjectId) && [world.player,...world.npcs].some(c => c.id === r.sourceId) && r.status === 'unverified' && numberIn(r.at, 0, elapsed + .001)), 'Invalid rumor record.');
         const r = k.relationship;
         if (r.lastAt === undefined) { insist(!Object.keys(k.discoveredFacts).length && !k.rumors.length && r.familiarity === 0 && r.trust === 0, 'Invalid legacy relationship.'); return; }
         insist(numberIn(r.lastAt, -999, elapsed + .001) && integerIn(r.day, -1, Math.floor(elapsed / C.DAY)) && integerIn(r.today, 0, SOCIAL.dailyLimit) && plain(r.topics) && Array.isArray(r.history) && r.history.length <= SOCIAL.historyLimit, 'Invalid relationship timing/history.');

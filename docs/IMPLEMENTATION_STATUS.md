@@ -50,3 +50,28 @@ snapshot restoration. Aging, family presentation and control transfer follow in 
 
 An external checkout switched to main after B. The committed B branch was retained;
 in-progress edits were backed up locally and resumed on the implementation branch.
+
+## Checkpoint D — playable generations
+
+One survival day ages each living character one year. Refuge advances process
+one or five years without replaying survival frames; community subsistence keeps
+needs coherent and preserves packed supplies. Adulthood is 18, retirement opens
+at 40, reproductive age is 18–60 and natural lifespan is deterministically 78–92.
+Only living adult biological descendants can inherit control. Death with only
+minor descendants ends the playable lineage; there is no automatic guardianship.
+
+The paused family register displays observed traits, parents, children, siblings,
+marriages, deaths and playable history without disclosing latent female geometry.
+Succession transfers control in the existing world, archives the old observer's
+notebook/reputation and retains siblings and retired founders as independent NPCs.
+Death closes active marriages; adult heirs can be selected after death or retirement.
+
+Twenty deterministic tests pass, including sons and daughters, mortality,
+extinction/minor policy, independent siblings, family integrity and a female heir
+bearing Generation 3. Real Chromium 149.0.7827.55 completed UI courtship, marriage,
+cohort birth, maturation, daughter succession, continued movement and a further
+birth. Two full browser shutdown/reopen cycles preserved exact saved payloads.
+QA hooks controlled proximity, clock and needs, and located consenting partners;
+relationship gains, births and succession used game rules and UI buttons.
+Desktop 1440×900 and phone-width 390×844 family screenshots were inspected locally.
+No page exceptions were observed. Artifacts remain in ignored local output.

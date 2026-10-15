@@ -277,6 +277,7 @@ class Renderer {
         ctx.restore();
     }
     citizen(ctx, c, alpha, time, isPlayer) {
+        if (!c.actual.life.alive) return;
         const x = lerp(c.px, c.x, alpha), y = lerp(c.py, c.y, alpha), a = moveAngle(c.prevAngle, c.angle, alpha);
         ctx.save();
         ctx.translate(x, y);
@@ -366,6 +367,7 @@ class Renderer {
         }
         ctx.fillStyle = '#b7c9b46a';
         for (const c of world.npcs) {
+            if (!c.actual.life.alive) continue;
             ctx.beginPath();
             ctx.arc(c.x, c.y, 9, 0, TAU);
             ctx.fill();
