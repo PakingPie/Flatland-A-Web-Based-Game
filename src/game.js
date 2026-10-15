@@ -51,9 +51,10 @@ class Game {
         bind('eatBtn', () => this.consume('food'));
         bind('drinkBtn', () => this.consume('water'));
         bind('restBtn', () => this.toggleRest());
+        bind('cancelApproachBtn', () => this.socialUI.controller?.cancel());
     }
     setScreen(state) {
-        if (state !== 'running') this.socialUI?.close(false);
+        if (state !== 'running') this.socialUI?.reset();
         this.state = state;
         const mapping = { menu: 'startScreen', paused: 'pauseScreen', help: 'helpScreen', dead: 'deathScreen', family: 'familyScreen' };
         for (const id of ['startScreen', 'pauseScreen', 'helpScreen', 'deathScreen', 'familyScreen'])
@@ -80,7 +81,7 @@ class Game {
         this.saves.load(slot);
     }
     installSave({ world, saved }) {
-        this.socialUI?.close(false);
+        this.socialUI?.reset();
         this.input.clear();
         this.world = world; this.runId = saved.runId;
         this.pack = copyJSON(saved.pack);
@@ -97,7 +98,7 @@ class Game {
     }
     start(seed) {
         seed = String(seed || 'abbott-1884').trim().slice(0, 48) || 'abbott-1884';
-        this.socialUI?.close(false);
+        this.socialUI?.reset();
         this.input.clear();
         this.world = new World(seed);
         this.runId = `${Date.now().toString(36)}-${globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)}`;
@@ -117,8 +118,7 @@ class Game {
         this.setScreen('running');
         this.renderer.snap();
         this.canvas.focus({ preventScroll: true });
-        this.log('Your pack holds 1 food and 1 water. Find more nearby.');
-        this.log('Green patches feed you. Blue springs fill your pack.');
+        this.log('Green: food · Blue: water');
         this.refreshUI();
         this.renderer.snap();
         this.renderer.map();
@@ -200,12 +200,12 @@ class Game {
         p.runtime.resting = !p.runtime.resting;
         if (p.runtime.resting) {
             const f = this.world.refugeAt(p.x, p.y);
-            this.log(f ? 'Refuge rest: fast stamina and lower food/water use. Both meters must exceed 30 to heal.' : 'Field rest: fast stamina and lower food/water use. No health regeneration.');
+            this.log(f ? 'Resting at refuge.' : 'Resting in the field.');
         }
         this.refreshUI();
     }
     updatePlayer(dt) {
-        const p = this.world.player, v = p.vitals, run = p.runtime, input = this.input, move = input.movement();
+        const p = this.world.player, v = p.vitals, run = p.runtime, input = this.input, manual = input.movement(), move = this.socialUI.movement(dt,manual);
         const moving = move.magnitude > .04;
         if (moving)
             run.resting = false;
@@ -266,7 +266,7 @@ class Game {
         if(persist) this.saves.save('auto',true);
     }
     step(dt) {
-        if (this.state !== 'running')
+        if (this.state !== 'running' || this.socialUI?.isOpen)
             return;
         const w = this.world;
         w.elapsed += dt;
@@ -299,7 +299,7 @@ class Game {
     frame(timestamp) {
         const dt = this.lastTime === null ? 0 : Math.min(.10, Math.max(0, (timestamp - this.lastTime) / 1000));
         this.lastTime = timestamp;
-        if (this.state === 'running' && !this.debugManual) {
+        if (this.state === 'running' && !this.debugManual && !this.socialUI.isOpen) {
             this.accumulator += dt;
             let steps = 0;
             while (this.accumulator >= C.DT && steps < 6) {
@@ -312,8 +312,9 @@ class Game {
                 }
             }
         }
-        const alpha = this.state === 'running' && !this.debugManual ? clamp(this.accumulator / C.DT, 0, 1) : 1;
+        const alpha = this.state === 'running' && !this.debugManual && !this.socialUI.isOpen ? clamp(this.accumulator / C.DT, 0, 1) : 1;
         this.renderer.render(alpha, dt);
+        this.socialUI?.frame();
         this.saves.tick();
         this.uiClock += dt;
         this.mapClock += dt;
@@ -360,19 +361,26 @@ class Game {
         $('gatherBtn').disabled = !r || this.pack[r.kind] >= C.PACK;
         let context = 'Explore · collect food and water · keep your meters filled';
         if (p.runtime.resting)
-            context = f ? (p.vitals.hunger > 30 && p.vitals.thirst > 30 ? 'Refuge rest · fast stamina · lower consumption · healing' : 'Refuge rest · fast stamina · lower consumption · food/water must exceed 30 to heal') : 'Field rest · fast stamina · lower consumption · no healing';
+            context = f ? (p.vitals.hunger > 30 && p.vitals.thirst > 30 ? 'Refuge rest · healing' : 'Refuge rest · eat and drink to heal') : 'Field rest · no healing';
         else if (r)
             context = this.pack[r.kind] >= C.PACK ? `${r.kind === 'food' ? 'Food' : 'Water'} pack full · use supplies first` : `Hold E to gather ${r.kind} · ${r.quantity} remaining`;
         else if (f)
             context = 'Safe refuge · Space to rest and recover health';
+        if(w.elapsed<8 && !this.progress.gathered && !r && !p.runtime.resting) context=document.body.classList.contains('touch')?'Drag the joystick to move.':'WASD / arrows · Move';
+        if(r && !p.runtime.resting) context=`${document.body.classList.contains('touch')?'Hold Gather':'Hold E'} · ${r.kind} (${r.quantity})`;
+        if(p.vitals.hunger<45 && this.pack.food) context=document.body.classList.contains('touch')?'Tap Eat · Use packed food':'F · Eat packed food';
+        else if(p.vitals.thirst<45 && this.pack.water) context=document.body.classList.contains('touch')?'Tap Drink · Use packed water':'R · Drink packed water';
+        const pending=this.socialUI?.controller?.pending;
+        if(pending) context=w.social.nearby(w.social.citizen(pending.id))?'Waiting for a reply…':'Walking over…';
+        $('cancelApproachBtn').hidden=!pending;
         $('context').textContent = context;
-        $('restDetails').hidden = !p.runtime.resting;
+        $('restDetails').hidden = true;
         $('restDetails').textContent = `Stamina +27/s · food use −35% · water use −28%${f ? ' · eligible healing +1.8/s' : ''}`;
         $('location').textContent = w.districtAt(p.x, p.y);
         const nearby = w.social.nearest();
         $('talkBtn').disabled = !nearby;
         $('reputationSummary').textContent = w.social.reputationLabel();
-        if (!p.runtime.resting && !r && nearby) $('context').textContent = 'A citizen is nearby · T or Talk to introduce yourself';
+        if (!pending && !p.runtime.resting && !r && nearby) $('context').textContent = 'Click a citizen · Choose an action';
         this.socialUI?.refresh();
         const days = Math.min(3, Math.floor(w.elapsed / C.DAY));
         $('daysCount').textContent = days + ' / 3';
@@ -407,7 +415,7 @@ class Game {
         tooltip.replaceChildren();
         const title = document.createElement('strong'); title.textContent = v.introduced ? `${v.name} · ${v.observed.form}` : v.observed.form;
         const body = document.createElement('p'); body.textContent = `${v.observed.apparentClass} · ${v.observed.size} · ${v.observed.activity}.`;
-        const note = document.createElement('small'); note.textContent = `${v.introduced ? v.relationship.label + '. ' : 'Name unknown. '}Family history and hereditary traits are not revealed by an outline. ${v.inRange ? 'T to talk · ' : ''}Click to inspect.`;
+        const note = document.createElement('small'); note.textContent = `${v.introduced ? v.relationship.label+' · ' : ''}Click for actions`;
         tooltip.append(title, body, note); tooltip.hidden = false;
         const left = clamp(mouse.x + 17, 8, Math.max(8, this.renderer.w - tooltip.offsetWidth - 10));
         const top = clamp(mouse.y + 18, 8, Math.max(8, this.renderer.h - tooltip.offsetHeight - 10));

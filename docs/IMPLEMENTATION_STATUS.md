@@ -101,3 +101,20 @@ immigration), abstract immediate births, compact register, 256-individual/2 MB
 budgets, and no Firefox/Safari/physical-phone or long unassisted human session
 validation. These limits do not affect the verified Generation 2 control and
 Generation 3 births. See [current QA](QA_REPORT.md) and [handoff](PHASE35_HANDOFF.md).
+
+## Usability follow-up — action bubbles (v0.3.1)
+
+Approved direction: a small citizen action bubble, brief character dialogue and
+automatic approach. Routine choices pause the world; selecting one resumes time
+and navigates using existing collision/pathfinding. Menus expose at most four
+choices. Details retains source-aware knowledge; replies omit explanatory rules.
+Movement, Escape, pause or Cancel safely cancel queued actions. The queue is
+transient, so loading never resumes an obsolete UI click.
+
+The start screen has one premise line; contextual prompts teach controls. Family
+rows and history use optional expansion. Save schema v4, all stable IDs, original
+rule fixtures and the generational loop remain. Forty-eight deterministic tests
+and four real-browser scripts pass, including the new five-group bubble suite,
+the full generation scenario, native persistence and survival/touch regressions.
+Evidence stays local and ignored. This is a presentation/control pass, without
+Phase 3.5 population or architecture expansion.

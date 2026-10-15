@@ -1,4 +1,4 @@
-# QA report — Phase 2B + Phase 3 (v0.3.0)
+# QA report — Phase 2B + Phase 3 (v0.3.1)
 
 Executed 2026-10-15 on Windows with Node 24.12.0, Python 3.14.2 and real Chromium
 149.0.7827.55 using the bundled Playwright runtime. The
@@ -9,9 +9,10 @@ preserved; its old counts are **not** added to current results.
 
 | Suite | Result | Scope |
 |---|---|---|
-| Dependency-free deterministic suite | 44 passed, 0 failed | Rules, family integration, migration, malformed-save rejection |
+| Dependency-free deterministic suite | 48 passed, 0 failed | Rules, family integration, migration, malformed-save rejection |
 | Native browser smoke | Passed | Manual save, full Chromium shutdown, reopen, Continue, identical payload |
 | Browser generation scenario | 8 check groups passed | UI courtship through daughters, further births, storage and death cases |
+| Action-bubble usability | 5 check groups passed | Paused choices, real approach, cancellation, responsive notebook and native emulated touch |
 | Browser preservation regressions | 9 check groups passed | Survival, native v2 migration, touch, Canvas and standalone opening |
 | Build agreement / documentation links | Passed | Generated HTML matches source; local document references resolve |
 
@@ -26,6 +27,7 @@ in the ignored output directory.
 Run the commands in the [README validation section](../README.md#source-and-validation)
 from the repository root. The committed scripts are [rules](../tools/test.cjs),
 [browser smoke](../tools/browser-smoke.cjs), [generations](../tools/browser-generations.cjs)
+, [action bubbles](../tools/browser-bubbles.cjs)
 and [survival/touch regressions](../tools/browser-regressions.cjs).
 
 The browser scripts require Playwright and an installed Chromium. Set
@@ -130,3 +132,24 @@ through Pause. No page exceptions remained in executed browser scenarios.
 
 See [Phase 3.5 recommendations](PHASE35_HANDOFF.md) and
 [implemented balance rules](FAMILY_RULES.md).
+
+## Action-bubble follow-up
+
+The interaction sidebar has been replaced by an anchored menu of up to four
+choices. Selecting a citizen freezes simulation, including needs, NPC motion and
+aging. Choosing an action resumes ordinary time, navigates to that citizen and
+honors the existing shared social cooldown before applying the action. Movement,
+Escape, pause and Cancel interrupt the transient queue; it is not restored from a
+save. Lost targets, blocked routes and a 40-second catch-up limit cancel safely.
+
+New unit cases cover cooldown-preserving approach, missing/deceased targets,
+manual cancellation, short reply presentation and collision-free navigation around
+a building. The bubble browser suite verifies paused time/vitals/NPCs, genuine
+walking before a greeting, optional notebook privacy, cancellation, viewport fit
+at 1280×800, 390×844 and 844×390, and native emulated touch selection. Menu and
+reply screenshots were inspected locally. The full generation and native-storage
+suites also run with the new nested choices and Family birth action.
+
+The opening screen now uses one premise line; contextual prompts and optional Help
+carry the controls. Family rows show summary information, with traits, relationships
+and histories collapsed by default. No gameplay/save schema migration was required.

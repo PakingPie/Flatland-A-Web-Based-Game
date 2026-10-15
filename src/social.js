@@ -195,7 +195,7 @@ class SocialSystem {
     view(c) {
         const observed = observeCitizen(c), k = c.playerKnowledge, stage = this.stage(c);
         const facts = Object.entries(SOCIAL.factLabels).map(([key, label]) => ({ key, label, ...(k.discoveredFacts[key] ? copyJSON(k.discoveredFacts[key]) : { locked: true }) }));
-        return { id: c.id, name: k.discoveredFacts.name?.value || 'Unknown citizen', observed, facts,
+        return { adult: c.actual.life.ageYears >= 18, id: c.id, name: k.discoveredFacts.name?.value || 'Unknown citizen', observed, facts,
             relationship: { familiarity: k.relationship.familiarity, trust: k.relationship.trust, stage, label: SOCIAL.stages[stage] },
             rumors: copyJSON(k.rumors), inRange: this.nearby(c), cooldown: Math.max(0, SOCIAL.cooldown - (this.world.elapsed - k.relationship.lastAt)),
             remaining: k.relationship.day === Math.floor(this.world.elapsed / C.DAY) ? Math.max(0, SOCIAL.dailyLimit - k.relationship.today) : SOCIAL.dailyLimit,

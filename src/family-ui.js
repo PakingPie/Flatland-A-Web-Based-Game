@@ -21,9 +21,9 @@ class FamilyUI {
         if(!g.world.player.actual.life.alive) { if(g.world.family.candidates().length) return; g.setScreen('dead'); return; }
         g.setScreen(this.returnState==='paused'?'paused':'running');
     }
-    birth() { const r=this.game.world.family.birth(); $('familyOutcome').textContent=r.text; this.refresh(); this.game.saves.save('auto',true); }
+    birth() { const r=this.game.world.family.birth(); $('familyOutcome').textContent=briefReply(r,'birth'); this.refresh(); this.game.saves.save('auto',true); }
     advance(years) {
-        const g=this.game,r=g.world.family.advance(years); $('familyOutcome').textContent=r.text;
+        const g=this.game,r=g.world.family.advance(years); $('familyOutcome').textContent=r.ok?`${years} family years pass.`:briefReply(r,'advance');
         if(!g.world.player.actual.life.alive) g.die();
         this.refresh(); g.refreshUI(); g.renderer.snap(); g.renderer.map(); g.saves.save('auto',true);
     }
@@ -36,22 +36,23 @@ class FamilyUI {
     refresh() {
         const g=this.game, f=g.world.family, v=f.view(), p=g.world.player;
         $('familySummary').textContent=`Generation ${v.generation} · ${f.name(p)}, age ${Math.floor(p.actual.life.ageYears)} · Spouse: ${v.spouse}`;
-        $('familyBirthStatus').textContent=v.birthReason || 'Both partners are ready to consent to raising biological children.';
+        $('familyBirthStatus').textContent=v.birthReason.includes('Joint biological')?'Joint births require a male and female spouse.':v.birthReason || 'Ready to raise children.';
         $('familyBirthBtn').disabled=!!v.birthReason;
         $('closeFamilyBtn').disabled=!p.actual.life.alive && f.candidates().length>0;
-        $('successionStatus').textContent=!p.actual.life.alive ? (f.candidates().length ? 'Choose a living adult descendant to continue this world.' : 'The playable lineage has ended. No living adult descendant was eligible; minors cannot inherit control.') : v.canSucceed ? 'You may retire now and choose a living adult descendant.' : 'Raise children to adulthood (18). Voluntary retirement opens at age 40. On death, only living adult descendants can continue the lineage; minors cannot inherit control.';
+        $('successionStatus').textContent=!p.actual.life.alive ? (f.candidates().length ? 'Choose an adult heir to continue.' : 'No adult heir. This lineage has ended.') : `${f.candidates().length} adult heirs · Children mature at 18 · ${v.canSucceed?'You may retire now.':'Retire at 40.'}`;
         const refuge=!!g.world.refugeAt(p.x,p.y);
         for(const n of [1,5]) $(`advance${n}Btn`).disabled=!p.actual.life.alive || !refuge;
-        $('timeAdvanceStatus').textContent=refuge ? 'One survival day equals one family year. Refuge time advance supplies basic needs through community subsistence, preserves your pack, and processes aging and deaths. It stops if you die.' : 'Return to a refuge with health 35+, food and water 30+ to advance family years.';
+        $('timeAdvanceStatus').textContent=refuge ? 'Refuge years provide subsistence. Your pack is kept.' : 'Return to a refuge to advance years.';
         const list=$('familyMembers'); list.replaceChildren();
         for(const m of v.members) {
             const card=document.createElement('article'); card.className='family-member';
             const title=document.createElement('h3'); title.textContent=`${m.name}${m.current?' · You':''} · Generation ${m.generation}`;
             const details=document.createElement('p'); details.textContent=`Age ${m.age} · ${m.sex} · ${m.form} · ${m.alive ? (m.age<18?'Child':'Adult') : m.death}`;
+            const extra=document.createElement('details'), summary=document.createElement('summary'); summary.textContent='Traits & relationships';
             const traits=document.createElement('p'); traits.textContent=m.traits;
             const links=document.createElement('p'); links.textContent=`Parents: ${m.parents.join(', ') || 'Not recorded'} · Children: ${m.children.join(', ') || 'None'} · Siblings: ${m.siblings.join(', ') || 'None recorded'}`;
-            const eligibility=document.createElement('small'); eligibility.textContent=m.current?'Current playable character':m.eligible?'Eligible adult descendant':!m.alive?'Deceased':m.age<18?'Not eligible: minor':'Not a descendant of the current character';
-            card.append(title,details,traits,links,eligibility);
+            const eligibility=document.createElement('small'); eligibility.textContent=m.current?'Current playable character':m.eligible?'Adult heir':!m.alive?'Deceased':m.age<18?`Adult in ${18-m.age} years`:'Family member';
+            extra.append(summary,traits,links); card.append(title,details,eligibility,extra);
             if(m.eligible) { const b=document.createElement('button'); b.className='small-btn'; b.textContent=`Continue as ${m.name}`; b.disabled=!v.canSucceed; b.dataset.successor=m.id; b.addEventListener('click',()=>this.choose(m.id)); card.appendChild(b); }
             list.appendChild(card);
         }

@@ -26,13 +26,13 @@ let url = process.env.FLATLAND_URL;
     };
     try {
         let page = await open();
-        await page.getByRole('button', { name: 'Begin new expedition' }).click();
+        await page.locator('#startBtn').click();
         await page.evaluate(() => { FlatlandDebug.manual(); FlatlandDebug.advance(2); });
         const before = await page.evaluate(() => { FlatlandDebug.pause(); return FlatlandDebug.exportSave(); });
         assert.equal(await page.evaluate(() => FlatlandDebug.save()), true);
         await context.close(); context = null;
         page = await open();
-        await page.getByRole('button', { name: 'Continue saved expedition' }).click();
+        await page.locator('#continueBtn').click();
         const after = await page.evaluate(() => { FlatlandDebug.manual(); return FlatlandDebug.exportSave(); });
         assert.deepEqual(JSON.parse(after).payload, JSON.parse(before).payload);
         await page.screenshot({ path: path.join(output, 'baseline.png') });

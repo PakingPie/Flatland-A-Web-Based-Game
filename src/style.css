@@ -1006,77 +1006,33 @@ button {
 .secondary-row { flex-wrap:wrap; gap:8px }
 @media (max-width:720px) { #restDetails { font-size:9px } .modal .save-status { font-size:11px!important } }
 
-/* Phase 2A: one modeless citizen panel, never a second full-screen statistics HUD. */
-.citizen-panel { position:absolute; right:24px; top:96px; bottom:172px; width:360px; max-height:700px; padding:17px; pointer-events:auto; display:flex; flex-direction:column; z-index:5 }
-.citizen-heading { display:flex; align-items:center; justify-content:space-between; gap:12px }
-.citizen-heading h2 { font-size:20px; font-weight:550; margin:5px 0 0; line-height:1.3 }
-.citizen-heading .eyebrow { font-size:8px }
-#closeCitizenBtn { font-size:20px; padding:4px 12px }
-#citizenForm { color:var(--muted); font-size:10px; line-height:1.5; margin:9px 0 12px }
-.relationship-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:11px; color:var(--green) }
-#playerReputation { font-size:9px; color:var(--muted); text-align:right }
-.relationship-meters { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:12px 0; font-size:10px; color:var(--muted) }
-.relationship-meters label span { float:right; color:var(--ink) }
-.relationship-meters meter { display:block; width:100%; height:6px; margin-top:6px; border:0; accent-color:var(--green) }
-.social-tabs { display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:10px }
-.social-tabs button { background:none; border:0; border-bottom:2px solid transparent; padding:10px 8px; font-size:11px; color:var(--muted) }
-.social-tabs button[aria-selected=true] { color:var(--ink); border-bottom-color:var(--water) }
-.social-scroll { min-height:0; overflow:auto; overscroll-behavior:contain; padding-right:5px; flex:1; scrollbar-width:thin }
-#dialogueText { margin:3px 0 8px; font-size:12px; line-height:1.65; color:var(--ink); min-height:46px }
-#socialOutcome { font-size:10px; line-height:1.5; min-height:15px; margin:5px 0 12px }
-.social-positive { color:var(--green) } .social-negative { color:var(--coral) }
-#conversationOptions { display:grid; grid-template-columns:1fr; gap:6px }
-.topic { text-align:left; font-size:11px; line-height:1.4; background:#263b3d; border:1px solid var(--line); border-radius:5px; padding:9px 10px; min-height:36px }
-.topic[data-topic=family] { border-color:#665347 }
-#conversationStatus { flex-shrink:0; border-top:1px solid var(--line); padding-top:10px; margin-top:10px; font-size:10px; line-height:1.55; color:var(--water) }
-.social-warning,.knowledge-rule,.genetic-lock { font-size:10px; line-height:1.6; color:var(--muted) }
-.social-warning { color:var(--gold) }
-.fact-row { display:flex; flex-direction:column; gap:4px; border-bottom:1px solid #34464b70; padding:10px 0; font-size:11px; line-height:1.5 }
-.fact-row strong { font-weight:500; color:var(--ink) }
-.fact-row span { color:var(--muted); overflow-wrap:anywhere }
-.fact-row small { font-size:8px; letter-spacing:.07em; color:var(--water) }
-.locked { color:#809696!important; font-style:italic }
-.genetic-lock { border:1px dashed var(--line); border-radius:6px; padding:10px; margin:12px 0 }
-#notesView h3 { font-size:12px; font-weight:550 }
-.rumor { border-left:2px solid var(--gold); padding-left:9px; color:var(--gold); font-size:11px; line-height:1.6 }
-#knownRumors .locked { font-size:11px }
-.social-open .objectives,.social-open .map-panel { visibility:hidden }
-.touch .action:nth-child(4) { grid-column:auto }
-@media (max-width:1100px) and (min-width:721px) { .citizen-panel { width:330px; right:16px; padding:14px } }
-@media (max-width:720px) {
-  .citizen-panel { left:14px; right:14px; top:290px; bottom:148px; width:auto; padding:12px; max-height:none }
-  .touch .citizen-panel { bottom:173px }
-  .citizen-heading h2 { font-size:17px }
-  #citizenForm { margin:5px 0 7px; font-size:9px }
-  .relationship-meters { margin:8px 0 }
-  .social-tabs button { padding:7px 6px; font-size:10px }
-  #dialogueText { font-size:11px; min-height:0 }
-  #conversationOptions { grid-template-columns:1fr 1fr; gap:5px }
-  .topic { font-size:10px; padding:8px; min-height:42px }
-  .social-open #log,.social-open #location { display:none }
-  #conversationStatus { font-size:9px; margin-top:7px; padding-top:7px }
-}
-@media (max-height:500px) {
-  .citizen-panel { left:auto; right:14px; top:67px; bottom:18px; width:44%; padding:10px; max-height:none }
-  .touch .citizen-panel { bottom:18px }
-  .citizen-heading h2 { font-size:15px }
-  .citizen-heading .eyebrow { display:none }
-  #citizenForm { font-size:9px; margin:4px 0 }
-  .relationship-meters { margin:7px 0 }
-  .social-tabs { margin-bottom:6px }
-  .social-tabs button { padding:5px 6px; font-size:10px }
-  #conversationOptions { grid-template-columns:1fr 1fr }
-  .topic { min-height:40px; font-size:10px; padding:7px }
-  .social-open .bottom-center,.touch.social-open .bottom-center { left:183px; right:auto; width:calc(56% - 205px); max-width:280px; bottom:15px; transform:none }
-  .social-open .actionbar { display:grid; grid-template-columns:repeat(3,1fr); gap:4px }
-  .social-open .action { font-size:9px; padding:6px 3px; min-height:34px }
-  .social-open .action kbd { display:none }
-  .social-open #context { font-size:9px }
-  .social-open #log,.social-open #location { display:none }
-}
-
-#socialScrollHint { font-size:9px; line-height:1.5; color:var(--muted); margin-top:5px }
-@media (max-height:500px) { .touch #joystick { width:90px; height:90px; bottom:18px } }
+/* World-anchored action menu: no sidebar or forced notebook. */
+.action-bubble { position:fixed; width:278px; max-width:calc(100vw - 20px); max-height:calc(100dvh - 20px); padding:14px; border-radius:22px; z-index:7; pointer-events:auto; box-shadow:0 12px 36px #0006; overflow:auto; }
+.bubble-heading { display:flex; gap:8px; align-items:center; }
+.bubble-heading > div { flex:1; min-width:0; }
+.bubble-heading h2 { font-size:16px; margin:0 0 3px; overflow-wrap:anywhere; }
+.bubble-heading small { color:var(--muted); font-size:11px; }
+.bubble-close { border:0; border-radius:50%; background:#2a3e42; width:36px; height:36px; padding:0; flex:none; font-size:22px; }
+#bubbleSummary { font-size:10px; color:var(--green); margin:10px 0; text-transform:capitalize; }
+#bubbleOptions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.bubble-action { border-radius:22px; min-height:46px; padding:9px 8px; border:1px solid #4c6664; background:#263e40; font-size:12px; display:flex; gap:6px; align-items:center; justify-content:center; }
+.bubble-action:hover,.bubble-action:focus-visible { background:#3a5753; border-color:var(--green); }
+.bubble-action span { color:var(--green); font-size:18px; }
+#bubbleHint { display:block; font-size:10px; line-height:1.4; color:var(--muted); margin-top:10px; }
+#bubbleDetails { margin-top:12px; font-size:11px; line-height:1.5; }
+#relationshipNumbers { color:var(--green); }
+.fact-row { display:flex; flex-direction:column; gap:3px; border-top:1px solid var(--line); padding-top:8px; font-size:11px; }
+.fact-row small { color:var(--water); font-size:9px; }
+.rumor { border-left:2px solid var(--gold); padding-left:8px; color:var(--gold); font-size:11px; }
+.speech-bubble { position:fixed; max-width:min(280px,calc(100vw - 20px)); border-radius:18px; padding:12px 16px; pointer-events:none; z-index:6; box-shadow:0 6px 24px #0005; }
+#dialogueText { margin:0; font-size:13px; line-height:1.45; }
+#socialOutcome { display:block; color:var(--green); font-size:10px; margin-top:5px; }
+#speechBubble[data-outcome=negative] #socialOutcome { color:var(--coral); }
+#cancelApproachBtn { pointer-events:auto; margin-bottom:5px; min-height:36px; }
+.knowledge-rule { color:var(--muted); font-size:11px; }
+.modal details { border-top:1px solid var(--line); padding:12px 0; font-size:12px; line-height:1.5; }
+.modal summary { cursor:pointer; color:var(--green); }
+@media (max-height:500px) { .action-bubble { width:278px; padding:11px; } }
 
 /* Family register is a paused, scrollable modal on desktop and touch. */
 .family-modal { max-width:780px; text-align:left; }
@@ -1088,3 +1044,9 @@ button {
 .family-record { white-space:pre-line; overflow-wrap:anywhere; }
 #familyOutcome { color:var(--gold); }
 #romanceOptions .topic, #birthBtn { width:100%; text-align:left; margin-bottom:5px; }
+
+.family-member { padding:10px 12px; margin:8px 0; }
+.family-member details { padding:6px 0 0; border:0; }
+.family-member summary { font-size:11px; }
+.family-member h3 { font-size:13px; }
+.action-bubble,.speech-bubble { background:#14262b; }

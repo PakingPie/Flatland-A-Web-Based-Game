@@ -1,4 +1,4 @@
-# Implemented family and inheritance rules (v0.3.0)
+# Implemented family and inheritance rules (v0.3.1)
 
 These adjustable gameplay defaults resolve Phase 2B/3 implementation questions.
 They are not statements about real genetics or moral worth.
@@ -9,6 +9,10 @@ Unrelated adults (18+) can court. Stable pair records are independent of the cur
 player. Attraction uses individual sex preferences, a seeded personal spark, public
 reputation and social expectations. High trust cannot override lack of attraction.
 Preferences are private until discussed; marriage never reveals genomes.
+
+Citizen menus pause the world while choosing. An action resumes time, approaches
+the target and waits out any existing cooldown before interaction. Movement,
+Escape or Cancel stops the approach; queued actions are transient and not saved.
 
 Courtship shares the three-second social cooldown and six-exchange daily budget.
 There is a further cap of three romance actions per pair per day, diminishing gains

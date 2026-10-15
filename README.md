@@ -1,5 +1,5 @@
 # The Flatland
-## Version 0.3.0 — Courtship, families and playable generations
+## Version 0.3.1 — Action bubbles and playable generations
 
 A lightweight offline Canvas survival and society simulation inspired by Edwin
 Abbott's *Flatland*. Survive as an irregular triangle, meet citizens, court a
@@ -22,8 +22,8 @@ storage durability has not been established.
 ## Playing a generation
 
 1. Gather food and water, eat/drink from your pack, and rest at refuges to heal.
-2. Approach citizens, introduce yourself and vary conversation topics over days.
-3. Discuss partnership preferences and try different courtship activities. Trust
+2. Click or tap a citizen and choose Greet. You walk over automatically.
+3. Discuss partnership preferences and try different courtship activities in the Romance bubble. Trust
    and attraction are separate; an excellent friend can decline romance.
 4. Propose once affection, trust and mutual interest are established. Marriage
    lowers food/water use by 12% and improves playable refuge healing.
@@ -54,17 +54,28 @@ require a male and female spouse. Marriage and biological parentage are separate
 | Eat / drink | F / R | Eat / Drink |
 | Rest / stand | Space | Rest |
 | Talk / inspect | T / click citizen | Talk / tap citizen |
-| Conversation | 1–7 or buttons | Scroll and tap options |
-| Courtship / proposal | Citizen panel buttons | Scroll and tap options |
+| Conversation | Action bubble; 1–4 select visible choices | Tap an action |
+| Courtship / proposal | Romance → actions / Commitment | Same bubble choices |
 | Family, years, heir selection | Condition panel or Pause → Family | Same buttons |
 | Close citizen / family panel | Escape or close button | Close button |
 | Pause / help | P / H | Pause / Help |
 | Save, load, export, import | Pause menu | Pause menu |
 
-Conversation does **not** pause survival. Family does. Walking closes the citizen
-panel. Gathering fills your pack without automatically eating/drinking. Each pack
+Citizen menus and Family **pause the world while choosing**. Selecting an action
+resumes time and walks over automatically; brief replies fade on their own.
+Manual movement, Escape or Cancel stops a queued approach. Details opens the
+optional notebook. Gathering fills your pack without automatically eating/drinking. Each pack
 holds eight. Food restores up to 38, water 45, capped at 100. Field rest restores
 stamina and reduces consumption; refuge rest heals when food/water both exceed 30.
+
+## A small menu, a brief reply
+
+New lives start without an instruction wall. Context prompts teach movement,
+gathering and using supplies. Citizen bubbles show at most four choices, with
+more topics one level deeper. Greet, Talk, Romance and Family use existing rules;
+Details holds discovered facts and unconfirmed rumors. Short speech bubbles
+replace mechanical explanations after actions. Family traits and histories expand
+on demand. Help retains optional rule explanations.
 
 ## Relationships and inheritance
 
@@ -136,6 +147,7 @@ starts its own ephemeral localhost server and isolated context/profile:
 ```sh
 node tools/browser-smoke.cjs
 node tools/browser-generations.cjs
+node tools/browser-bubbles.cjs
 node tools/browser-regressions.cjs
 ```
 

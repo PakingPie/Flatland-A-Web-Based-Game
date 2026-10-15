@@ -4,11 +4,11 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
-const files = ['core','genetics','characters','navigation','world','social','romance','family','persistence'];
+const files = ['core','genetics','characters','navigation','world','social','romance','family','approach','persistence'];
 const storage=new Map();
 const context = vm.createContext({ console, document: { getElementById: () => ({textContent:'', hidden:true}), querySelectorAll:()=>[] }, performance, structuredClone,
     localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}, confirm:()=>true });
-vm.runInContext(files.map(f => fs.readFileSync(`src/${f}.js`, 'utf8')).join('\n') + '\nglobalThis.rules = {World,RNG,SaveStore,hash,ROMANCE,emptyRelationship,inheritGenome,normalizeGenome,validateGenome,GENETICS,FAMILY};', context);
+vm.runInContext(files.map(f => fs.readFileSync(`src/${f}.js`, 'utf8')).join('\n') + '\nglobalThis.rules = {World,RNG,SaveStore,hash,ROMANCE,emptyRelationship,inheritGenome,normalizeGenome,validateGenome,GENETICS,FAMILY,CitizenApproach,briefReply};', context);
 const { World, RNG, SaveStore, hash, emptyRelationship } = context.rules;
 const { inheritGenome, normalizeGenome, validateGenome } = context.rules;
 const json = x => JSON.parse(JSON.stringify(x));
@@ -192,4 +192,36 @@ test('current player identity follows a stable ID rather than a population array
     const {w}=familyWorld();const children=w.family.birth().ids;mature(w);assert.equal(w.family.succeed(children[0]).ok,true);
     const store=saveFor(w),data=JSON.parse(store.encode());data.payload.characters.reverse();data.checksum=hash(JSON.stringify(data.payload));
     const restored=store.decode(JSON.stringify(data)).world;assert.equal(restored.player.id,w.player.id);assert.deepEqual(json(restored.player.actual),json(w.player.actual));assert.equal(restored.player.ai,null);
+});
+test('approach waits until nearby and respects the existing interaction cooldown',()=>{
+    const w=new World('approach'), c=w.npcs[0];c.x=c.px=1728;c.y=c.py=1092;
+    let called=0;const q=new context.rules.CitizenApproach(w,()=>called++,()=>assert.fail('Route failed'));
+    q.start(c.id,{kind:'social',topic:'introduce'});assert.equal(called,0);
+    for(let i=0;i<300&&q.pending;i++){w.elapsed+=1/60;const m=q.movement(1/60);if(m)w.move(w.player,m.x*136/60,m.y*136/60);}
+    assert.equal(called,1);assert.equal(q.pending,null);
+    c.playerKnowledge.relationship.lastAt=w.elapsed;q.start(c.id,{});q.movement(.1);assert.equal(called,1);
+    w.elapsed+=3.1;q.movement(.1);assert.equal(called,2);
+});
+test('queued approach can cancel and handles missing/deceased targets without interaction',()=>{
+    const w=new World('approach'),c=w.npcs[0],errors=[];let called=0;
+    const q=new context.rules.CitizenApproach(w,()=>called++,message=>errors.push(message));q.start(c.id,{});q.cancel();assert.equal(q.movement(1),null);
+    q.start('missing',{});q.movement(.1);assert.equal(errors.length,1);c.actual.life.alive=false;q.start(c.id,{});q.movement(.1);assert.equal(errors.length,2);assert.equal(called,0);
+});
+test('brief replies preserve a character line without exposing mechanical commentary',()=>{
+    const reply=context.rules.briefReply({text:'“Yes. Let us build a life together.” Household support lowers food and water use by 12%.',ok:true},'propose');
+    assert.ok(reply.includes('Yes'));assert.ok(!reply.includes('12%'));assert.ok(reply.length<60);
+    assert.equal(context.rules.briefReply({text:'A long birth event.',ok:true,ids:['a','b']},'birth'),'2 children born. Meet them in Family.');
+});
+test('automatic approach takes a collision-free route around a building',()=>{
+    const w=new World('approach-obstacles'),c=w.npcs[0];let fixture;
+    for(const b of w.obstacles.filter(b=>b.kind==='building')) {
+        const left={x:b.x-32,y:b.y+b.h/2},right={x:b.x+b.w+32,y:b.y+b.h/2};
+        if(!w.circleClear(left.x,left.y,27)||!w.circleClear(right.x,right.y,27))continue;
+        const path=w.nav.path(left.x,left.y,right.x,right.y);
+        if(path?.length>1){fixture={left,right};break;}
+    }
+    assert.ok(fixture);Object.assign(w.player,fixture.left);Object.assign(c,fixture.right);let arrived=false;
+    const q=new context.rules.CitizenApproach(w,()=>arrived=true,message=>assert.fail(message));q.start(c.id,{});
+    for(let i=0;i<2000 && q.pending;i++){w.elapsed+=1/60;const m=q.movement(1/60);if(m)w.move(w.player,m.x*136/60,m.y*136/60);assert.ok(w.circleClear(w.player.x,w.player.y,w.player.body.radius-.001));}
+    assert.ok(arrived);
 });

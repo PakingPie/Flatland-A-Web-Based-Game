@@ -2,7 +2,7 @@
 
 **Design baseline:** v0.3 · 2026-10-15  
 **Project:** Browser-based, two-dimensional survival, society, and generational evolution game inspired by Edwin A. Abbott's *Flatland*.  
-**Status:** Phase 1.1, 2A, 2B and 3 are implemented in [the playable build](../the-flatland.html), v0.3.0. See [current QA](QA_REPORT.md), [implemented family rules](FAMILY_RULES.md) and [checkpoints](IMPLEMENTATION_STATUS.md). Later phases remain planned.
+**Status:** Phase 1.1, 2A, 2B and 3 are implemented in [the playable build](../the-flatland.html), v0.3.1. See [current QA](QA_REPORT.md), [implemented family rules](FAMILY_RULES.md) and [checkpoints](IMPLEMENTATION_STATUS.md). The usability follow-up adds anchored action bubbles, automatic approach, paused choices and concise tutorials. Later phases remain planned.
 
 **Repository and license:** [PakingPie/Flatland-A-Web-Based-Game](https://github.com/PakingPie/Flatland-A-Web-Based-Game) is public and uses the [MIT license](../LICENSE), Copyright (c) 2026 PerkinPie. Public deployment is a separate decision.
 
@@ -15,8 +15,8 @@
 | 1 — Living World | **Implemented; original [baseline preserved](../baseline/the-flatland-phase1.html)** | Canvas world, movement, resources, survival, wandering NPCs, minimap | Explore and complete a three-day survival expedition |
 | **1.1 — Polish & Persistence** | **Implemented in [the-flatland.html](../the-flatland.html), v0.2.0; [QA evidence and limits](QA_REPORT.md)** | HUD/camera fixes, clearer rest feedback, saves | Resume the same game reliably, including NPC/resource state |
 | **2A — Living Society** | **Implemented in [the-flatland.html](../the-flatland.html), v0.2.0; [QA evidence and limits](QA_REPORT.md)** | Citizen identities, conversation, trust, rumors and partial knowledge | Introduce yourself, discover limited information, and retain relationship progress |
-| 2B — Courtship & Marriage | **Implemented, v0.3.0** | Preferences, attraction, courtship, consent, same-sex marriage and household support | Marriage persists through save/load |
-| 3 — Family, Inheritance & Evolution | **Implemented, v0.3.0** | Multiple offspring, strict genetics, aging, genealogy and playable succession | Verified daughter control in Generation 2 and Generation 3 births |
+| 2B — Courtship & Marriage | **Implemented, v0.3.1** | Preferences, attraction, courtship, consent, same-sex marriage and household support | Marriage persists through save/load |
+| 3 — Family, Inheritance & Evolution | **Implemented, v0.3.1** | Multiple offspring, strict genetics, aging, genealogy and playable succession | Verified daughter control in Generation 2 and Generation 3 births |
 | 3.5 — Architecture hardening | Planned | Stable character registry, migration boundaries, population sustainability | Preserve current gameplay and legacy fixtures; see [handoff](PHASE35_HANDOFF.md) |
 | 4 — Combat & Law | Planned | Shape-specific attacks, danger, guards, injuries, crimes | Combat and legal reactions follow geometry and social context |
 | 5 — Civilization | Planned | Trade, property, class mobility, politics, institutions and reform | Multiple viable long-term paths beyond becoming a circle |
@@ -38,7 +38,7 @@ The original self-contained HTML5 Canvas prototype is preserved in the [Phase 1 
 
 ## Phase 1.1 — Polish & Persistence
 
-**Status:** Originally implemented in v0.2.0 and preserved in the current [v0.3.0 build](../the-flatland.html). Native Chromium saving, shutdown and reopen now pass in [current QA](QA_REPORT.md); other browser environments remain unverified.
+**Status:** Originally implemented in v0.2.0 and preserved in the current [v0.3.1 build](../the-flatland.html). Native Chromium saving, shutdown and reopen now pass in [current QA](QA_REPORT.md); other browser environments remain unverified.
 
 **Scope**
 
@@ -72,7 +72,7 @@ The original self-contained HTML5 Canvas prototype is preserved in the [Phase 1 
 
 ## Phase 2B — Courtship & Marriage
 
-**Status:** Implemented in v0.3.0. Deterministic and real-browser evidence is recorded in [QA](QA_REPORT.md).
+**Status:** Implemented in v0.3.1. Deterministic and real-browser evidence is recorded in [QA](QA_REPORT.md).
 
 - Romantic compatibility, preferences, affection, agency, consent, rejection, and marriage/partnership status.
 - Marriage eligibility is **separate** from biological reproduction eligibility.
@@ -87,7 +87,7 @@ The original self-contained HTML5 Canvas prototype is preserved in the [Phase 1 
 
 ## Phase 3 — Family, Inheritance & Evolution
 
-**Status:** Implemented in v0.3.0, including playable daughters, genealogy, aging and save migration. The founding population is finite: no autonomous NPC births or immigration yet.
+**Status:** Implemented in v0.3.1, including playable daughters, genealogy, aging and save migration. The founding population is finite: no autonomous NPC births or immigration yet.
 
 ### Multiple offspring and succession
 

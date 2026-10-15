@@ -15,7 +15,7 @@ class Renderer {
         window.addEventListener('resize', () => this.resize());
         if (typeof ResizeObserver !== 'undefined') {
             this.layoutObserver = new ResizeObserver(() => { this.layoutDirty = true; });
-            for (const el of document.querySelectorAll('.topbar,.vitals,.objectives,.map-panel,.bottom-center,#joystick,#citizenPanel')) this.layoutObserver.observe(el);
+            for (const el of document.querySelectorAll('.topbar,.vitals,.objectives,.map-panel,.bottom-center,#joystick')) this.layoutObserver.observe(el);
         }
     }
     resize() { const r = this.game.canvas.getBoundingClientRect(); this.w = Math.max(1, r.width); this.h = Math.max(1, r.height); this.dpr = Math.min(devicePixelRatio || 1, 2); this.game.canvas.width = Math.round(this.w * this.dpr); this.game.canvas.height = Math.round(this.h * this.dpr); this.clampCamera(); }
@@ -23,7 +23,7 @@ class Renderer {
     // Select a stable clear screen anchor on layout changes, not every simulation step.
     measureLayout() {
         const blockers = [];
-        if (!$('hud').hidden) for (const el of document.querySelectorAll('.topbar,.vitals,.objectives,.map-panel,.bottom-center,#joystick,#citizenPanel')) {
+        if (!$('hud').hidden) for (const el of document.querySelectorAll('.topbar,.vitals,.objectives,.map-panel,.bottom-center,#joystick')) {
             const r = el.getBoundingClientRect();
             if (r.width && r.height && getComputedStyle(el).display !== 'none' && getComputedStyle(el).visibility !== 'hidden') blockers.push({ x: r.left, y: r.top, w: r.width, h: r.height });
         }
@@ -281,6 +281,10 @@ class Renderer {
         const x = lerp(c.px, c.x, alpha), y = lerp(c.py, c.y, alpha), a = moveAngle(c.prevAngle, c.angle, alpha);
         ctx.save();
         ctx.translate(x, y);
+        const ui=this.game.socialUI;
+        if(!isPlayer && (ui?.selectedId===c.id || ui?.controller?.pending?.id===c.id)) {
+            ctx.beginPath();ctx.arc(0,0,c.body.radius+8,0,TAU);ctx.strokeStyle='#a6cfaa';ctx.lineWidth=2;ctx.stroke();
+        }
         if (isPlayer) {
             ctx.beginPath();
             ctx.arc(0, 0, c.body.radius + 8, 0, TAU);
