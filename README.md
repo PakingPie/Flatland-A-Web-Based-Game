@@ -33,6 +33,9 @@ storage durability has not been established.
    and attraction are separate; an excellent friend can decline romance.
 4. Propose once affection, trust and mutual interest are established. Marriage
    lowers food/water use by 12% and improves playable refuge healing.
+   Under Affection → Commitment, **Discuss children** explains current readiness.
+   A hesitant spouse can reconsider as trust and affection grow; asking repeatedly
+   does not increase willingness.
 5. Open **Family & succession** from your condition panel or Pause. Eligible,
    consenting spouses can have two to four individually inherited children.
 6. At a refuge use **Live 1 / 5 family years**. Community subsistence covers needs
@@ -89,6 +92,9 @@ Courtship shares the existing three-second social cooldown and six meaningful
 exchanges per citizen per day, with a further three-action romance cap, diminishing
 gains and repeated-topic limits. NPC preferences, attraction, social expectations
 and willingness to raise children vary. Separation retains history and children.
+Family willingness combines a stable personal preference with the current bond.
+Varied relationship actions can help hesitant spouses become willing, while falling
+trust/affection can make them unready again. F8 shows baseline and current values.
 
 Observations, claims and unverified rumors remain distinct. Marriage never
 reveals private ancestry. The family register records household births, parents,
@@ -182,6 +188,7 @@ node tools/browser-bubbles.cjs
 node tools/browser-regressions.cjs
 node tools/browser-architecture.cjs
 node tools/browser-inspector.cjs
+node tools/browser-parenthood.cjs
 ```
 
 Use `FLATLAND_NODE_MODULES` for a bundled Playwright package directory and

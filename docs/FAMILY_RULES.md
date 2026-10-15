@@ -24,11 +24,38 @@ refuge healing of 2.1 health per second instead of 1.8.
 
 Birth eligibility requires living opposite-sex spouses aged 18–60, affection 42+,
 trust 18+, mutual willingness to raise children, playable health 35+ and food/water
-30+. Some NPCs decline parenthood. Pair births have a two-family-year cooldown.
+30+. Hesitant spouses can reconsider as the relationship grows. Pair births have a two-family-year cooldown.
 Cohort probabilities are 65% two children, 30% three, 5% four. Sex is independently
 50/50, so both sexes are not guaranteed within a cohort. Birth is an immediate
 abstract household event; there is no pregnancy queue. The current budget is 256
 individuals, including deceased family records.
+
+### Relationship-dependent willingness
+
+The user selected allowing hesitant spouses to reconsider. The seeded family-life
+preference remains the baseline; current willingness adds relationship support:
+
+- Trust contributes 0 below 30, increasing linearly to +0.08 at 70.
+- Affection contributes 0 below 50, increasing linearly to +0.08 at 90.
+- Current willingness is baseline plus those contributions, capped at 1. Birth
+  needs willingness 0.30+, as well as the existing trust 18+ and affection 42+.
+
+Every existing baseline can cross the threshold with a strong enough bond. Support
+is recomputed from the current relationship; it can fall if trust or affection
+falls. It is not a permanent permission flag. Health, supplies, marriage, biological
+eligibility and birth cooldown remain separate requirements. Rank and hidden
+ancestry do not affect willingness.
+
+**Discuss children** is an optional informational action under Romance/Affection →
+Commitment. It explains trust, closeness or hesitation and acknowledges same-sex
+biological limits. It shares the social cooldown and romance daily budget, but
+awards no trust/affection/willingness and writes no new topic counter. Varied
+relationship actions grow the bond; repeated requests cannot farm willingness.
+
+The Family screen now distinguishes trust, affection and hesitation instead of
+one generic refusal. F8 shows baseline, current willingness and each contribution.
+Readiness is derived from existing saved fields, so legacy saves need no restart,
+schema migration or new stored preference. NPC population renewal is unchanged.
 
 Every child has a distinct genome, stable ID, two biological parents, birth record,
 generation and independent life/runtime state. Female line-form children retain

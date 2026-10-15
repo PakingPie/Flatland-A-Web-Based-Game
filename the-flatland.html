@@ -2084,7 +2084,7 @@ class SocialSystem {
 // trust is a prerequisite for intimacy, never a substitute for attraction.
 const ROMANCE = Object.freeze({ affectionToMarry: 42, trustToMarry: 18,
     topics: { preferences: 'Discuss partnership preferences', compliment: 'Offer a sincere compliment',
-        outing: 'Invite a quiet walk', commitment: 'Discuss a shared future', propose: 'Propose marriage', separate: 'End this marriage' } });
+        outing: 'Invite a quiet walk', commitment: 'Discuss a shared future', children:'Discuss children', propose: 'Propose marriage', separate: 'End this marriage' } });
 class RomanceSystem {
     constructor(world) { this.world = world; this.pairs = {}; this.marriages = []; }
     records() { return this.world.registry.all(); }
@@ -2095,6 +2095,18 @@ class RomanceSystem {
             independence: rng.next(), reputation: rng.next(), familyLife: rng.range(.25, 1) };
     }
     key(a, b) { return [a.id, b.id].sort().join('|'); }
+    parenthoodReadiness(a,b) {
+        // Derived from existing relationship state, never a permanent yes or a
+        // reward for repeated requests. No new saved fields or RNG consumption.
+        const base=this.preferences(b).familyLife, pair=this.pairs[this.key(a,b)];
+        const trust=b.playerKnowledge.relationship.trust, affection=pair?.affection || 0;
+        const trustSupport=.08*clamp((trust-30)/40,0,1), affectionSupport=.08*clamp((affection-50)/40,0,1);
+        const willingness=clamp(base+trustSupport+affectionSupport,0,1);
+        const reason=trust<ROMANCE.trustToMarry ? 'Build more trust together before raising children.'
+            : affection<ROMANCE.affectionToMarry ? 'Grow closer through shared time before raising children.'
+            : willingness<.3 ? 'Your spouse feels unsure about parenthood. Spend time strengthening your bond.' : '';
+        return {base,willingness,trustSupport,affectionSupport,trust,affection,ready:!reason,reason};
+    }
     pair(a, b) {
         const key = this.key(a, b);
         return this.pairs[key] ||= { ids: [a.id, b.id].sort(), affection: 0, status: 'none', knownBy: [],
@@ -2132,8 +2144,21 @@ class RomanceSystem {
         if (pair.day !== day) { pair.day = day; pair.today = 0; pair.topics = {}; }
         if (r.today >= SOCIAL.dailyLimit || pair.today >= 3) return result('Let us leave room for tomorrow.', 'daily-limit');
         r.lastAt = pair.lastAt = time; r.today++; pair.today++;
-        const repeated = pair.topics[topic] || 0; pair.topics[topic] = repeated + 1;
         const finish = (text, outcome = 'refused') => { pair.lastOutcome = text; return result(text, outcome); };
+        if(topic==='children') {
+            // An informational check uses the shared budget but creates no new
+            // saved topic counter and gives no affection/trust/willingness gains.
+            if(this.spouse(a)?.id!==b.id && (this.spouse(a) || this.spouse(b))) return finish('“An existing marriage must be resolved before we make family plans.”');
+            const readiness=this.parenthoodReadiness(a,b);
+            if(readiness.trust<ROMANCE.trustToMarry) return finish('“I need to feel more trust between us before raising children.”');
+            if(readiness.affection<ROMANCE.affectionToMarry) return finish('“I need us to grow closer before we plan for children.”');
+            if(!readiness.ready) return finish('“I’m still unsure about parenthood, but I’m open to revisiting it as we grow closer.”');
+            if(a.actual.identity.sex===b.actual.identity.sex) return finish('“I’d like a family together, though we can’t have joint biological children.”','positive');
+            if(this.spouse(a)?.id!==b.id) return finish('“I can imagine raising children together once we choose a shared commitment.”','positive');
+            if([a,b].some(c=>c.actual.life.ageYears>FAMILY.fertileUntil)) return finish('“I’d like a family with you, but we’re past the age for biological births.”','positive');
+            return finish('“I’d like us to have children when we’re healthy and supplied.”','positive');
+        }
+        const repeated = pair.topics[topic] || 0; pair.topics[topic] = repeated + 1;
         if (repeated) return finish('We have already discussed that today. Affection needs more than repetition.');
         if (topic === 'preferences') {
             if (!pair.knownBy.includes(a.id)) pair.knownBy.push(a.id);
@@ -2288,7 +2313,8 @@ class FamilySystem {
         if (a.actual.identity.sex === b.actual.identity.sex) return 'Your marriage provides household support. Joint biological births require a male and female parent under the current inheritance rules.';
         if ([a,b].some(c=>c.actual.life.ageYears < FAMILY.adult || c.actual.life.ageYears > FAMILY.fertileUntil)) return 'Both biological parents must be aged 18–60.';
         const pair = this.world.romance.pair(a,b);
-        if (pair.affection < ROMANCE.affectionToMarry || b.playerKnowledge.relationship.trust < ROMANCE.trustToMarry || this.world.romance.preferences(b).familyLife < .3) return 'Your spouse is not ready to consent to raising children.';
+        const readiness=this.world.romance.parenthoodReadiness(a,b);
+        if(!readiness.ready) return readiness.reason;
         if (this.year - pair.lastBirthYear < FAMILY.birthCooldown) return `Allow ${Math.ceil(FAMILY.birthCooldown - (this.year-pair.lastBirthYear))} more family year(s) between births.`;
         if (this.records().length > FAMILY.maxPopulation - 4) return 'This dynasty has reached the current population budget.';
         if (a.vitals.health < 35 || a.vitals.hunger < 30 || a.vitals.thirst < 30) return 'Recover your health and supplies before expanding the household.';
@@ -3800,7 +3826,7 @@ class SocialUI {
         const w=this.game.world;
         const result=action.kind==='social'?w.social.interact(id,action.topic):w.romance.interact(id,action.topic);
         const changes=result.changes;
-        const cue=action.topic==='propose' && result.ok?'♥ Married':changes?.trust>0?'Trust ↑':changes?.trust<0?'Trust ↓':action.kind==='romance'&&result.ok?'♥ Affection ↑':'';
+        const cue=action.topic==='children'?'Family plans':action.topic==='propose' && result.ok?'♥ Married':changes?.trust>0?'Trust ↑':changes?.trust<0?'Trust ↓':action.kind==='romance'&&result.ok?'♥ Affection ↑':'';
         const reply=action.topic==='introduce'&&result.ok?`“I’m ${w.social.view(w.social.citizen(id)).name}.”`:
             result.ok?({compliment:'“That’s kind of you.”',outing:'“A walk sounds lovely.”',commitment:'“I can imagine a life together.”'}[action.topic] || briefReply(result,action.topic)):briefReply(result,action.topic);
         this.say(id,reply,cue,result.outcome);
@@ -3819,7 +3845,7 @@ class SocialUI {
         if(this.group==='talk') return [social('Chat','chat'),social('Interests','interests'),group('More topics','stories')];
         if(this.group==='stories') return [social('Work','occupation'),social('Society','district'),social('Family stories','family'),social('Rumors','rumor')];
         if(this.group==='romance') return [love('Compliment','compliment'),love('Invite out','outing'),love('Our future','commitment'),group('Commitment','commitment')];
-        if(this.group==='commitment') return [love('Preferences','preferences','◇'),love('Propose','propose'),...(romance.status==='married'?[love('Separate','separate','↗')]:[])];
+        if(this.group==='commitment') return [love('Preferences','preferences','◇'),love('Discuss children','children'),love('Propose','propose'),...(romance.status==='married'?[love('Separate','separate','↗')]:[])];
         if(this.group==='details') return [];
         if(!v.introduced) return [social('Greet','introduce','◌'),details];
         if(romance.status==='married') return [group('Talk','talk','◌'),group('Affection','romance','♡'),{label:'Family',icon:'⌂',action:{kind:'family'}},details];
@@ -4014,6 +4040,7 @@ class InformationInspector {
         if(!c) { $('inspectorSummary').textContent='No matching records.'; $('inspectorRecord').textContent=''; return; }
         const a=c.actual,genome=a.genome,spouse=w.romance.spouse(c),name=id=>w.registry.get(id)?.actual.identity.name || id || 'None';
         const preferences=w.romance.preferences(c),pair=c.id===w.player.id?null:w.romance.pairs[w.romance.key(w.player,c)] || null;
+        const readiness=c.id===w.player.id?null:w.romance.parenthoodReadiness(w.player,c);
         const summary=[
             `${a.identity.name} · ${c.id} · ${a.identity.sex} · age ${a.life.ageYears.toFixed(2)} · ${a.life.alive?'Living':a.life.deathCause || 'Deceased'}`,
             `Visible form: ${c.body.visibleType} · Generation ${a.lineage.generation}`,
@@ -4023,11 +4050,12 @@ class InformationInspector {
             `Mother: ${name(a.lineage.motherId)} · Father: ${name(a.lineage.fatherId)}`,
             `Children: ${a.lineage.childrenIds.map(name).join(', ') || 'None'} · Spouse: ${spouse?name(spouse.id):'None'}`,
             `Health ${c.vitals.health.toFixed(1)} · Food ${c.vitals.hunger.toFixed(1)} · Water ${c.vitals.thirst.toFixed(1)} · Stamina ${c.vitals.stamina.toFixed(1)}`,
-            `Partner preferences: ${preferences.sexes.join(', ')} · Willingness for family life: ${preferences.familyLife.toFixed(3)}`,
+            `Partner preferences: ${preferences.sexes.join(', ')} · Baseline family preference: ${preferences.familyLife.toFixed(3)}`,
+            ...(readiness?[`Current willingness: ${readiness.willingness.toFixed(3)} · Trust support +${readiness.trustSupport.toFixed(3)} · Affection support +${readiness.affectionSupport.toFixed(3)}`]:[]),
             `Trust ${c.playerKnowledge.relationship.trust.toFixed(1)} · Familiarity ${c.playerKnowledge.relationship.familiarity.toFixed(1)} · Affection ${pair?.affection.toFixed(1) || '0.0'}`
         ];
         $('inspectorSummary').textContent=summary.join('\n');
-        $('inspectorRecord').textContent=JSON.stringify({character:c,romanticPreferences:preferences,
+        $('inspectorRecord').textContent=JSON.stringify({character:c,romanticPreferences:preferences,parenthoodReadiness:readiness,
             compatibilityWithPlayer:c.id===w.player.id?null:w.romance.compatibility(w.player,c),
             closeKinToPlayer:w.romance.isCloseKin(w.player,c),
             pairs:Object.values(w.romance.pairs).filter(p=>p.ids.includes(c.id)),
@@ -4098,7 +4126,8 @@ if (new URLSearchParams(location.search).get('debug') === '1') {
         interact(id, topic) { return game.world.social.interact(id, topic); },
         romance(id, topic) { return game.world.romance.interact(id, topic); },
         familyView() { return game.world.family.view(); },
-        courtshipCandidate(sex='female') { const w=game.world; return w.npcs.find(c=>c.actual.life.alive && c.actual.identity.sex===sex && c.actual.life.ageYears>=18 && c.actual.life.ageYears<=55 && c.actual.profile?.personality.warmth>.5 && !w.romance.isCloseKin(w.player,c) && w.romance.compatibility(w.player,c).ok && w.romance.preferences(c).familyLife>=.3)?.id || null; },
+        parenthoodReadiness(id) { const w=game.world,c=w.registry.get(id); if(!c || c===w.player) throw new Error('Choose another character'); return clone(w.romance.parenthoodReadiness(w.player,c)); },
+        courtshipCandidate(sex='female',familyPreference='ready') { const w=game.world; return w.npcs.find(c=>c.actual.life.alive && c.actual.identity.sex===sex && c.actual.life.ageYears>=18 && c.actual.life.ageYears<=55 && c.actual.profile?.personality.warmth>.5 && !w.romance.isCloseKin(w.player,c) && w.romance.compatibility(w.player,c).ok && (familyPreference==='hesitant'?w.romance.preferences(c).familyLife<.3:w.romance.preferences(c).familyLife>=.3))?.id || null; },
         familyBirth() { return game.world.family.birth(); },
         advanceYears(years) { const r=game.world.family.advance(years); if(!game.world.player.actual.life.alive) game.die(); game.refreshUI(); return r; },
         successor(id) { game.familyUI.choose(id); return this.snapshot(); },

@@ -9,13 +9,14 @@ preserved; its old counts are **not** added to current results.
 
 | Suite | Result | Scope |
 |---|---|---|
-| Dependency-free deterministic suite | 60 passed, 0 failed | Rules, registry/observer integration, v1–v4 migration, malformed-save rejection, population-budget stress |
+| Dependency-free deterministic suite | 63 passed, 0 failed | Rules, registry/observer integration, v1–v4 migration, willingness, malformed-save rejection, population-budget stress |
 | Native browser smoke | Passed | Manual save, full Chromium shutdown, reopen, Continue, identical payload |
 | Browser generation scenario | 8 check groups passed | UI courtship through daughters, further births, storage and death cases |
 | Action-bubble usability | 5 check groups passed | Paused choices, real approach, cancellation, responsive notebook and native emulated touch |
 | Browser preservation regressions | 9 check groups passed | Survival, native v2 migration, touch, Canvas and standalone opening |
 | Browser architecture checks | 7 check groups passed | Released-v4 native recovery, keyed family rows, storage failure injection, cross-tab protection |
 | Reversible testing inspector | 6 check groups passed | F8/console/touch, private truth, read-only payloads, normal privacy restoration and reload |
+| Parenthood reconsideration | 4 check groups passed | Existing hesitant marriage, informational conversation, actual relationship gains/birth, native save/reload |
 | Build agreement / documentation links | Passed | Generated HTML matches source; local document references resolve |
 
 Browser check groups contain multiple assertions; they are not represented as an
@@ -206,3 +207,27 @@ Normal family DTOs remain privacy-safe. Native emulated touch entry/exit passes
 without the debug API. Desktop, portrait and short-landscape layouts fit, and
 portrait/desktop screenshots were inspected locally. No page exceptions occurred.
 The 60 deterministic cases and five prior browser suites also pass.
+
+## Parenthood willingness follow-up
+
+The user chose allowing hesitant spouses to reconsider. Three new deterministic
+cases verify a low-baseline spouse crossing the threshold through real varied
+romance actions, falling readiness when the bond deteriorates, no gains/RNG from
+repeated planning requests, shared cooldown/daily limits, round-trip readiness,
+same-sex biological limits and existing-marriage boundaries. All 63 cases pass,
+including the exact frozen released-v4 payload.
+
+The new [parenthood browser scenario](../tools/browser-parenthood.cjs) passes four
+groups. Setup fabricates a valid legacy-shaped marriage with a hesitant, compatible
+partner and controlled trust/affection; it is not evidence of natural courtship.
+The fixture loads through native Continue. Subsequent family discussion, varied
+relationship actions, birth and save/reload use actual UI/game rules. Clock,
+proximity and needs are controlled as in the existing generation suite. The
+scenario proves that the same formerly hesitant spouse can become willing and
+have a valid birth cohort. All six prior browser suites also pass.
+
+No new save fields, stored topic counters, RNG stream or schema version is needed.
+Discussion itself changes only existing interaction budgets/timestamps/outcome;
+relationship gains come from the ordinary actions. The F8 inspector remains
+read-only and now distinguishes baseline preference from effective willingness.
+No page exceptions occurred. These changes do not enable autonomous NPC families.

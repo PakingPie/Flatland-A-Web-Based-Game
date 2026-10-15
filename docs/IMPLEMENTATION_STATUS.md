@@ -1,5 +1,19 @@
 # Implementation checkpoints — Phase 2B / 3 / 3.5
 
+## Parenthood willingness follow-up
+
+The user selected allowing hesitant spouses to reconsider. Baseline family-life
+preference now receives bounded support from current trust/affection. No permanent
+consent flag or RNG is added. Discuss children gives a short, specific response
+without awarding relationship gains; the Family screen separates trust, affection
+and hesitation. F8 displays baseline and effective willingness. Original save
+fields, schema/slots, ancestry privacy and standalone build remain compatible.
+
+All 63 deterministic cases and seven Chromium scripts pass. The new four-group
+browser scenario loads a controlled existing hesitant marriage, uses ordinary UI
+actions to improve the bond, has children with that spouse and verifies native
+save/reload. No new game is needed. Autonomous NPC families remain design-only.
+
 ## Reversible testing inspector
 
 Added the user-requested read-only truth inspector: F8 toggles it, Escape closes

@@ -53,7 +53,7 @@ class SocialUI {
         const w=this.game.world;
         const result=action.kind==='social'?w.social.interact(id,action.topic):w.romance.interact(id,action.topic);
         const changes=result.changes;
-        const cue=action.topic==='propose' && result.ok?'♥ Married':changes?.trust>0?'Trust ↑':changes?.trust<0?'Trust ↓':action.kind==='romance'&&result.ok?'♥ Affection ↑':'';
+        const cue=action.topic==='children'?'Family plans':action.topic==='propose' && result.ok?'♥ Married':changes?.trust>0?'Trust ↑':changes?.trust<0?'Trust ↓':action.kind==='romance'&&result.ok?'♥ Affection ↑':'';
         const reply=action.topic==='introduce'&&result.ok?`“I’m ${w.social.view(w.social.citizen(id)).name}.”`:
             result.ok?({compliment:'“That’s kind of you.”',outing:'“A walk sounds lovely.”',commitment:'“I can imagine a life together.”'}[action.topic] || briefReply(result,action.topic)):briefReply(result,action.topic);
         this.say(id,reply,cue,result.outcome);
@@ -72,7 +72,7 @@ class SocialUI {
         if(this.group==='talk') return [social('Chat','chat'),social('Interests','interests'),group('More topics','stories')];
         if(this.group==='stories') return [social('Work','occupation'),social('Society','district'),social('Family stories','family'),social('Rumors','rumor')];
         if(this.group==='romance') return [love('Compliment','compliment'),love('Invite out','outing'),love('Our future','commitment'),group('Commitment','commitment')];
-        if(this.group==='commitment') return [love('Preferences','preferences','◇'),love('Propose','propose'),...(romance.status==='married'?[love('Separate','separate','↗')]:[])];
+        if(this.group==='commitment') return [love('Preferences','preferences','◇'),love('Discuss children','children'),love('Propose','propose'),...(romance.status==='married'?[love('Separate','separate','↗')]:[])];
         if(this.group==='details') return [];
         if(!v.introduced) return [social('Greet','introduce','◌'),details];
         if(romance.status==='married') return [group('Talk','talk','◌'),group('Affection','romance','♡'),{label:'Family',icon:'⌂',action:{kind:'family'}},details];

@@ -2,7 +2,7 @@
 // trust is a prerequisite for intimacy, never a substitute for attraction.
 const ROMANCE = Object.freeze({ affectionToMarry: 42, trustToMarry: 18,
     topics: { preferences: 'Discuss partnership preferences', compliment: 'Offer a sincere compliment',
-        outing: 'Invite a quiet walk', commitment: 'Discuss a shared future', propose: 'Propose marriage', separate: 'End this marriage' } });
+        outing: 'Invite a quiet walk', commitment: 'Discuss a shared future', children:'Discuss children', propose: 'Propose marriage', separate: 'End this marriage' } });
 class RomanceSystem {
     constructor(world) { this.world = world; this.pairs = {}; this.marriages = []; }
     records() { return this.world.registry.all(); }
@@ -13,6 +13,18 @@ class RomanceSystem {
             independence: rng.next(), reputation: rng.next(), familyLife: rng.range(.25, 1) };
     }
     key(a, b) { return [a.id, b.id].sort().join('|'); }
+    parenthoodReadiness(a,b) {
+        // Derived from existing relationship state, never a permanent yes or a
+        // reward for repeated requests. No new saved fields or RNG consumption.
+        const base=this.preferences(b).familyLife, pair=this.pairs[this.key(a,b)];
+        const trust=b.playerKnowledge.relationship.trust, affection=pair?.affection || 0;
+        const trustSupport=.08*clamp((trust-30)/40,0,1), affectionSupport=.08*clamp((affection-50)/40,0,1);
+        const willingness=clamp(base+trustSupport+affectionSupport,0,1);
+        const reason=trust<ROMANCE.trustToMarry ? 'Build more trust together before raising children.'
+            : affection<ROMANCE.affectionToMarry ? 'Grow closer through shared time before raising children.'
+            : willingness<.3 ? 'Your spouse feels unsure about parenthood. Spend time strengthening your bond.' : '';
+        return {base,willingness,trustSupport,affectionSupport,trust,affection,ready:!reason,reason};
+    }
     pair(a, b) {
         const key = this.key(a, b);
         return this.pairs[key] ||= { ids: [a.id, b.id].sort(), affection: 0, status: 'none', knownBy: [],
@@ -50,8 +62,21 @@ class RomanceSystem {
         if (pair.day !== day) { pair.day = day; pair.today = 0; pair.topics = {}; }
         if (r.today >= SOCIAL.dailyLimit || pair.today >= 3) return result('Let us leave room for tomorrow.', 'daily-limit');
         r.lastAt = pair.lastAt = time; r.today++; pair.today++;
-        const repeated = pair.topics[topic] || 0; pair.topics[topic] = repeated + 1;
         const finish = (text, outcome = 'refused') => { pair.lastOutcome = text; return result(text, outcome); };
+        if(topic==='children') {
+            // An informational check uses the shared budget but creates no new
+            // saved topic counter and gives no affection/trust/willingness gains.
+            if(this.spouse(a)?.id!==b.id && (this.spouse(a) || this.spouse(b))) return finish('“An existing marriage must be resolved before we make family plans.”');
+            const readiness=this.parenthoodReadiness(a,b);
+            if(readiness.trust<ROMANCE.trustToMarry) return finish('“I need to feel more trust between us before raising children.”');
+            if(readiness.affection<ROMANCE.affectionToMarry) return finish('“I need us to grow closer before we plan for children.”');
+            if(!readiness.ready) return finish('“I’m still unsure about parenthood, but I’m open to revisiting it as we grow closer.”');
+            if(a.actual.identity.sex===b.actual.identity.sex) return finish('“I’d like a family together, though we can’t have joint biological children.”','positive');
+            if(this.spouse(a)?.id!==b.id) return finish('“I can imagine raising children together once we choose a shared commitment.”','positive');
+            if([a,b].some(c=>c.actual.life.ageYears>FAMILY.fertileUntil)) return finish('“I’d like a family with you, but we’re past the age for biological births.”','positive');
+            return finish('“I’d like us to have children when we’re healthy and supplied.”','positive');
+        }
+        const repeated = pair.topics[topic] || 0; pair.topics[topic] = repeated + 1;
         if (repeated) return finish('We have already discussed that today. Affection needs more than repetition.');
         if (topic === 'preferences') {
             if (!pair.knownBy.includes(a.id)) pair.knownBy.push(a.id);

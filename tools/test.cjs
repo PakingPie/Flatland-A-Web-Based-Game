@@ -148,6 +148,49 @@ test('genuine Phase 2A snapshot migrates without losing progress', () => {
     assert.equal(restored.world.resources[0].quantity,0); assert.equal(restored.world.romance.marriages.length,0);
 });
 function familyWorld(seed='family') { const w=new World(seed); w.social.reputation.score=5; const c=w.npcs.find(c=>c.actual.identity.sex==='female' && c.actual.life.ageYears<=60 && w.romance.compatibility(w.player,c).ok && w.romance.preferences(c).familyLife>=.3); marry(w,c); return {w,c}; }
+function hesitantFamily() {
+    for(let seed=0;seed<20;seed++) {
+        const w=new World(`hesitant-${seed}`);w.social.reputation.score=5;
+        const c=w.npcs.find(c=>c.actual.identity.sex==='female' && c.actual.life.ageYears<=60 && w.romance.compatibility(w.player,c).ok && w.romance.preferences(c).familyLife<.3);
+        if(c) {marry(w,c);return {w,c};}
+    }
+    assert.fail('No hesitant fixture partner');
+}
+test('hesitant spouse can reconsider with trust and affection, and readiness can fall again',()=>{
+    const {w,c}=hesitantFamily(),pair=w.romance.pair(w.player,c),base=w.romance.preferences(c).familyLife;
+    c.playerKnowledge.relationship.trust=30;pair.affection=42;
+    assert.equal(w.romance.parenthoodReadiness(w.player,c).ready,false);assert.match(w.family.birthEligibility(),/unsure/);
+    for(let day=0;day<4 && !w.romance.parenthoodReadiness(w.player,c).ready;day++) {
+        w.elapsed+=120;for(const topic of ['compliment','outing','commitment']) assert.equal(action(w,c,topic).ok,true);
+    }
+    const ready=w.romance.parenthoodReadiness(w.player,c);assert.equal(ready.ready,true);assert.ok(ready.willingness>base);
+    assert.equal(w.family.birthEligibility(),'');
+    const store=saveFor(w),restored=store.decode(store.encode()).world;
+    assert.deepEqual(json(restored.romance.parenthoodReadiness(restored.player,restored.registry.get(c.id))),json(ready));
+    assert.equal(restored.family.birth().ok,true);
+    c.playerKnowledge.relationship.trust=10;assert.match(w.family.birthEligibility(),/trust/);
+    c.playerKnowledge.relationship.trust=30;pair.affection=42;assert.equal(w.romance.parenthoodReadiness(w.player,c).ready,false);
+    assert.equal(w.romance.preferences(c).familyLife,base);
+});
+test('discussing children explains hesitation but cannot farm willingness and uses shared limits',()=>{
+    const {w,c}=hesitantFamily(),pair=w.romance.pair(w.player,c);c.playerKnowledge.relationship.trust=30;pair.affection=42;w.elapsed+=120;
+    const before=json(w.romance.parenthoodReadiness(w.player,c)),rng=[w.rng.state,w.social.rng.state,w.family.rng.state];
+    assert.match(action(w,c,'children').text,/unsure/);
+    assert.equal(w.romance.interact(c.id,'children').outcome,'cooldown');
+    action(w,c,'children');action(w,c,'children');assert.equal(action(w,c,'children').outcome,'daily-limit');
+    assert.deepEqual(json(w.romance.parenthoodReadiness(w.player,c)),before);
+    assert.deepEqual([w.rng.state,w.social.rng.state,w.family.rng.state],rng);
+    assert.equal(Object.hasOwn(pair.topics,'children'),false);
+    const store=saveFor(w);store.decode(store.encode());
+});
+test('family discussions support same-sex households while retaining biological birth rules',()=>{
+    const w=new World('romance'),c=compatible(w,'male');marry(w,c);w.elapsed+=120;
+    const result=action(w,c,'children');assert.equal(result.ok,true);assert.match(result.text,/can’t have joint biological children/);
+    assert.equal(w.family.birth().ok,false);
+    const other=compatible(w,'female');prepare(w,other);w.romance.pair(w.player,other).affection=90;
+    assert.match(action(w,other,'children').text,/existing marriage/);
+    saveFor(w).decode(saveFor(w).encode());
+});
 test('multiple persistent offspring have distinct genomes, parents and stable identities', () => {
     const {w,c}=familyWorld(), result=w.family.birth(); assert.equal(result.ok,true); assert.ok(result.ids.length>=2 && result.ids.length<=4);
     const children=result.ids.map(id=>w.family.character(id)); assert.equal(new Set(children.map(c=>JSON.stringify(c.actual.genome))).size,children.length);

@@ -39,9 +39,9 @@ no removal path for referenced ancestors; deceased records still count toward th
 
 ## Current validation
 
-Build agreement, documentation links and 60 deterministic cases pass. All six
+Build agreement, documentation links and 63 deterministic cases pass. All seven
 Chromium scripts pass: smoke, generations (8 groups), bubbles (5), preservation
-(9), architecture (7), inspector (6). The architecture suite includes native released-v4 loading,
+(9), architecture (7), inspector (6), parenthood (4). The architecture suite includes native released-v4 loading,
 three Continue cycles/two complete browser restarts, preserved family row expansion,
 injected Storage quota/denial, and a genuine cross-tab storage event. The
 population stress test fills the record budget, kills non-household actors and
@@ -53,7 +53,7 @@ exports and profiles stay under ignored local output. Failure injection is not
 physical disk exhaustion. Existing gameplay suites still control clock, needs,
 proximity and compatible candidate discovery.
 
-## Population discussion before rule changes
+## Population discussion before renewal rule changes
 
 The user selected **design autonomous NPC families first**. Read the
 [concrete proposal](POPULATION_RENEWAL_DESIGN.md). Direction is selected; pacing,
@@ -65,6 +65,11 @@ state and RNG. A closed population cannot guarantee unrelated partners forever
 under the existing shared-ancestor rule and record/save limits. Do not silently
 weaken kinship, delete ancestors or promise unlimited generations. Discuss the
 proposal with the user before implementing population rules.
+
+The later user-approved parenthood follow-up lets hesitant spouses reconsider
+through trust/affection support and adds Discuss children. It applies to existing
+playable couples, uses no new save fields and needs no new game. This does not
+adopt the separate autonomous NPC-family proposal. See [current rules](FAMILY_RULES.md).
 
 ## Remaining work and limits
 
@@ -94,7 +99,7 @@ optional debug API. Use it for inspection, not as evidence of natural discovery.
 > QA_REPORT, IMPLEMENTATION_STATUS and POPULATION_RENEWAL_DESIGN under docs. Core registry,
 > save-codec/migration, observer/family/household boundaries and keyed family rows
 > are implemented. Start by rerunning the deterministic build/docs/rule checks and
-> the six browser scripts. Preserve action bubbles, stable IDs, hidden ancestry,
+> the seven browser scripts. Preserve action bubbles, stable IDs, hidden ancestry,
 > original slots, v1–v4 compatibility and standalone HTML. The user chose to design
 > autonomous NPC families first; discuss unresolved rules in the proposal before
 > implementing them. Do not assume population tuning or archive deletion is
