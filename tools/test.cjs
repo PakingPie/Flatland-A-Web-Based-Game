@@ -4,11 +4,11 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
-const files = ['core','genetics','characters','registry','navigation','world','social','romance','family','approach','persistence'];
+const files = ['core','genetics','characters','registry','navigation','world','social','romance','family','approach','save-format','save-validation','save-migrations','save-codec','persistence'];
 const storage=new Map();
 const context = vm.createContext({ console, document: { getElementById: () => ({textContent:'', hidden:true}), querySelectorAll:()=>[] }, performance, structuredClone,
     localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}, confirm:()=>true });
-vm.runInContext(files.map(f => fs.readFileSync(`src/${f}.js`, 'utf8')).join('\n') + '\nglobalThis.rules = {World,RNG,SaveStore,hash,ROMANCE,emptyRelationship,inheritGenome,normalizeGenome,validateGenome,GENETICS,FAMILY,CitizenApproach,briefReply};', context);
+vm.runInContext(files.map(f => fs.readFileSync(`src/${f}.js`, 'utf8')).join('\n') + '\nglobalThis.rules = {World,RNG,SaveStore,SaveCodec,hash,ROMANCE,emptyRelationship,inheritGenome,normalizeGenome,validateGenome,GENETICS,FAMILY,CitizenApproach,briefReply};', context);
 const { World, RNG, SaveStore, hash, emptyRelationship } = context.rules;
 const { inheritGenome, normalizeGenome, validateGenome } = context.rules;
 const json = x => JSON.parse(JSON.stringify(x));
@@ -30,6 +30,31 @@ test('frozen released v4 family, daughter observer and deceased ancestors round-
     assert.equal(restored.world.player.actual.identity.sex,'female');
     assert.equal(restored.world.family.character('founder-000').actual.life.alive,false);
     assert.ok(restored.world.family.notebooks['founder-000']);
+});
+test('save codec validates released schemas without a DOM, storage adapter or active game', () => {
+    const portable=vm.createContext({});
+    const source=files.filter(f=>f!=='persistence').map(f=>fs.readFileSync(`src/${f}.js`,'utf8')).join('\n');
+    vm.runInContext(source+'\nglobalThis.codec=SaveCodec;',portable);
+    for(const fixture of ['phase2a-v2','phase2b-v3','released-v4']) {
+        const raw=fs.readFileSync(`tools/fixtures/${fixture}.json`,'utf8');
+        const decoded=portable.codec.decode(raw);
+        assert.deepEqual(json(decoded.envelope),JSON.parse(raw));
+        assert.equal(decoded.world.player.id,decoded.saved.currentPlayerId || 'founder-000');
+        assert.equal(decoded.world.rng.state,decoded.saved.rngState);
+        assert.equal(typeof portable.document,'undefined');
+        assert.equal(typeof portable.localStorage,'undefined');
+        assert.equal(typeof portable.game,'undefined');
+    }
+    const data=JSON.parse(fs.readFileSync('tools/fixtures/released-v4.json','utf8'));
+    data.payload.characters.at(-1).actual.life.ageYears=-1; data.checksum=hash(JSON.stringify(data.payload));
+    assert.throws(()=>portable.codec.decode(JSON.stringify(data)),/Invalid age/);
+});
+test('released v4 observer fallback migrates without rewriting the source envelope', () => {
+    const data=JSON.parse(fs.readFileSync('tools/fixtures/released-v4.json','utf8'));
+    const playerId=data.payload.currentPlayerId; delete data.payload.currentPlayerId;
+    data.checksum=hash(JSON.stringify(data.payload)); const raw=JSON.stringify(data);
+    const out=context.rules.SaveCodec.decode(raw);
+    assert.equal(out.world.player.id,playerId); assert.deepEqual(json(out.envelope),data);
 });
 test('registry keeps deceased identities and observer sources outside living NPC simulation', () => {
     const {w,c}=familyWorld(); const children=w.family.birth().ids;

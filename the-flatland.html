@@ -2330,33 +2330,6 @@ class FamilySystem {
         insist(this.actors().filter(c=>c.id.startsWith('descendant-')).every(c=>Number(c.id.slice(11))<this.nextId),'Invalid next descendant ID.');
     }
 }
-function restoreFamilyPopulation(w, records, currentId) {
-    const baseIds=w.registry.all().map(c=>c.id);
-    insist(Array.isArray(records) && records.length>=baseIds.length && records.length<=FAMILY.maxPopulation, 'Invalid saved population.');
-    const ids=new Set();
-    insist(shortText(currentId,100), 'Missing current player ID.');
-    const actors=records.map(s=> {
-        const a=s.actual, pub=s.publicIdentity;
-        insist(plain(s) && shortText(s.id,100) && /^(founder-000|citizen-\d{3}|descendant-[1-9]\d*)$/.test(s.id) && !ids.has(s.id), 'Invalid or duplicate character ID.'); ids.add(s.id);
-        insist(plain(a) && plain(a.identity) && a.identity.id===s.id && ['male','female'].includes(a.identity.sex) && a.identity.bodyForm===(a.identity.sex==='female'?'line':'polygon') && shortText(a.identity.name,100), 'Invalid character identity.');
-        validateGenome(a.genome);
-        insist(plain(a.life) && numberIn(a.life.ageYears,0,200) && typeof a.life.alive==='boolean' && a.life.alive===(s.vitals?.health>0), 'Invalid age or life state.');
-        if(a.life.deathAt!==undefined) insist(!a.life.alive && numberIn(a.life.deathAt,0,w.elapsed+.001) && shortText(a.life.deathCause,100), 'Invalid death record.');
-        if(a.profile) {
-            const p=a.profile;
-            insist(plain(p) && shortText(p.occupation,100) && plain(p.personality) && ['warmth','candor','reserve','curiosity','prejudice'].every(k=>numberIn(p.personality[k],0,1)) && plain(p.preferences) && ['likes','dislikes'].every(k=>shortText(p.preferences[k],100)) && numberIn(p.disposition,-3,5) && plain(p.background), 'Invalid social profile.');
-            insist(['origin','family','ambition','concern','sensitive'].every(k=>shortText(p.background[k],1000)) && ['knowsFamily','discloseSensitive'].every(k=>typeof p.background[k]==='boolean'), 'Invalid background.');
-        } else insist(s.id==='founder-000','Citizen is missing a social profile.');
-        insist(plain(pub) && (pub.displayName===null || shortText(pub.displayName,100)) && (pub.claimedOccupation===null || shortText(pub.claimedOccupation,100)) && numberIn(pub.reputation,-100,100) && Array.isArray(pub.claims) && pub.claims.length<=30 && pub.claims.every(claim=>plain(claim) && shortText(claim.key,100) && shortText(claim.value,1000)) && plain(pub.standing) && integerIn(pub.standing.tier,0,7) && shortText(pub.standing.label,160), 'Invalid public identity.');
-        const c=createCharacter(s.id,a.genome,a.identity.bodyForm,s.x,s.y,new RNG(s.id),s.id===currentId);
-        c.actual=copyJSON(a); c.publicIdentity=copyJSON(pub);
-        return c;
-    });
-    insist(baseIds.every(id=>ids.has(id)), 'Seeded citizens are missing.');
-    insist(ids.has(currentId), 'Current player is missing.');
-    w.registry.replace(actors,currentId);
-    records.forEach((s,i)=>restoreCharacter(actors[i],s,w));
-}
 
 // ---- approach.js ----
 // Transient player intent. Saves retain the world, never a queued UI click.
@@ -2399,12 +2372,15 @@ function briefReply(result, topic) {
     return quoted?`“${text}”`:text;
 }
 
-// ---- persistence.js ----
+// ---- save-format.js ----
 // Versioned, transactional local saves. Immutable terrain and identities are seeded;
 // every mutable simulation field is restored into a candidate World before install.
 // The checksum detects accidental corruption; it is NOT an anti-cheat mechanism.
 const SaveFormat = Object.freeze({ name: 'the-flatland', version: 4, worldVersion: 1,
     keys: { manual: 'flatland.manual.v1', auto: 'flatland.auto.v1' }, maxBytes: 2_000_000 });
+
+// ---- save-validation.js ----
+// Stateless validators and character DTO conversion; no storage or DOM access.
 const copyJSON = value => JSON.parse(JSON.stringify(value));
 function insist(ok, message) { if (!ok) throw new Error(message); }
 function numberIn(n, lo, hi) { return typeof n === 'number' && Number.isFinite(n) && n >= lo && n <= hi; }
@@ -2463,6 +2439,115 @@ function restoreCharacter(target, s, world, legacy = false) {
     validateKnowledge(s.playerKnowledge, world.elapsed, world);
     for (const key of ['x', 'y', 'px', 'py', 'angle', 'prevAngle', 'vitals', 'ai', 'runtime', 'playerKnowledge']) target[key] = copyJSON(s[key]);
 }
+
+// ---- save-migrations.js ----
+// Explicit released-schema readers. They hydrate current in-memory defaults;
+// they never rewrite input, browser slots, or the original version/checksum.
+function restoreLegacyPopulation(w, s) {
+    const chars=w.registry.all();
+    insist(Array.isArray(s.characters) && s.characters.length===chars.length, 'Saved population does not match.');
+    s.characters.forEach((c,i)=>restoreCharacter(chars[i],c,w,true));
+}
+function migrateSavePopulation(w, s, version) {
+    switch(version) {
+        case 1: // Survival-only: seeded identity signatures, no discoveries.
+        case 2: // Society: same generator and seeded population as v1.
+        case 3: // Marriage: same seeded population, with persistent pairs.
+            restoreLegacyPopulation(w,s); break;
+        case 4: // Dynamic individuals, full genomes, and playable observer ID.
+            restoreFamilyPopulation(w,s.characters,s.currentPlayerId ?? s.family?.playableIds?.at(-1)); break;
+        default: throw new Error('No population migration for save version.');
+    }
+}
+function migrateSaveSystems(w, s, version) {
+    switch(version) {
+        case 1:
+            w.social.importState(s.social,1); break;
+        case 2:
+            w.social.importState(s.social,2); break;
+        case 3:
+            w.social.importState(s.social,3); w.romance.importState(s.romance); break;
+        case 4:
+            w.social.importState(s.social,4); w.romance.importState(s.romance); w.family.importState(s.family); break;
+        default: throw new Error('No system migration for save version.');
+    }
+}
+function restoreFamilyPopulation(w, records, currentId) {
+    const baseIds=w.registry.all().map(c=>c.id);
+    insist(Array.isArray(records) && records.length>=baseIds.length && records.length<=FAMILY.maxPopulation, 'Invalid saved population.');
+    const ids=new Set();
+    insist(shortText(currentId,100), 'Missing current player ID.');
+    const actors=records.map(s=> {
+        const a=s.actual, pub=s.publicIdentity;
+        insist(plain(s) && shortText(s.id,100) && /^(founder-000|citizen-\d{3}|descendant-[1-9]\d*)$/.test(s.id) && !ids.has(s.id), 'Invalid or duplicate character ID.'); ids.add(s.id);
+        insist(plain(a) && plain(a.identity) && a.identity.id===s.id && ['male','female'].includes(a.identity.sex) && a.identity.bodyForm===(a.identity.sex==='female'?'line':'polygon') && shortText(a.identity.name,100), 'Invalid character identity.');
+        validateGenome(a.genome);
+        insist(plain(a.life) && numberIn(a.life.ageYears,0,200) && typeof a.life.alive==='boolean' && a.life.alive===(s.vitals?.health>0), 'Invalid age or life state.');
+        if(a.life.deathAt!==undefined) insist(!a.life.alive && numberIn(a.life.deathAt,0,w.elapsed+.001) && shortText(a.life.deathCause,100), 'Invalid death record.');
+        if(a.profile) {
+            const p=a.profile;
+            insist(plain(p) && shortText(p.occupation,100) && plain(p.personality) && ['warmth','candor','reserve','curiosity','prejudice'].every(k=>numberIn(p.personality[k],0,1)) && plain(p.preferences) && ['likes','dislikes'].every(k=>shortText(p.preferences[k],100)) && numberIn(p.disposition,-3,5) && plain(p.background), 'Invalid social profile.');
+            insist(['origin','family','ambition','concern','sensitive'].every(k=>shortText(p.background[k],1000)) && ['knowsFamily','discloseSensitive'].every(k=>typeof p.background[k]==='boolean'), 'Invalid background.');
+        } else insist(s.id==='founder-000','Citizen is missing a social profile.');
+        insist(plain(pub) && (pub.displayName===null || shortText(pub.displayName,100)) && (pub.claimedOccupation===null || shortText(pub.claimedOccupation,100)) && numberIn(pub.reputation,-100,100) && Array.isArray(pub.claims) && pub.claims.length<=30 && pub.claims.every(claim=>plain(claim) && shortText(claim.key,100) && shortText(claim.value,1000)) && plain(pub.standing) && integerIn(pub.standing.tier,0,7) && shortText(pub.standing.label,160), 'Invalid public identity.');
+        const c=createCharacter(s.id,a.genome,a.identity.bodyForm,s.x,s.y,new RNG(s.id),s.id===currentId);
+        c.actual=copyJSON(a); c.publicIdentity=copyJSON(pub);
+        return c;
+    });
+    insist(baseIds.every(id=>ids.has(id)), 'Seeded citizens are missing.');
+    insist(ids.has(currentId), 'Current player is missing.');
+    w.registry.replace(actors,currentId);
+    records.forEach((s,i)=>restoreCharacter(actors[i],s,w));
+}
+
+// ---- save-codec.js ----
+// Decode into a fully validated candidate only. This boundary has no storage,
+// UI, active game, clocks or installation side effects.
+class SaveCodec {
+    static parse(raw) {
+        insist(typeof raw === 'string' && raw.length > 0 && raw.length <= SaveFormat.maxBytes, 'Save is missing or too large.');
+        let data;
+        try { data = JSON.parse(raw); } catch { throw new Error('Save contains damaged JSON.'); }
+        checkJSONTree(data);
+        insist(plain(data) && data.format === SaveFormat.name, 'This is not a Flatland save.');
+        insist([1, 2, 3, 4].includes(data.version), 'Save version is not supported by this build.');
+        insist(data.worldVersion === SaveFormat.worldVersion, 'World generator version is incompatible.');
+        insist(plain(data.payload) && data.checksum === hash(JSON.stringify(data.payload)), 'Save checksum does not match.');
+        insist(numberIn(data.savedAt, 0, 1e15) && integerIn(data.revision, 0, 1e12), 'Invalid save timestamp.');
+        return data;
+    }
+    static decode(raw) {
+        const envelope = this.parse(raw), s = envelope.payload;
+        insist(shortText(s.seed, 48) && s.seed.trim().length > 0 && shortText(s.runId, 100) && s.runId.length > 0, 'Invalid seed or expedition ID.');
+        insist(numberIn(s.elapsed, 0, 1e10) && integerIn(s.rngState, 0, 4294967295) && typeof s.ended === 'boolean', 'Invalid simulation time or random state.');
+        const w = new World(s.seed); // Candidate only. Failed validation never touches the live world.
+        w.elapsed = s.elapsed;
+        migrateSavePopulation(w, s, envelope.version);
+        insist(s.ended === (w.player.vitals.health <= 0), 'Life state and health disagree.');
+        w.player.actual.life.alive = !s.ended;
+        insist(Array.isArray(s.resources) && s.resources.length === w.resources.length, 'Saved resource population does not match.');
+        s.resources.forEach((r, i) => {
+            const target = w.resources[i];
+            insist(plain(r) && r.id === target.id && integerIn(r.quantity, 0, target.capacity) && numberIn(r.respawn, 0, target.cycle + .001), 'Invalid resource state.');
+            insist(r.quantity === 0 || r.respawn === 0, 'Inconsistent resource regeneration timer.');
+            target.quantity = r.quantity; target.respawn = r.respawn;
+        });
+        insist(plain(s.pack) && ['food', 'water'].every(k => integerIn(s.pack[k], 0, C.PACK)), 'Invalid inventory.');
+        const p = s.progress;
+        insist(plain(p) && integerIn(p.gathered, 0, 1e10) && Array.isArray(p.visited) && p.visited.length <= w.refuges.length && new Set(p.visited).size === p.visited.length && p.visited.every(id => w.refuges.some(f => f.id === id)) && typeof p.complete === 'boolean', 'Invalid expedition progress.');
+        insist(!p.complete || (s.elapsed >= C.DAY * 3 && p.gathered >= 12 && p.visited.length >= 2), 'Inconsistent completed expedition.');
+        insist(numberIn(s.gatherCooldown, 0, 2) && plain(s.warningLatch) && Object.entries(s.warningLatch).every(([k, v]) => ['hunger', 'thirst'].includes(k) && typeof v === 'boolean'), 'Invalid survival timers.');
+        insist(Array.isArray(s.effects) && s.effects.length <= 100 && s.effects.every(e => plain(e) && shortText(e.text, 160) && /^#[a-f0-9]{6}$/i.test(e.color) && numberIn(e.x, 0, C.W) && numberIn(e.y, -100, C.H) && numberIn(e.age, 0, 2)), 'Invalid transient effects.');
+        insist(Array.isArray(s.messages) && s.messages.length <= 4 && s.messages.every(m => plain(m) && shortText(m.text) && typeof m.warn === 'boolean' && numberIn(m.time, 0, s.elapsed + .01)), 'Invalid event log.');
+        insist(plain(s.notice) && shortText(s.notice.text) && numberIn(s.notice.until, 0, s.elapsed + 100) && typeof s.notice.hidden === 'boolean', 'Invalid notice.');
+        migrateSaveSystems(w, s, envelope.version);
+        w.rng.state = s.rngState;
+        return { world: w, saved: s, envelope };
+    }
+}
+
+// ---- persistence.js ----
+// Browser storage and file I/O adapter. Candidate validation lives in SaveCodec.
 class SaveStore {
     constructor(game) {
         this.game = game;
@@ -2513,54 +2598,8 @@ class SaveStore {
         return JSON.stringify({ format: SaveFormat.name, version: SaveFormat.version, worldVersion: SaveFormat.worldVersion,
             savedAt: Date.now(), revision: this.revision + 1, slot, checksum: hash(JSON.stringify(payload)), payload });
     }
-    parse(raw) {
-        insist(typeof raw === 'string' && raw.length > 0 && raw.length <= SaveFormat.maxBytes, 'Save is missing or too large.');
-        let data;
-        try { data = JSON.parse(raw); } catch { throw new Error('Save contains damaged JSON.'); }
-        checkJSONTree(data);
-        insist(plain(data) && data.format === SaveFormat.name, 'This is not a Flatland save.');
-        insist([1, 2, 3, 4].includes(data.version), 'Save version is not supported by this build.');
-        insist(data.worldVersion === SaveFormat.worldVersion, 'World generator version is incompatible.');
-        insist(plain(data.payload) && data.checksum === hash(JSON.stringify(data.payload)), 'Save checksum does not match.');
-        insist(numberIn(data.savedAt, 0, 1e15) && integerIn(data.revision, 0, 1e12), 'Invalid save timestamp.');
-        return data;
-    }
-    decode(raw) {
-        const envelope = this.parse(raw), s = envelope.payload;
-        insist(shortText(s.seed, 48) && s.seed.trim().length > 0 && shortText(s.runId, 100) && s.runId.length > 0, 'Invalid seed or expedition ID.');
-        insist(numberIn(s.elapsed, 0, 1e10) && integerIn(s.rngState, 0, 4294967295) && typeof s.ended === 'boolean', 'Invalid simulation time or random state.');
-        const w = new World(s.seed); // Candidate only. Failed validation never touches the live world.
-        w.elapsed = s.elapsed;
-        if (envelope.version >= 4) restoreFamilyPopulation(w, s.characters, s.currentPlayerId ?? s.family?.playableIds?.at(-1));
-        else {
-            insist(Array.isArray(s.characters) && s.characters.length === w.npcs.length + 1, 'Saved population does not match.');
-            const chars = [w.player, ...w.npcs];
-            s.characters.forEach((c, i) => restoreCharacter(chars[i], c, w, true));
-        }
-        insist(s.ended === (w.player.vitals.health <= 0), 'Life state and health disagree.');
-        w.player.actual.life.alive = !s.ended;
-        insist(Array.isArray(s.resources) && s.resources.length === w.resources.length, 'Saved resource population does not match.');
-        s.resources.forEach((r, i) => {
-            const target = w.resources[i];
-            insist(plain(r) && r.id === target.id && integerIn(r.quantity, 0, target.capacity) && numberIn(r.respawn, 0, target.cycle + .001), 'Invalid resource state.');
-            insist(r.quantity === 0 || r.respawn === 0, 'Inconsistent resource regeneration timer.');
-            target.quantity = r.quantity; target.respawn = r.respawn;
-        });
-        insist(plain(s.pack) && ['food', 'water'].every(k => integerIn(s.pack[k], 0, C.PACK)), 'Invalid inventory.');
-        const p = s.progress;
-        insist(plain(p) && integerIn(p.gathered, 0, 1e10) && Array.isArray(p.visited) && p.visited.length <= w.refuges.length && new Set(p.visited).size === p.visited.length && p.visited.every(id => w.refuges.some(f => f.id === id)) && typeof p.complete === 'boolean', 'Invalid expedition progress.');
-        insist(!p.complete || (s.elapsed >= C.DAY * 3 && p.gathered >= 12 && p.visited.length >= 2), 'Inconsistent completed expedition.');
-        insist(numberIn(s.gatherCooldown, 0, 2) && plain(s.warningLatch) && Object.entries(s.warningLatch).every(([k, v]) => ['hunger', 'thirst'].includes(k) && typeof v === 'boolean'), 'Invalid survival timers.');
-        insist(Array.isArray(s.effects) && s.effects.length <= 100 && s.effects.every(e => plain(e) && shortText(e.text, 160) && /^#[a-f0-9]{6}$/i.test(e.color) && numberIn(e.x, 0, C.W) && numberIn(e.y, -100, C.H) && numberIn(e.age, 0, 2)), 'Invalid transient effects.');
-        insist(Array.isArray(s.messages) && s.messages.length <= 4 && s.messages.every(m => plain(m) && shortText(m.text) && typeof m.warn === 'boolean' && numberIn(m.time, 0, s.elapsed + .01)), 'Invalid event log.');
-        insist(plain(s.notice) && shortText(s.notice.text) && numberIn(s.notice.until, 0, s.elapsed + 100) && typeof s.notice.hidden === 'boolean', 'Invalid notice.');
-        if (w.social) w.social.importState(s.social, envelope.version);
-        else insist(s.social === null, 'Social save requires a newer build.');
-        if (envelope.version >= 3) w.romance.importState(s.romance);
-        if (envelope.version >= 4) w.family.importState(s.family);
-        w.rng.state = s.rngState;
-        return { world: w, saved: s, envelope };
-    }
+    parse(raw) { return SaveCodec.parse(raw); }
+    decode(raw) { return SaveCodec.decode(raw); }
     candidates(slot = 'latest') {
         const found = [], failures = [];
         for (const name of slot === 'latest' ? ['manual', 'auto'] : [slot]) {

@@ -3,7 +3,7 @@ from pathlib import Path
 import argparse
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCES = ["core", "genetics", "characters", "registry", "navigation", "world", "social", "romance", "family", "approach", "persistence", "input", "renderer", "game", "social-ui", "family-ui", "bootstrap"]
+SOURCES = ["core", "genetics", "characters", "registry", "navigation", "world", "social", "romance", "family", "approach", "save-format", "save-validation", "save-migrations", "save-codec", "persistence", "input", "renderer", "game", "social-ui", "family-ui", "bootstrap"]
 
 def build():
     source = ROOT / "src"

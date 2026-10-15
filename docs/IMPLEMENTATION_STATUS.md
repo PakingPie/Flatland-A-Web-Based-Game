@@ -1,5 +1,17 @@
 # Phase 2B + 3 implementation checkpoints
 
+## Phase 3.5 save-boundary checkpoint
+
+`SaveCodec` parses and validates candidates without a DOM, browser storage or an
+active game. The format contract, character validators and explicit schema readers
+are separate source fragments. `SaveStore` retains native slot selection, fallback,
+file I/O and transactional installation. No schema/key/generator version changes.
+
+All 53 deterministic cases pass. New isolated-VM tests decode released v2/v3/v4
+fixtures without browser globals, preserve source envelopes, and exercise the old
+v4 observer-ID fallback. Exact released-v4 payload and existing failure/slot tests
+pass. All four Chromium suites and deterministic build checks pass after extraction.
+
 ## Phase 3.5 registry checkpoint
 
 One private `CharacterRegistry` owns all persistent records by stable ID. World
