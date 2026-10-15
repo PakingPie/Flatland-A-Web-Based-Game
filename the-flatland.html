@@ -1059,6 +1059,14 @@ button {
 .family-member h3 { font-size:13px; }
 .action-bubble,.speech-bubble { background:#14262b; }
 
+/* Explicit testing view; hidden truth never enters ordinary citizen panels. */
+.inspector-modal { width:min(880px,100%); text-align:left; }
+.inspector-controls { display:grid; gap:12px; margin:18px 0; }
+.inspector-controls label { display:grid; gap:6px; color:var(--green); font-size:12px; }
+.inspector-controls input,.inspector-controls select { width:100%; min-width:0; box-sizing:border-box; padding:10px; border:1px solid var(--line); border-radius:6px; background:#14262b; color:var(--text); font:inherit; }
+.inspector-summary { white-space:pre-line; overflow-wrap:anywhere; }
+#inspectorRecord { white-space:pre-wrap; overflow-wrap:anywhere; font-size:11px; line-height:1.5; }
+
 </style>
 </head>
 <body>
@@ -1110,12 +1118,13 @@ button {
   <div class="seedrow"><label for="seedInput">World seed</label><input id="seedInput" value="abbott-1884" maxlength="48" spellcheck="false" autocomplete="off" aria-label="World seed"></div>
   <button class="primary" id="continueBtn" disabled>Continue →</button><p class="save-status" data-save-status role="status"></p><button class="small-btn" id="startBtn">New life →</button><button class="small-btn" id="startImportBtn">Import save file</button><p class="fine">Move, gather, meet your neighbors. Help is always available.</p>
 </div></section>
-<section class="overlay" id="pauseScreen" aria-label="Paused" hidden><div class="modal"><div class="eyebrow">The world can wait</div><h2>Expedition paused</h2><p id="pauseReason">Take a breath. Nothing advances while paused.</p><button class="primary" id="resumeBtn">Resume expedition</button><div class="secondary-row"><button class="small-btn" id="pauseFamilyBtn">Family &amp; succession</button><button class="small-btn" id="pauseHelpBtn">Controls & field guide</button><button class="small-btn" id="restartBtn">Restart same seed</button><button class="small-btn" id="newSeedBtn">New world seed</button></div><div class="secondary-row"><button class="small-btn" id="saveBtn">Save manually</button><button class="small-btn" id="loadBtn">Load manual save</button><button class="small-btn" id="exportSaveBtn">Export save file</button><button class="small-btn" id="importSaveBtn">Import save file</button></div><p class="save-status" data-save-status role="status"></p><p class="fine">Saves stay in this browser. Export a backup for safekeeping.</p></div></section>
+<section class="overlay" id="pauseScreen" aria-label="Paused" hidden><div class="modal"><div class="eyebrow">The world can wait</div><h2>Expedition paused</h2><p id="pauseReason">Take a breath. Nothing advances while paused.</p><button class="primary" id="resumeBtn">Resume expedition</button><div class="secondary-row"><button class="small-btn" id="pauseFamilyBtn">Family &amp; succession</button><button class="small-btn" id="pauseHelpBtn">Controls & field guide</button><button class="small-btn" id="restartBtn">Restart same seed</button><button class="small-btn" id="newSeedBtn">New world seed</button></div><div class="secondary-row"><button class="small-btn" id="saveBtn">Save manually</button><button class="small-btn" id="loadBtn">Load manual save</button><button class="small-btn" id="exportSaveBtn">Export save file</button><button class="small-btn" id="importSaveBtn">Import save file</button></div><p class="save-status" data-save-status role="status"></p><p class="fine">Saves stay in this browser. Export a backup for safekeeping.</p><details><summary>Testing</summary><button class="small-btn" id="openInspectorBtn">All information · F8</button></details></div></section>
 <section class="overlay" id="helpScreen" aria-label="Controls and field guide" hidden><div class="modal"><div class="eyebrow">Field guide</div><h2>Your next move</h2>
 <dl class="instructions"><dt>WASD / arrows</dt><dd>Move. Shift to sprint. On touch, use the joystick.</dd><dt>E / Gather</dt><dd>Hold to collect nearby food or water.</dd><dt>F / R</dt><dd>Eat / drink from your pack.</dd><dt>Space / Rest</dt><dd>Rest. Refuges can heal you.</dd><dt>Click a citizen / T</dt><dd>Choose an action. You walk over automatically. Move or Cancel to stop.</dd><dt>P / Escape</dt><dd>Pause. Escape also closes a citizen menu.</dd></dl>
 <details><summary>Relationships &amp; family</summary><p>Vary your conversations. Friendship and attraction are separate. Marriage requires mutual interest. Same-sex spouses share household support; joint biological births currently require a male and female spouse.</p><p>At a refuge, advance family years. Children mature at 18. Retire at 40 or choose an adult descendant upon death. No adult heir means the playable lineage ends. Daughters can inherit too.</p></details>
 <details><summary>Survival &amp; time</summary><p>Food and water fill your pack; use them to refill your meters. Empty meters cost health. Field rest restores stamina; refuge rest also heals when food and water exceed 30.</p><p>Citizen menus and Family pause the world. Walking and interactions resume it. One survival day equals one family year. Refuge year advances provide subsistence and process aging and deaths.</p></details>
 <details><summary>Notes &amp; saves</summary><p>Details holds your notebook. Unconfirmed claims and rumors can be wrong. Marriage does not reveal hidden ancestry or a daughter's latent geometry.</p><p>Pause to save, load or export a backup. Browser saves stay in this browser and origin. A new life preserves the manual slot. Import validates before replacing active progress.</p></details>
+<details><summary>Testing inspector</summary><p>F8 toggles a paused view of all character information, including private ancestry. Press F8 or Escape to return. This does not teach your character secrets or change saved knowledge. On touch: Pause → Testing → All information.</p></details>
 <button class="primary" id="closeHelpBtn">Back to game</button></div></section>
 <section class="overlay" id="deathScreen" aria-label="Expedition ended" hidden><div class="modal"><div class="eyebrow">The end of this expedition</div><h2>Even small lives matter.</h2><p class="lede" id="deathCause"></p><p id="deathStats"></p><div class="rule"></div><button class="primary" id="retryBtn">Try again · same world</button><div class="secondary-row"><button class="small-btn" id="deathFamilyBtn">View dynasty history</button><button class="small-btn" id="menuBtn">Choose a different seed</button></div><p class="fine">Only a living adult descendant can inherit control. If all descendants are minors or deceased, this playable lineage ends. You can still view the family history.</p></div></section>
 <section class="overlay" id="familyScreen" aria-label="Family and succession" hidden><div class="modal family-modal">
@@ -1127,6 +1136,14 @@ button {
   <p id="timeAdvanceStatus"></p><div class="secondary-row"><button class="small-btn" id="advance1Btn">Live 1 year</button><button class="small-btn" id="advance5Btn">Live 5 years</button></div>
   <h3>Your family</h3>
   <div id="familyMembers"></div><details><summary>Marriage history</summary><p class="family-record" id="familyMarriages"></p></details><details><summary>Life history</summary><p class="family-record" id="familyHistory"></p></details>
+</div></section>
+<section class="overlay" id="inspectorScreen" role="dialog" aria-modal="true" aria-labelledby="inspectorTitle" hidden><div class="modal inspector-modal">
+  <div class="eyebrow">Testing view · World paused</div><h2 id="inspectorTitle">All information</h2>
+  <p class="fine">Private simulation truth. Your character does not learn this information.</p>
+  <button class="small-btn" id="closeInspectorBtn">Return to normal · F8 / Escape</button>
+  <div class="inspector-controls"><label for="inspectorSearch">Find name or ID<input id="inspectorSearch" type="search" autocomplete="off" placeholder="All characters, including deceased"></label><label for="inspectorCharacter">Record<select id="inspectorCharacter"></select></label></div>
+  <p id="inspectorSummary" class="inspector-summary"></p>
+  <details id="inspectorRaw"><summary>Full record</summary><pre id="inspectorRecord"></pre></details>
 </div></section>
 <script>
 'use strict';
@@ -2810,7 +2827,7 @@ class Input {
     keyDown(e) {
         if (e.code === 'Tab' && (this.game.state !== 'running' || this.game.socialUI?.isOpen)) {
             const dialog = this.game.socialUI?.isOpen ? $('citizenPanel') : document.querySelector('.overlay:not([hidden])');
-            const controls = dialog ? [...dialog.querySelectorAll('button:not(:disabled),input')].filter(el => !el.hidden && el.getClientRects().length) : [];
+            const controls = dialog ? [...dialog.querySelectorAll('button:not(:disabled),input,select:not(:disabled),summary')].filter(el => !el.hidden && el.getClientRects().length) : [];
             if (controls.length) {
                 const first = controls[0], last = controls[controls.length - 1];
                 if (e.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
@@ -2820,6 +2837,11 @@ class Input {
         }
         if (e.ctrlKey || e.metaKey || e.altKey)
             return;
+        if(e.code==='F8') { e.preventDefault(); if(!e.repeat) this.game.inspector.toggle(); return; }
+        if(this.game.inspector?.isOpen) {
+            if(e.code==='Escape') { e.preventDefault(); this.game.inspector.close(); }
+            return;
+        }
         const editing = e.target instanceof HTMLElement && (e.target.matches('input,textarea,select') || e.target.isContentEditable);
         if (editing) {
             if (e.code === 'Enter' && this.game.state === 'menu') {
@@ -3318,6 +3340,7 @@ class Game {
         this.bindUI();
         this.socialUI = new SocialUI(this);
         this.familyUI = new FamilyUI(this);
+        this.inspector = new InformationInspector(this);
         this.setScreen('menu');
         this.saves.refreshMenu();
         requestAnimationFrame(t => this.frame(t));
@@ -3351,10 +3374,11 @@ class Game {
         bind('cancelApproachBtn', () => this.socialUI.controller?.cancel());
     }
     setScreen(state) {
+        if(this.state==='inspect' && state!=='inspect') this.inspector.clear();
         if (state !== 'running') this.socialUI?.reset();
         this.state = state;
-        const mapping = { menu: 'startScreen', paused: 'pauseScreen', help: 'helpScreen', dead: 'deathScreen', family: 'familyScreen' };
-        for (const id of ['startScreen', 'pauseScreen', 'helpScreen', 'deathScreen', 'familyScreen'])
+        const mapping = { menu: 'startScreen', paused: 'pauseScreen', help: 'helpScreen', dead: 'deathScreen', family: 'familyScreen', inspect:'inspectorScreen' };
+        for (const id of Object.values(mapping))
             $(id).hidden = mapping[state] !== id;
         $('hud').hidden = state === 'menu';
         $('tooltip').hidden = true;
@@ -3363,7 +3387,7 @@ class Game {
         if (state !== 'running') {
             this.input?.clear();
             this.accumulator = 0;
-            const first = state === 'menu' ? $('startBtn') : state === 'paused' ? $('resumeBtn') : state === 'help' ? $('closeHelpBtn') : state === 'family' ? $('familySaveBtn') : $('retryBtn');
+            const first = state === 'menu' ? $('startBtn') : state === 'paused' ? $('resumeBtn') : state === 'help' ? $('closeHelpBtn') : state === 'family' ? $('familySaveBtn') : state==='inspect' ? $('closeInspectorBtn') : $('retryBtn');
             first?.focus({ preventScroll: true });
         }
     }
@@ -3935,6 +3959,83 @@ class FamilyUI {
     }
 }
 
+// ---- inspector.js ----
+// Explicit, read-only testing view. Private truth never enters ordinary DTOs or
+// observer discoveries. Opening/closing is transient and does not enter saves.
+class InformationInspector {
+    constructor(game) {
+        this.game=game; this.returnState='paused';
+        $('openInspectorBtn').addEventListener('click',()=>this.toggle());
+        $('closeInspectorBtn').addEventListener('click',()=>this.close());
+        $('inspectorSearch').addEventListener('input',()=>this.populate());
+        $('inspectorCharacter').addEventListener('change',()=>this.render());
+    }
+    get isOpen() { return this.game.state==='inspect'; }
+    toggle() {
+        if(this.isOpen) { this.close(); return false; }
+        const g=this.game; if(!g.world || g.state==='menu') return false;
+        const selected=g.socialUI?.selectedId || g.world.player.id;
+        this.returnState=g.state;
+        g.setScreen('inspect');
+        $('inspectorSearch').value=''; this.populate(selected);
+        return true;
+    }
+    close() {
+        if(!this.isOpen) return;
+        const g=this.game; g.setScreen(this.returnState);
+        if(g.state==='running') g.canvas.focus({preventScroll:true});
+    }
+    clear() {
+        $('inspectorSearch').value='';
+        $('inspectorCharacter').replaceChildren();
+        for(const id of ['inspectorSummary','inspectorRecord']) $(id).textContent='';
+        $('inspectorRaw').open=false;
+    }
+    populate(selected=$('inspectorCharacter').value) {
+        const w=this.game.world, query=$('inspectorSearch').value.trim().toLowerCase(), select=$('inspectorCharacter');
+        select.replaceChildren();
+        const option=(id,label)=>{const el=document.createElement('option');el.value=id;el.textContent=label;select.appendChild(el);};
+        if(!query || 'world dynasty resources'.includes(query)) option('world','World & dynasty');
+        for(const c of w.registry.all()) {
+            const label=`${c.actual.identity.name || c.id} · ${c.id}${c.isPlayer?' · You':''}${c.actual.life.alive?'':' · Deceased'}`;
+            if(!query || label.toLowerCase().includes(query)) option(c.id,label);
+        }
+        if([...select.options].some(o=>o.value===selected)) select.value=selected;
+        select.disabled=!select.options.length;
+        this.render();
+    }
+    render() {
+        const g=this.game,w=g.world,id=$('inspectorCharacter').value,c=w.registry.get(id);
+        if(id==='world') {
+            $('inspectorSummary').textContent=`Seed ${w.seed} · Family year ${(w.elapsed/C.DAY).toFixed(2)} · ${w.registry.living().length} living / ${w.registry.all().length} total records`;
+            $('inspectorRecord').textContent=JSON.stringify({save:g.saves.capture(),resources:w.resources,terrain:{obstacles:w.obstacles,refuges:w.refuges,roads:w.roads,districts:w.districts}},null,2);
+            return;
+        }
+        if(!c) { $('inspectorSummary').textContent='No matching records.'; $('inspectorRecord').textContent=''; return; }
+        const a=c.actual,genome=a.genome,spouse=w.romance.spouse(c),name=id=>w.registry.get(id)?.actual.identity.name || id || 'None';
+        const preferences=w.romance.preferences(c),pair=c.id===w.player.id?null:w.romance.pairs[w.romance.key(w.player,c)] || null;
+        const summary=[
+            `${a.identity.name} · ${c.id} · ${a.identity.sex} · age ${a.life.ageYears.toFixed(2)} · ${a.life.alive?'Living':a.life.deathCause || 'Deceased'}`,
+            `Visible form: ${c.body.visibleType} · Generation ${a.lineage.generation}`,
+            `Hidden geometry: ${genome.sideCount} sides · ${genome.geometryStage} · regularity ${genome.regularity.toFixed(3)} · sharpness ${genome.sharpness.toFixed(3)}`,
+            `Irregular-ancestry carrier: ${genome.latentIrregularAncestry?'Yes':'No'} · Mutation tendency: ${genome.mutationTendency.toFixed(3)}`,
+            `Size ${genome.size.toFixed(3)} · Mobility ${genome.mobility.toFixed(3)} · Metabolism ${genome.metabolism.toFixed(3)}`,
+            `Mother: ${name(a.lineage.motherId)} · Father: ${name(a.lineage.fatherId)}`,
+            `Children: ${a.lineage.childrenIds.map(name).join(', ') || 'None'} · Spouse: ${spouse?name(spouse.id):'None'}`,
+            `Health ${c.vitals.health.toFixed(1)} · Food ${c.vitals.hunger.toFixed(1)} · Water ${c.vitals.thirst.toFixed(1)} · Stamina ${c.vitals.stamina.toFixed(1)}`,
+            `Partner preferences: ${preferences.sexes.join(', ')} · Willingness for family life: ${preferences.familyLife.toFixed(3)}`,
+            `Trust ${c.playerKnowledge.relationship.trust.toFixed(1)} · Familiarity ${c.playerKnowledge.relationship.familiarity.toFixed(1)} · Affection ${pair?.affection.toFixed(1) || '0.0'}`
+        ];
+        $('inspectorSummary').textContent=summary.join('\n');
+        $('inspectorRecord').textContent=JSON.stringify({character:c,romanticPreferences:preferences,
+            compatibilityWithPlayer:c.id===w.player.id?null:w.romance.compatibility(w.player,c),
+            closeKinToPlayer:w.romance.isCloseKin(w.player,c),
+            pairs:Object.values(w.romance.pairs).filter(p=>p.ids.includes(c.id)),
+            marriages:w.romance.marriages.filter(m=>m.ids.includes(c.id)),
+            archivedNotebooks:Object.fromEntries(Object.entries(w.family.notebooks).filter(([observer,book])=>observer===c.id || book.knowledge[c.id]))},null,2);
+    }
+}
+
 // ---- bootstrap.js ----
 const game = new Game();
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3962,6 +4063,7 @@ if (new URLSearchParams(location.search).get('debug') === '1') {
         setResource(id, quantity) { const r = game.world.resources.find(r => r.id === id); if (!r)
             throw new Error('Unknown resource'); r.quantity = clamp(Math.floor(quantity), 0, r.capacity); r.respawn = r.quantity === 0 ? r.cycle : 0; },
         pause() { game.pause(); }, resume() { game.resume(); },
+        inspect() { return game.inspector.toggle(); },
         worldToScreen(x, y) { return game.renderer.worldToScreen(x, y); }, screenToWorld(x, y) { return game.renderer.screenToWorld(x, y); },
         path(ax, ay, bx, by) { return game.world.nav.path(ax, ay, bx, by); },
         validate() {

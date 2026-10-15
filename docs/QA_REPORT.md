@@ -15,6 +15,7 @@ preserved; its old counts are **not** added to current results.
 | Action-bubble usability | 5 check groups passed | Paused choices, real approach, cancellation, responsive notebook and native emulated touch |
 | Browser preservation regressions | 9 check groups passed | Survival, native v2 migration, touch, Canvas and standalone opening |
 | Browser architecture checks | 7 check groups passed | Released-v4 native recovery, keyed family rows, storage failure injection, cross-tab protection |
+| Reversible testing inspector | 6 check groups passed | F8/console/touch, private truth, read-only payloads, normal privacy restoration and reload |
 | Build agreement / documentation links | Passed | Generated HTML matches source; local document references resolve |
 
 Browser check groups contain multiple assertions; they are not represented as an
@@ -188,3 +189,20 @@ layout and expandable relationships remain. All original browser suites pass wit
 the keyed renderer. No executed scenario produced page exceptions. Architecture
 work does not enable population renewal, trim history, or broaden the verified
 browser/device matrix. See [the NPC-family proposal](POPULATION_RENEWAL_DESIGN.md).
+
+## Reversible all-information inspector
+
+The explicit testing view is available with F8 or Pause → Testing → All information
+in the production build; the broader debug API still requires its opt-in query.
+The six-group inspector browser suite verifies repeat-safe F8, Escape, repeated
+console toggles, selected-citizen entry, searchable living/deceased records,
+hidden female geometry/carrier state, archived notebooks and a world snapshot.
+
+Complete payloads (including knowledge and all RNG streams) and native slots are
+identical before/after inspection. Gameplay hotkeys and controlled time advance
+cannot mutate the world while inspecting. Closing clears private record text and
+options; reloading restores normal mode, even if the page closed while inspecting.
+Normal family DTOs remain privacy-safe. Native emulated touch entry/exit passes
+without the debug API. Desktop, portrait and short-landscape layouts fit, and
+portrait/desktop screenshots were inspected locally. No page exceptions occurred.
+The 60 deterministic cases and five prior browser suites also pass.

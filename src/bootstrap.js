@@ -24,6 +24,7 @@ if (new URLSearchParams(location.search).get('debug') === '1') {
         setResource(id, quantity) { const r = game.world.resources.find(r => r.id === id); if (!r)
             throw new Error('Unknown resource'); r.quantity = clamp(Math.floor(quantity), 0, r.capacity); r.respawn = r.quantity === 0 ? r.cycle : 0; },
         pause() { game.pause(); }, resume() { game.resume(); },
+        inspect() { return game.inspector.toggle(); },
         worldToScreen(x, y) { return game.renderer.worldToScreen(x, y); }, screenToWorld(x, y) { return game.renderer.screenToWorld(x, y); },
         path(ax, ay, bx, by) { return game.world.nav.path(ax, ay, bx, by); },
         validate() {

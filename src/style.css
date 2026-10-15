@@ -1050,3 +1050,11 @@ button {
 .family-member summary { font-size:11px; }
 .family-member h3 { font-size:13px; }
 .action-bubble,.speech-bubble { background:#14262b; }
+
+/* Explicit testing view; hidden truth never enters ordinary citizen panels. */
+.inspector-modal { width:min(880px,100%); text-align:left; }
+.inspector-controls { display:grid; gap:12px; margin:18px 0; }
+.inspector-controls label { display:grid; gap:6px; color:var(--green); font-size:12px; }
+.inspector-controls input,.inspector-controls select { width:100%; min-width:0; box-sizing:border-box; padding:10px; border:1px solid var(--line); border-radius:6px; background:#14262b; color:var(--text); font:inherit; }
+.inspector-summary { white-space:pre-line; overflow-wrap:anywhere; }
+#inspectorRecord { white-space:pre-wrap; overflow-wrap:anywhere; font-size:11px; line-height:1.5; }

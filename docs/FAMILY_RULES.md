@@ -94,6 +94,9 @@ characters, dynamic population, life state, family records, current observer,
 archived notebooks and all three RNG streams. A candidate world is fully validated
 before installation, including reciprocal family links and playable descent.
 The private registry retains deceased identities outside living world simulation.
+The explicitly enabled F8 testing inspector can display private simulation truth,
+including hidden genomes. It is transient, pauses time and never updates observer
+knowledge or save data; normal family/notebook/bubble disclosure rules remain.
 Explicit generation ordering excludes ancestry cycles; v4 imports reject spouse
 bonds that disagree with reciprocal marriage history. Observers, household support
 and family DTOs have separate boundaries without changing these gameplay rules.

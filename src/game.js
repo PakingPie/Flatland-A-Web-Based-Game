@@ -21,6 +21,7 @@ class Game {
         this.bindUI();
         this.socialUI = new SocialUI(this);
         this.familyUI = new FamilyUI(this);
+        this.inspector = new InformationInspector(this);
         this.setScreen('menu');
         this.saves.refreshMenu();
         requestAnimationFrame(t => this.frame(t));
@@ -54,10 +55,11 @@ class Game {
         bind('cancelApproachBtn', () => this.socialUI.controller?.cancel());
     }
     setScreen(state) {
+        if(this.state==='inspect' && state!=='inspect') this.inspector.clear();
         if (state !== 'running') this.socialUI?.reset();
         this.state = state;
-        const mapping = { menu: 'startScreen', paused: 'pauseScreen', help: 'helpScreen', dead: 'deathScreen', family: 'familyScreen' };
-        for (const id of ['startScreen', 'pauseScreen', 'helpScreen', 'deathScreen', 'familyScreen'])
+        const mapping = { menu: 'startScreen', paused: 'pauseScreen', help: 'helpScreen', dead: 'deathScreen', family: 'familyScreen', inspect:'inspectorScreen' };
+        for (const id of Object.values(mapping))
             $(id).hidden = mapping[state] !== id;
         $('hud').hidden = state === 'menu';
         $('tooltip').hidden = true;
@@ -66,7 +68,7 @@ class Game {
         if (state !== 'running') {
             this.input?.clear();
             this.accumulator = 0;
-            const first = state === 'menu' ? $('startBtn') : state === 'paused' ? $('resumeBtn') : state === 'help' ? $('closeHelpBtn') : state === 'family' ? $('familySaveBtn') : $('retryBtn');
+            const first = state === 'menu' ? $('startBtn') : state === 'paused' ? $('resumeBtn') : state === 'help' ? $('closeHelpBtn') : state === 'family' ? $('familySaveBtn') : state==='inspect' ? $('closeInspectorBtn') : $('retryBtn');
             first?.focus({ preventScroll: true });
         }
     }

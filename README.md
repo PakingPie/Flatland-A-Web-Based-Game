@@ -124,6 +124,25 @@ play or silently erasing older slots.
 
 ## Source and validation
 
+### Reversible testing inspector
+
+With an expedition loaded, press **F8** to open **All information**. Press **F8**
+again, **Escape**, or **Return to normal** to close it. On touch, use
+**Pause → Testing → All information**. Reload this updated HTML to get the feature;
+existing saves work without starting a new game.
+
+The inspector pauses simulation and shows hidden genomes, ancestry, preferences,
+relationships and raw records. Search any name/ID, including deceased ancestors,
+or select **World & dynasty** for the complete save snapshot and terrain records.
+**Full record** expands the detailed JSON. It does not change discoveries, trust,
+RNG or save data. Private details are cleared on close, and inspection mode is
+never saved. Ordinary bubbles, notebooks and family screens keep their usual
+discovery rules.
+
+For console-driven testing with the optional debug query, run
+`FlatlandDebug.inspect()` to toggle the same view. F8 and the touch button also
+work without that query; the normal build still excludes the debug API.
+
 Source fragments in [src](src/) share a strict lexical closure and assemble using
 [the build script](tools/build.py). Edit source and rebuild instead of editing the
 generated HTML. The [original Phase 1 baseline](baseline/the-flatland-phase1.html)
@@ -141,6 +160,7 @@ remains unchanged.
 | [family UI](src/family-ui.js) | Paused register, years and heir selection |
 | [save codec](src/save-codec.js), [migrations](src/save-migrations.js), [validation](src/save-validation.js) | Storage-independent schema readers and candidate validation |
 | [persistence](src/persistence.js) | Native storage, slot fallback, installation and file I/O |
+| [inspector](src/inspector.js) | Explicit, reversible private-truth view for testing |
 | [game](src/game.js), [world](src/world.js) | Existing survival and integration |
 
 Python 3.10+ and Node 18+ run dependency-free checks:
@@ -161,6 +181,7 @@ node tools/browser-generations.cjs
 node tools/browser-bubbles.cjs
 node tools/browser-regressions.cjs
 node tools/browser-architecture.cjs
+node tools/browser-inspector.cjs
 ```
 
 Use `FLATLAND_NODE_MODULES` for a bundled Playwright package directory and

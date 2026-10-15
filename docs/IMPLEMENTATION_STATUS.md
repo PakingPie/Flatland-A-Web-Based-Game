@@ -1,5 +1,18 @@
 # Implementation checkpoints — Phase 2B / 3 / 3.5
 
+## Reversible testing inspector
+
+Added the user-requested read-only truth inspector: F8 toggles it, Escape closes
+it, and Pause → Testing supports touch. A selected citizen opens directly; search
+includes deceased ancestors, private genomes, preferences, records and archived
+notebooks. World/dynasty mode exposes the full snapshot and terrain. The view
+pauses time, preserves payload/knowledge/RNG/slots, clears private DOM on exit and
+is not saved. Default disclosure, stable IDs and save schema remain unchanged.
+
+All 60 deterministic tests, build/docs checks and six Chromium scripts pass. The
+new six-group inspector suite covers production keyboard/touch access, transient
+mode, readonly state, normal privacy, reload, selected-citizen entry and layouts.
+
 ## Phase 3.5 final core-hardening checkpoint
 
 Keyed family rows preserve expanded details and DOM identity during updates. A

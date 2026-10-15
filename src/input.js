@@ -60,7 +60,7 @@ class Input {
     keyDown(e) {
         if (e.code === 'Tab' && (this.game.state !== 'running' || this.game.socialUI?.isOpen)) {
             const dialog = this.game.socialUI?.isOpen ? $('citizenPanel') : document.querySelector('.overlay:not([hidden])');
-            const controls = dialog ? [...dialog.querySelectorAll('button:not(:disabled),input')].filter(el => !el.hidden && el.getClientRects().length) : [];
+            const controls = dialog ? [...dialog.querySelectorAll('button:not(:disabled),input,select:not(:disabled),summary')].filter(el => !el.hidden && el.getClientRects().length) : [];
             if (controls.length) {
                 const first = controls[0], last = controls[controls.length - 1];
                 if (e.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
@@ -70,6 +70,11 @@ class Input {
         }
         if (e.ctrlKey || e.metaKey || e.altKey)
             return;
+        if(e.code==='F8') { e.preventDefault(); if(!e.repeat) this.game.inspector.toggle(); return; }
+        if(this.game.inspector?.isOpen) {
+            if(e.code==='Escape') { e.preventDefault(); this.game.inspector.close(); }
+            return;
+        }
         const editing = e.target instanceof HTMLElement && (e.target.matches('input,textarea,select') || e.target.isContentEditable);
         if (editing) {
             if (e.code === 'Enter' && this.game.state === 'menu') {

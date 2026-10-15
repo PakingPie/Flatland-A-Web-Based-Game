@@ -39,9 +39,9 @@ no removal path for referenced ancestors; deceased records still count toward th
 
 ## Current validation
 
-Build agreement, documentation links and 60 deterministic cases pass. All five
+Build agreement, documentation links and 60 deterministic cases pass. All six
 Chromium scripts pass: smoke, generations (8 groups), bubbles (5), preservation
-(9), architecture (7). The architecture suite includes native released-v4 loading,
+(9), architecture (7), inspector (6). The architecture suite includes native released-v4 loading,
 three Continue cycles/two complete browser restarts, preserved family row expansion,
 injected Storage quota/denial, and a genuine cross-tab storage event. The
 population stress test fills the record budget, kills non-household actors and
@@ -81,6 +81,12 @@ proposal with the user before implementing population rules.
 5. Consider a compact graphical tree only when population size and playtesting
    justify it. Current keyed text rows retain concise expandable relationships.
 
+The user-requested F8 inspector is an explicit testing exception to ordinary
+disclosure: it pauses time and shows private truth without teaching discoveries
+or changing saved state. F8/Escape returns to normal and clears private details.
+Pause → Testing supports touch; the view is transient and does not require the
+optional debug API. Use it for inspection, not as evidence of natural discovery.
+
 ## Ready-to-copy next-session prompt
 
 > Continue The Flatland Phase 3.5 on `codex/phase-2b-3-generations`, PR #1. Inspect
@@ -88,7 +94,7 @@ proposal with the user before implementing population rules.
 > QA_REPORT, IMPLEMENTATION_STATUS and POPULATION_RENEWAL_DESIGN under docs. Core registry,
 > save-codec/migration, observer/family/household boundaries and keyed family rows
 > are implemented. Start by rerunning the deterministic build/docs/rule checks and
-> the five browser scripts. Preserve action bubbles, stable IDs, hidden ancestry,
+> the six browser scripts. Preserve action bubbles, stable IDs, hidden ancestry,
 > original slots, v1–v4 compatibility and standalone HTML. The user chose to design
 > autonomous NPC families first; discuss unresolved rules in the proposal before
 > implementing them. Do not assume population tuning or archive deletion is
