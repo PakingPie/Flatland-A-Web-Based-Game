@@ -103,6 +103,20 @@ test('observer transfer archives discoveries without sharing private claims with
     assert.ok(!JSON.stringify(w.family.view()).includes('A private founder conversation'));
     saveFor(w).decode(saveFor(w).encode());
 });
+test('population budget counts deceased records and refuses births without consuming IDs or RNG', () => {
+    const {w,c}=familyWorld();
+    while(w.registry.all().length<=context.rules.FAMILY.maxPopulation-4) {
+        w.elapsed+=2*120+1; const born=w.family.birth(); assert.equal(born.ok,true,born.text);
+    }
+    const count=w.registry.all().length, nextId=w.family.nextId, rng=w.family.rng.state;
+    assert.ok(count<=256 && count>252);
+    for(const child of w.registry.all().filter(n=>n!==w.player && n!==c)) w.family.markDeath(child);
+    assert.equal(w.npcs.length,1);
+    assert.equal(w.family.birth().ok,false);
+    assert.equal(w.family.nextId,nextId);assert.equal(w.family.rng.state,rng);
+    const restored=saveFor(w).decode(saveFor(w).encode()).world;
+    assert.equal(restored.registry.all().length,count);assert.equal(restored.npcs.length,1);
+});
 test('excellent trust does not guarantee attraction; proposals can fail', () => {
     const w=new World('romance'); const c=w.npcs.find(c=>!w.romance.preferences(c).sexes.includes('male')); prepare(w,c); c.playerKnowledge.relationship.trust=100;
     assert.equal(action(w,c,'compliment').ok,false); assert.equal(w.romance.pair(w.player,c).affection,0);

@@ -93,6 +93,10 @@ Original slot keys and generator version remain. Schema v4 persists private
 characters, dynamic population, life state, family records, current observer,
 archived notebooks and all three RNG streams. A candidate world is fully validated
 before installation, including reciprocal family links and playable descent.
+The private registry retains deceased identities outside living world simulation.
+Explicit generation ordering excludes ancestry cycles; v4 imports reject spouse
+bonds that disagree with reciprocal marriage history. Observers, household support
+and family DTOs have separate boundaries without changing these gameplay rules.
 Legacy v1/v2/v3 first validate original seeded identity signatures, then acquire
 family defaults. The legacy generation-zero founder becomes Generation 1.
 
@@ -102,6 +106,9 @@ later autosave. The checksum detects accidental corruption, not deliberate editi
 The save budget is 2 MB. Developer hooks require the debug query parameter.
 
 The founding population ages without autonomous NPC reproduction or immigration.
-Unrelated fertile partners can eventually run out. Sustainable population renewal,
-archival compaction and adoption remain later design work; see the
+Unrelated fertile partners can eventually run out. The selected next direction is
+[autonomous NPC families](POPULATION_RENEWAL_DESIGN.md), with proposed pacing and
+activation still open for discussion. Reproduction in a closed population cannot
+guarantee unrelated partners forever under the current kinship/budget rules.
+Archival compaction and adoption remain unimplemented; see the
 [Phase 3.5 handoff](PHASE35_HANDOFF.md).

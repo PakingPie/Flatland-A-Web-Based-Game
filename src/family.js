@@ -3,9 +3,9 @@ class FamilySystem {
     constructor(world) {
         this.world = world; this.rng = new RNG(world.seed + ':families'); this.nextId = 1;
         this.births = []; this.history = []; this.playableIds = [world.player.id]; this.notebooks = {};
-        for (const c of this.actors()) { c.actual.lineage.generation = 1; c.actual.genome.generation = 1; }
+        for (const c of this.records()) { c.actual.lineage.generation = 1; c.actual.genome.generation = 1; }
     }
-    actors() { return this.world.registry.all(); }
+    records() { return this.world.registry.all(); }
     character(id) { return this.world.registry.get(id); }
     get year() { return this.world.elapsed / C.DAY; }
     birthEligibility() {
@@ -16,7 +16,7 @@ class FamilySystem {
         const pair = this.world.romance.pair(a,b);
         if (pair.affection < ROMANCE.affectionToMarry || b.playerKnowledge.relationship.trust < ROMANCE.trustToMarry || this.world.romance.preferences(b).familyLife < .3) return 'Your spouse is not ready to consent to raising children.';
         if (this.year - pair.lastBirthYear < FAMILY.birthCooldown) return `Allow ${Math.ceil(FAMILY.birthCooldown - (this.year-pair.lastBirthYear))} more family year(s) between births.`;
-        if (this.actors().length > FAMILY.maxPopulation - 4) return 'This dynasty has reached the current population budget.';
+        if (this.records().length > FAMILY.maxPopulation - 4) return 'This dynasty has reached the current population budget.';
         if (a.vitals.health < 35 || a.vitals.hunger < 30 || a.vitals.thirst < 30) return 'Recover your health and supplies before expanding the household.';
         return '';
     }
@@ -99,7 +99,7 @@ class FamilySystem {
     knownFamily() {
         const founder=this.character(this.playableIds[0]), base=[founder,...this.descendants(founder)], ids=new Set(base.map(c=>c.id));
         for(const m of this.world.romance.marriages) if(m.ids.some(id=>ids.has(id))) m.ids.forEach(id=>ids.add(id));
-        return this.actors().filter(c=>ids.has(c.id));
+        return this.records().filter(c=>ids.has(c.id));
     }
     view() { return familyView(this); }
     exportState() { return copyJSON({rngState:this.rng.state,nextId:this.nextId,births:this.births,history:this.history,playableIds:this.playableIds,notebooks:this.notebooks}); }
@@ -120,6 +120,6 @@ class FamilySystem {
             const current=this.world.social.exportState(); this.world.social.importState({version:1,rngState:current.rngState,reputation:book.reputation},4); this.world.social.importState(current,4);
         }
         this.rng.state=data.rngState; this.nextId=data.nextId; this.births=copyJSON(data.births); this.history=copyJSON(data.history); this.playableIds=copyJSON(data.playableIds); this.notebooks=copyJSON(data.notebooks);
-        insist(this.actors().filter(c=>c.id.startsWith('descendant-')).every(c=>Number(c.id.slice(11))<this.nextId),'Invalid next descendant ID.');
+        insist(this.records().filter(c=>c.id.startsWith('descendant-')).every(c=>Number(c.id.slice(11))<this.nextId),'Invalid next descendant ID.');
     }
 }

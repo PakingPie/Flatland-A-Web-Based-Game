@@ -5,7 +5,7 @@ const ROMANCE = Object.freeze({ affectionToMarry: 42, trustToMarry: 18,
         outing: 'Invite a quiet walk', commitment: 'Discuss a shared future', propose: 'Propose marriage', separate: 'End this marriage' } });
 class RomanceSystem {
     constructor(world) { this.world = world; this.pairs = {}; this.marriages = []; }
-    actors() { return this.world.registry.all(); }
+    records() { return this.world.registry.all(); }
     character(id) { return this.world.registry.get(id); }
     preferences(c) {
         const rng = new RNG(`${this.world.seed}:romance:${c.id}`), roll = rng.next();
@@ -86,7 +86,7 @@ class RomanceSystem {
     preferenceText(c) { const p = this.preferences(c); return `I am open to partners who are ${p.sexes.join(' or ')}. ${p.independence > .5 ? 'I choose affection over family expectations.' : 'Family expectations matter to me.'} ${p.reputation > .75 ? 'A considerate public reputation matters too.' : 'I want to build trust at our own pace.'}`; }
     endMarriage(m, reason) { m.endedAt = this.world.elapsed; m.reason = reason; const a = this.character(m.ids[0]), b = this.character(m.ids[1]); if (a && b) this.pair(a, b).status = reason === 'death' ? 'widowed' : 'separated'; this.syncBonds(); }
     syncBonds() {
-        for (const c of this.actors()) c.actual.bonds = { partnerIds: [], marriageIds: [] };
+        for (const c of this.records()) c.actual.bonds = { partnerIds: [], marriageIds: [] };
         for (const m of this.marriages) for (const id of m.ids) {
             const c = this.character(id); if (!c) continue;
             c.actual.bonds.marriageIds.push(m.id);

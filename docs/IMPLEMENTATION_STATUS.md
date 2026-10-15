@@ -1,4 +1,21 @@
-# Phase 2B + 3 implementation checkpoints
+# Implementation checkpoints — Phase 2B / 3 / 3.5
+
+## Phase 3.5 final core-hardening checkpoint
+
+Keyed family rows preserve expanded details and DOM identity during updates. A
+fifth Chromium script adds seven architecture check groups for frozen-v4 native
+recovery, dead-record separation, malformed spouse-bond imports, storage failures,
+startup without storage and cross-tab protection. Final results: 60 deterministic
+cases, all five Chromium scripts, build agreement and documentation links pass.
+The total-population stress case proves deceased records retain capacity and
+refused births consume neither IDs nor inheritance RNG. Evidence remains local.
+
+The user chose to design autonomous NPC families first. The concrete proposal is
+recorded in [the population discussion](POPULATION_RENEWAL_DESIGN.md); its pacing,
+NPC needs, inheritance anchors and activation policy are not adopted. Population
+rules, save schema and gameplay rates remain unchanged. Archive compaction,
+unassisted human balance, broader browsers/devices and long-session validation
+remain pending. The [handoff](PHASE35_HANDOFF.md) has a self-contained starter prompt.
 
 ## Phase 3.5 family boundaries and integrity checkpoint
 

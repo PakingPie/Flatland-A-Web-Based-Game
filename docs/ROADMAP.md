@@ -17,7 +17,7 @@
 | **2A — Living Society** | **Implemented in [the-flatland.html](../the-flatland.html), v0.2.0; [QA evidence and limits](QA_REPORT.md)** | Citizen identities, conversation, trust, rumors and partial knowledge | Introduce yourself, discover limited information, and retain relationship progress |
 | 2B — Courtship & Marriage | **Implemented, v0.3.1** | Preferences, attraction, courtship, consent, same-sex marriage and household support | Marriage persists through save/load |
 | 3 — Family, Inheritance & Evolution | **Implemented, v0.3.1** | Multiple offspring, strict genetics, aging, genealogy and playable succession | Verified daughter control in Generation 2 and Generation 3 births |
-| 3.5 — Architecture hardening | Planned | Stable character registry, migration boundaries, population sustainability | Preserve current gameplay and legacy fixtures; see [handoff](PHASE35_HANDOFF.md) |
+| 3.5 — Architecture hardening | **Core boundaries implemented; renewal design pending** | Stable registry, storage-independent migrations, family/observer/household seams, incremental rows | Current gameplay and v1–v4 fixtures pass; discuss [NPC families](POPULATION_RENEWAL_DESIGN.md) before rules change; see [handoff](PHASE35_HANDOFF.md) |
 | 4 — Combat & Law | Planned | Shape-specific attacks, danger, guards, injuries, crimes | Combat and legal reactions follow geometry and social context |
 | 5 — Civilization | Planned | Trade, property, class mobility, politics, institutions and reform | Multiple viable long-term paths beyond becoming a circle |
 

@@ -1,6 +1,12 @@
 # The Flatland
 ## Version 0.3.1 — Action bubbles and playable generations
 
+Phase 3.5 core architecture is hardened: a stable character registry separates
+living actors from deceased records; save validation/migration runs independently
+of browser storage; family views, observer notebooks and household support have
+explicit boundaries. Population rules remain unchanged. The selected next design
+direction is [autonomous NPC families](docs/POPULATION_RENEWAL_DESIGN.md).
+
 A lightweight offline Canvas survival and society simulation inspired by Edwin
 Abbott's *Flatland*. Survive as an irregular triangle, meet citizens, court a
 consenting partner, marry, raise children and continue as a chosen adult son or
@@ -126,10 +132,15 @@ remains unchanged.
 | Module | Responsibility |
 |---|---|
 | [genetics](src/genetics.js) | Pure staged inheritance and genome validation |
+| [registry](src/registry.js) | Private stable-ID records and living world projections |
 | [romance](src/romance.js) | Preferences, attraction, consent and marriage history |
-| [family](src/family.js) | Births, aging, genealogy, succession, dynasty validation |
+| [family](src/family.js) | Birth, death, aging and succession commands/events |
+| [family invariants](src/family-invariants.js) | Reciprocal spouse links and generation DAGs |
+| [observer notebooks](src/observer-notebooks.js), [household](src/household.js) | Observer transfer and derived household support |
+| [family view](src/family-view.js) | Privacy-safe family presentation DTO |
 | [family UI](src/family-ui.js) | Paused register, years and heir selection |
-| [persistence](src/persistence.js) | Migration, native storage, file export/import |
+| [save codec](src/save-codec.js), [migrations](src/save-migrations.js), [validation](src/save-validation.js) | Storage-independent schema readers and candidate validation |
+| [persistence](src/persistence.js) | Native storage, slot fallback, installation and file I/O |
 | [game](src/game.js), [world](src/world.js) | Existing survival and integration |
 
 Python 3.10+ and Node 18+ run dependency-free checks:
@@ -149,6 +160,7 @@ node tools/browser-smoke.cjs
 node tools/browser-generations.cjs
 node tools/browser-bubbles.cjs
 node tools/browser-regressions.cjs
+node tools/browser-architecture.cjs
 ```
 
 Use `FLATLAND_NODE_MODULES` for a bundled Playwright package directory and
