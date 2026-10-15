@@ -1,5 +1,18 @@
 # Phase 2B + 3 implementation checkpoints
 
+## Phase 3.5 baseline and released-save checkpoint (2026-10-15)
+
+Started clean on `codex/phase-2b-3-generations` at `87feb3c`. Build agreement,
+documentation links, all 48 original deterministic cases and all four Chromium
+browser scripts pass before architecture edits. Browser processes require an
+unsandboxed run with explicit installed Chromium and isolated test profiles.
+
+Frozen a released-v4 fixture by executing source from `87feb3c`, with daughter
+succession, births, deaths and an archived observer. Its full payload round-trip
+adds a 49th passing deterministic case. Legacy v2/v3 fixtures and the original
+standalone baseline remain untouched. Population direction selected by the user:
+design autonomous NPC families first; no renewal rule is adopted yet.
+
 ## Recovery / checkpoint A (2026-10-15)
 
 Started from stable main `6e565b7`. Refreshed origin; the interrupted branch

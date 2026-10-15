@@ -22,6 +22,15 @@ test('seeded baseline and existing simulation state round-trip', () => {
     const a = new World('baseline'), b = new World('baseline'); assert.deepEqual(json(a.resources),json(b.resources)); assert.equal(a.rng.state,b.rng.state);
     const store=saveFor(a), raw=store.encode(), out=store.decode(raw); assert.deepEqual(json(out.world.player),json(a.player)); assert.equal(out.world.social.rng.state,a.social.rng.state);
 });
+test('frozen released v4 family, daughter observer and deceased ancestors round-trip exactly', () => {
+    const raw=fs.readFileSync('tools/fixtures/released-v4.json','utf8'), original=JSON.parse(raw);
+    const store=saveFor(new World('unused')), restored=store.decode(raw);
+    store.game={...gameFor(restored.world),...restored.saved,world:restored.world,progress:{...restored.saved.progress,visited:new Set(restored.saved.progress.visited)},noticeUntil:restored.saved.notice.until};
+    assert.deepEqual(json(store.capture()),original.payload);
+    assert.equal(restored.world.player.actual.identity.sex,'female');
+    assert.equal(restored.world.family.character('founder-000').actual.life.alive,false);
+    assert.ok(restored.world.family.notebooks['founder-000']);
+});
 test('excellent trust does not guarantee attraction; proposals can fail', () => {
     const w=new World('romance'); const c=w.npcs.find(c=>!w.romance.preferences(c).sexes.includes('male')); prepare(w,c); c.playerKnowledge.relationship.trust=100;
     assert.equal(action(w,c,'compliment').ok,false); assert.equal(w.romance.pair(w.player,c).affection,0);
