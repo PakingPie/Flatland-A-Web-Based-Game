@@ -1,7 +1,7 @@
 // Versioned, transactional local saves. Immutable terrain and identities are seeded;
 // every mutable simulation field is restored into a candidate World before install.
 // The checksum detects accidental corruption; it is NOT an anti-cheat mechanism.
-const SaveFormat = Object.freeze({ name: 'the-flatland', version: 2, worldVersion: 1,
+const SaveFormat = Object.freeze({ name: 'the-flatland', version: 3, worldVersion: 1,
     keys: { manual: 'flatland.manual.v1', auto: 'flatland.auto.v1' }, maxBytes: 2_000_000 });
 const copyJSON = value => JSON.parse(JSON.stringify(value));
 function insist(ok, message) { if (!ok) throw new Error(message); }
@@ -103,6 +103,7 @@ class SaveStore {
             pack: copyJSON(g.pack), progress: { gathered: g.progress.gathered, visited: [...g.progress.visited], complete: g.progress.complete },
             gatherCooldown: g.gatherCooldown, warningLatch: copyJSON(g.warningLatch), effects: copyJSON(g.effects), messages: copyJSON(g.messages),
             notice: { text: $('notice').textContent, until: g.noticeUntil, hidden: $('notice').hidden },
+            romance: w.romance.exportState(),
             social: w.social ? w.social.exportState() : null };
     }
     encode(slot = 'manual') {
@@ -116,7 +117,7 @@ class SaveStore {
         try { data = JSON.parse(raw); } catch { throw new Error('Save contains damaged JSON.'); }
         checkJSONTree(data);
         insist(plain(data) && data.format === SaveFormat.name, 'This is not a Flatland save.');
-        insist(data.version === SaveFormat.version || data.version === 1, 'Save version is not supported by this build.');
+        insist([1, 2, 3].includes(data.version), 'Save version is not supported by this build.');
         insist(data.worldVersion === SaveFormat.worldVersion, 'World generator version is incompatible.');
         insist(plain(data.payload) && data.checksum === hash(JSON.stringify(data.payload)), 'Save checksum does not match.');
         insist(numberIn(data.savedAt, 0, 1e15) && integerIn(data.revision, 0, 1e12), 'Invalid save timestamp.');
@@ -150,6 +151,7 @@ class SaveStore {
         insist(plain(s.notice) && shortText(s.notice.text) && numberIn(s.notice.until, 0, s.elapsed + 100) && typeof s.notice.hidden === 'boolean', 'Invalid notice.');
         if (w.social) w.social.importState(s.social, envelope.version);
         else insist(s.social === null, 'Social save requires a newer build.');
+        if (envelope.version >= 3) w.romance.importState(s.romance);
         w.rng.state = s.rngState;
         return { world: w, saved: s, envelope };
     }

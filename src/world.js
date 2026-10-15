@@ -22,6 +22,7 @@ class World {
         this.player.prevAngle = -.8;
         this.generateCitizens();
         this.social = new SocialSystem(this);
+        this.romance = new RomanceSystem(this);
         this.conversationId = null;
     }
     addObstacle(o) { o.id = 'obstacle-' + this.obstacles.length; this.obstacles.push(o); this.index.insert(o); }

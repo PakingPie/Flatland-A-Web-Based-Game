@@ -15,6 +15,11 @@ class SocialUI {
             b.title = topic === 'family' ? 'Intrusive questions can damage trust. Build a trusted relationship first.' : label;
             b.addEventListener('click', () => this.talk(topic)); $('conversationOptions').appendChild(b);
         }
+        for (const [topic, label] of Object.entries(ROMANCE.topics)) {
+            const b = document.createElement('button'); b.type = 'button'; b.className = 'topic'; b.textContent = label; b.dataset.romance = topic;
+            b.addEventListener('click', () => { if (game.state !== 'running') return; const r = game.world.romance.interact(this.selectedId, topic); $('dialogueText').textContent = r.text; $('socialOutcome').textContent = r.outcome; this.refresh(); game.refreshUI(); });
+            $('romanceOptions').appendChild(b);
+        }
         game.canvas.addEventListener('click', e => {
             if (game.state !== 'running') return;
             const box = game.canvas.getBoundingClientRect(), c = game.citizenAtScreen(e.clientX - box.left, e.clientY - box.top);
@@ -81,6 +86,10 @@ class SocialUI {
         $('familiarityMeter').value = v.relationship.familiarity;
         $('trustMeter').value = Math.max(0, v.relationship.trust);
         $('playerReputation').textContent = social.reputationLabel();
+        const romance = this.game.world.romance.view(citizen);
+        $('romanceStatus').textContent = `${romance.status} · Affection ${Math.round(romance.affection)}/100 · Your spouse: ${romance.spouse}`;
+        $('romancePreferences').textContent = romance.preferences;
+        for (const b of $('romanceOptions').querySelectorAll('button')) b.disabled = !v.inRange || v.cooldown > .01 || v.remaining <= 0;
         for (const b of $('conversationOptions').querySelectorAll('button')) {
             b.disabled = !v.inRange || v.cooldown > .01 || v.remaining <= 0 || (b.dataset.topic === 'introduce' && v.introduced);
         }

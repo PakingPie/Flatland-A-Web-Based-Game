@@ -222,7 +222,7 @@ class Game {
             this.world.move(p, move.x * speed * dt, move.y * speed * dt);
             p.angle = moveAngle(p.angle, Math.atan2(move.y, move.x), dt * 15);
         }
-        const metabolism = p.actual.genome.metabolism;
+        const metabolism = p.actual.genome.metabolism * this.world.romance.household(p);
         v.hunger = Math.max(0, v.hunger - .30 * metabolism * dt * (sprint ? 1.65 : run.resting ? .65 : 1));
         v.thirst = Math.max(0, v.thirst - .46 * metabolism * dt * (sprint ? 1.8 : run.resting ? .72 : 1));
         if (v.hunger <= 0)
@@ -230,7 +230,7 @@ class Game {
         if (v.thirst <= 0)
             v.health -= 5 * dt;
         if (run.resting && this.world.refugeAt(p.x, p.y) && v.hunger > 30 && v.thirst > 30)
-            v.health = Math.min(100, v.health + 1.8 * dt);
+            v.health = Math.min(100, v.health + (this.world.romance.spouse(p) ? 2.1 : 1.8) * dt);
         v.health = clamp(v.health, 0, 100);
         for (const [key, label] of [['hunger', 'Food'], ['thirst', 'Water']]) {
             if (v[key] < 23 && !this.warningLatch[key]) {

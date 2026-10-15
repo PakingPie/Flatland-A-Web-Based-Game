@@ -8,8 +8,11 @@ const { chromium } = bundled ? createRequire(path.join(bundled, '_resolve.cjs'))
 const output = path.resolve('output/playwright');
 fs.mkdirSync(output, { recursive: true });
 const profile = fs.mkdtempSync(path.join(output, 'profile-'));
-const url = process.env.FLATLAND_URL || 'http://127.0.0.1:8000/the-flatland.html?debug=1';
+let url = process.env.FLATLAND_URL;
 (async () => {
+    const server = require('node:http').createServer((req, res) => { res.setHeader('Content-Type','text/html'); res.end(fs.readFileSync('the-flatland.html')); });
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    url ||= `http://127.0.0.1:${server.address().port}/the-flatland.html?debug=1`;
     let context;
     const errors = [];
     const open = async () => {
@@ -35,5 +38,5 @@ const url = process.env.FLATLAND_URL || 'http://127.0.0.1:8000/the-flatland.html
         await page.screenshot({ path: path.join(output, 'baseline.png') });
         assert.deepEqual(errors, []);
         console.log('PASS native manual save / browser shutdown / Continue: exact payload');
-    } finally { if (context) await context.close(); }
+    } finally { if (context) await context.close(); server.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });

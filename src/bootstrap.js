@@ -56,6 +56,7 @@ if (new URLSearchParams(location.search).get('debug') === '1') {
         npcVitals(id, values) { const c = game.world.social.citizen(id); if (!c) throw new Error('Unknown citizen'); for (const k of ['health','hunger','thirst','stamina']) if (Object.hasOwn(values,k)) { if (!Number.isFinite(values[k])) throw new TypeError('Non-finite vital'); c.vitals[k] = clamp(values[k],0,100); } },
         socialView(id) { const c = game.world.social.citizen(id); if (!c) throw new Error('Unknown citizen'); return game.world.social.view(c); },
         interact(id, topic) { return game.world.social.interact(id, topic); },
+        romance(id, topic) { return game.world.romance.interact(id, topic); },
         openCitizen(id) { game.socialUI.open(id); }, closeCitizen() { game.socialUI.close(); },
         socialState() { return game.world.social.exportState(); },
         config: C

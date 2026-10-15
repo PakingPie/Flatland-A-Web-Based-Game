@@ -1130,7 +1130,7 @@ button {
   <div class="relationship-meters"><label>Familiarity <span id="familiarityText">0</span><meter id="familiarityMeter" min="0" max="100" value="0">Familiarity</meter></label><label>Trust <span id="trustText">0</span><meter id="trustMeter" min="0" max="100" value="0">Trust</meter></label></div>
   <div class="social-tabs" role="tablist" aria-label="Citizen information"><button id="conversationTab" role="tab" aria-selected="true" aria-controls="conversationView">Conversation</button><button id="notesTab" role="tab" aria-selected="false" aria-controls="notesView">Discovered notes</button></div>
   <div class="social-scroll" tabindex="0" role="region" aria-label="Scrollable conversation and discovered notes">
-    <section id="conversationView" role="tabpanel" aria-labelledby="conversationTab"><p id="dialogueText" aria-live="polite"></p><p id="socialOutcome" aria-live="polite"></p><div id="conversationOptions"></div><p class="social-warning">The world is still moving. You still need food and water.</p></section>
+    <section id="conversationView" role="tabpanel" aria-labelledby="conversationTab"><p id="dialogueText" aria-live="polite"></p><p id="socialOutcome" aria-live="polite"></p><div id="conversationOptions"></div><h3>Courtship &amp; marriage</h3><p id="romanceStatus"></p><p id="romancePreferences" class="knowledge-rule"></p><div id="romanceOptions"></div><p class="social-warning">The world is still moving. You still need food and water.</p></section>
     <section id="notesView" role="tabpanel" aria-labelledby="notesTab" hidden><p class="knowledge-rule">Claimed is not confirmed. Trust does not unlock every secret.</p><div id="knownFacts"></div><div class="genetic-lock">Hereditary traits & verified genealogy: undiscovered. A line’s appearance reveals no hidden genome.</div><h3>Rumors</h3><div id="knownRumors"></div></section>
   </div>
   <small id="socialScrollHint" hidden>Scroll inside this panel for more ↓</small><div id="conversationStatus" role="status"></div>
@@ -1465,6 +1465,7 @@ class World {
         this.player.prevAngle = -.8;
         this.generateCitizens();
         this.social = new SocialSystem(this);
+        this.romance = new RomanceSystem(this);
         this.conversationId = null;
     }
     addObstacle(o) { o.id = 'obstacle-' + this.obstacles.length; this.obstacles.push(o); this.index.insert(o); }
@@ -1981,11 +1982,131 @@ class SocialSystem {
     }
 }
 
+// ---- romance.js ----
+// Pair records survive control changes. Preferences are private until discussed;
+// trust is a prerequisite for intimacy, never a substitute for attraction.
+const ROMANCE = Object.freeze({ affectionToMarry: 42, trustToMarry: 18,
+    topics: { preferences: 'Discuss partnership preferences', compliment: 'Offer a sincere compliment',
+        outing: 'Invite a quiet walk', commitment: 'Discuss a shared future', propose: 'Propose marriage', separate: 'End this marriage' } });
+class RomanceSystem {
+    constructor(world) { this.world = world; this.pairs = {}; this.marriages = []; }
+    actors() { return [this.world.player, ...this.world.npcs]; }
+    character(id) { return this.actors().find(c => c.id === id); }
+    preferences(c) {
+        const rng = new RNG(`${this.world.seed}:romance:${c.id}`), roll = rng.next();
+        return { sexes: roll < .55 ? ['male', 'female'] : [roll < .8 ? (c.actual.identity.sex === 'male' ? 'female' : 'male') : c.actual.identity.sex],
+            independence: rng.next(), reputation: rng.next(), familyLife: rng.range(.25, 1) };
+    }
+    key(a, b) { return [a.id, b.id].sort().join('|'); }
+    pair(a, b) {
+        const key = this.key(a, b);
+        return this.pairs[key] ||= { ids: [a.id, b.id].sort(), affection: 0, status: 'none', knownBy: [],
+            lastAt: -999, day: -1, today: 0, topics: {}, lastOutcome: '', lastBirthYear: -999 };
+    }
+    spouse(c) { const m = this.marriages.find(m => m.endedAt === null && m.ids.includes(c.id)); return m ? this.character(m.ids.find(id => id !== c.id)) : null; }
+    compatibility(a, b) {
+        const pref = this.preferences(b), profile = b.actual.profile;
+        if (!pref.sexes.includes(a.actual.identity.sex)) return { ok: false, reason: 'I value our friendship, but I do not feel that kind of attraction.' };
+        const spark = new RNG(`${this.world.seed}:spark:${this.key(a, b)}`).next();
+        if (spark < .15) return { ok: false, reason: 'Friendship feels right to me. Romance does not.' };
+        const gap = Math.max(0, apparentStanding(b).tier - apparentStanding(a).tier);
+        if (profile && pref.independence < .5 && profile.personality.prejudice * gap > 1.25)
+            return { ok: false, reason: 'My family expects a different social match. That is their belief about status, not a truth about your worth.' };
+        if (pref.reputation > .75 && this.world.social.reputation.score < 2)
+            return { ok: false, reason: 'I want to know how you treat the wider community first.' };
+        return { ok: true, reason: 'There may be something here, if we both choose it.' };
+    }
+    isCloseKin(a, b) {
+        const parents = c => [c.actual.lineage.motherId, c.actual.lineage.fatherId].filter(Boolean);
+        const ancestors = c => { const seen = new Set(), pending = parents(c); while (pending.length) { const id = pending.pop(); if (seen.has(id)) continue; seen.add(id); const p = this.character(id); if (p) pending.push(...parents(p)); } return seen; };
+        const aa = ancestors(a), bb = ancestors(b);
+        return aa.has(b.id) || bb.has(a.id) || [...aa].some(id => bb.has(id));
+    }
+    interact(id, topic) {
+        const w = this.world, a = w.player, b = w.social.citizen(id);
+        const result = (text, outcome = 'refused') => ({ ok: outcome === 'positive', text, outcome });
+        if (!b || !Object.hasOwn(ROMANCE.topics, topic) || !a.actual.life.alive) return result('That interaction is unavailable.');
+        if (!w.social.nearby(b)) return result('Come closer to speak.', 'out-of-range');
+        if (a.actual.life.ageYears < 18 || b.actual.life.ageYears < 18 || this.isCloseKin(a, b)) return result('Courtship requires unrelated adults.');
+        const r = b.playerKnowledge.relationship, pair = this.pair(a, b), time = w.elapsed, day = Math.floor(time / C.DAY);
+        if (time - Math.max(r.lastAt, pair.lastAt) < SOCIAL.cooldown) return result('Give them time to respond. Repeated clicks do not build affection.', 'cooldown');
+        if (!b.playerKnowledge.discoveredFacts.name) return result('Introduce yourself first.');
+        if (r.day !== day) { r.day = day; r.today = 0; r.topics = {}; }
+        if (pair.day !== day) { pair.day = day; pair.today = 0; pair.topics = {}; }
+        if (r.today >= SOCIAL.dailyLimit || pair.today >= 3) return result('Let us leave room for tomorrow.', 'daily-limit');
+        r.lastAt = pair.lastAt = time; r.today++; pair.today++;
+        const repeated = pair.topics[topic] || 0; pair.topics[topic] = repeated + 1;
+        const finish = (text, outcome = 'refused') => { pair.lastOutcome = text; return result(text, outcome); };
+        if (repeated) return finish('We have already discussed that today. Affection needs more than repetition.');
+        if (topic === 'preferences') {
+            if (!pair.knownBy.includes(a.id)) pair.knownBy.push(a.id);
+            return finish(this.preferenceText(b), 'positive');
+        }
+        if (topic === 'separate') {
+            const m = this.marriages.find(m => m.endedAt === null && m.ids.includes(a.id) && m.ids.includes(b.id));
+            if (!m) return finish('You are not married to one another.');
+            this.endMarriage(m, 'separation'); pair.status = 'separated';
+            return finish('The marriage ends. Your family history and children remain part of both lives.', 'positive');
+        }
+        if (b.vitals.hunger < 20 || b.vitals.thirst < 20) return finish('I need supplies before I can think about this.');
+        if (this.spouse(a)?.id !== b.id && (this.spouse(a) || this.spouse(b))) return finish('An existing marriage must be resolved first.');
+        if (r.trust < 7) return finish('I would like to know you better before courtship.');
+        const compatible = this.compatibility(a, b);
+        if (!compatible.ok) { pair.status = 'declined'; return finish(compatible.reason); }
+        if (topic === 'propose') {
+            if (this.spouse(a)?.id === b.id) return finish('We are already married.');
+            if (pair.affection < ROMANCE.affectionToMarry || r.trust < ROMANCE.trustToMarry || pair.status !== 'courting')
+                return finish('I am not ready. Let affection and trust grow through different shared experiences.');
+            const m = { id: `marriage-${this.marriages.length + 1}`, ids: [a.id, b.id], at: time, endedAt: null, reason: null };
+            this.marriages.push(m); pair.status = 'married'; this.syncBonds();
+            w.social.reputationEvent(1, 'marriage', b.id);
+            return finish('Yes. Let us build a life together. Household support lowers food and water use by 12% and improves rest.', 'positive');
+        }
+        if (topic === 'commitment' && pair.affection < 15) return finish('A shared future is a big question. Let us spend more time together.');
+        const gain = ({ compliment: 7, outing: 11, commitment: 9 })[topic] / (1 + (pair.today - 1) * .45);
+        pair.affection = clamp(pair.affection + gain, 0, 100); if (pair.status !== 'married') pair.status = 'courting';
+        r.trust = clamp(r.trust + 1.5, -30, 100);
+        return finish(({ compliment: 'Your kindness is welcome. They return your interest.', outing: 'A quiet walk sounds lovely. Shared time brings you closer.', commitment: 'We talk about the life we might choose together.' })[topic], 'positive');
+    }
+    preferenceText(c) { const p = this.preferences(c); return `I am open to partners who are ${p.sexes.join(' or ')}. ${p.independence > .5 ? 'I choose affection over family expectations.' : 'Family expectations matter to me.'} ${p.reputation > .75 ? 'A considerate public reputation matters too.' : 'I want to build trust at our own pace.'}`; }
+    endMarriage(m, reason) { m.endedAt = this.world.elapsed; m.reason = reason; const a = this.character(m.ids[0]), b = this.character(m.ids[1]); if (a && b) this.pair(a, b).status = reason === 'death' ? 'widowed' : 'separated'; this.syncBonds(); }
+    syncBonds() {
+        for (const c of this.actors()) c.actual.bonds = { partnerIds: [], marriageIds: [] };
+        for (const m of this.marriages) for (const id of m.ids) {
+            const c = this.character(id); if (!c) continue;
+            c.actual.bonds.marriageIds.push(m.id);
+            if (m.endedAt === null) c.actual.bonds.partnerIds.push(m.ids.find(other => other !== id));
+        }
+    }
+    household(c) { return this.spouse(c)?.actual.life.alive ? .88 : 1; }
+    view(c) { const p = this.pair(this.world.player, c); return { affection: p.affection, status: p.status,
+        preferences: p.knownBy.includes(this.world.player.id) ? this.preferenceText(c) : 'Undiscovered · discuss partnership preferences',
+        spouse: this.spouse(this.world.player)?.playerKnowledge.discoveredFacts.name?.value || (this.spouse(this.world.player) ? 'Your spouse' : 'None') }; }
+    exportState() { return copyJSON({ pairs: this.pairs, marriages: this.marriages }); }
+    importState(data) {
+        insist(plain(data) && plain(data.pairs) && Array.isArray(data.marriages) && data.marriages.length <= 1000, 'Invalid romance state.');
+        const validIds = ids => Array.isArray(ids) && ids.length === 2 && ids[0] !== ids[1] && ids.every(id => this.character(id));
+        for (const [key, p] of Object.entries(data.pairs)) {
+            insist(plain(p) && validIds(p.ids) && key === [...p.ids].sort().join('|') && numberIn(p.affection, 0, 100) && ['none','declined','courting','married','separated','widowed'].includes(p.status), 'Invalid romantic pair.');
+            insist(Array.isArray(p.knownBy) && p.knownBy.every(id => p.ids.includes(id)) && numberIn(p.lastAt, -999, this.world.elapsed + .001) && integerIn(p.day, -1, Math.floor(this.world.elapsed / C.DAY)) && integerIn(p.today, 0, 3) && plain(p.topics) && shortText(p.lastOutcome) && numberIn(p.lastBirthYear, -999, 1e9), 'Invalid courtship history.');
+            insist(Object.entries(p.topics).every(([t,n]) => Object.hasOwn(ROMANCE.topics, t) && integerIn(n, 0, 3)), 'Invalid courtship topics.');
+        }
+        const married = new Set(), ids = new Set();
+        for (const m of data.marriages) {
+            insist(plain(m) && shortText(m.id, 100) && !ids.has(m.id) && validIds(m.ids) && numberIn(m.at, 0, this.world.elapsed + .001) && (m.endedAt === null || numberIn(m.endedAt, m.at, this.world.elapsed + .001)) && [null,'death','separation'].includes(m.reason), 'Invalid marriage record.'); ids.add(m.id);
+            const pair = data.pairs[[...m.ids].sort().join('|')]; insist(pair, 'Marriage has no relationship.');
+            if (m.endedAt === null) { insist(pair.status === 'married' && m.ids.every(id => !married.has(id) && this.character(id).actual.life.alive), 'Conflicting marriage.'); m.ids.forEach(id => married.add(id)); }
+        }
+        for (const p of Object.values(data.pairs)) if (p.status === 'married') insist(data.marriages.some(m => m.endedAt === null && [...m.ids].sort().join('|') === [...p.ids].sort().join('|')), 'Missing active marriage.');
+        this.pairs = copyJSON(data.pairs); this.marriages = copyJSON(data.marriages); this.syncBonds();
+    }
+}
+
 // ---- persistence.js ----
 // Versioned, transactional local saves. Immutable terrain and identities are seeded;
 // every mutable simulation field is restored into a candidate World before install.
 // The checksum detects accidental corruption; it is NOT an anti-cheat mechanism.
-const SaveFormat = Object.freeze({ name: 'the-flatland', version: 2, worldVersion: 1,
+const SaveFormat = Object.freeze({ name: 'the-flatland', version: 3, worldVersion: 1,
     keys: { manual: 'flatland.manual.v1', auto: 'flatland.auto.v1' }, maxBytes: 2_000_000 });
 const copyJSON = value => JSON.parse(JSON.stringify(value));
 function insist(ok, message) { if (!ok) throw new Error(message); }
@@ -2087,6 +2208,7 @@ class SaveStore {
             pack: copyJSON(g.pack), progress: { gathered: g.progress.gathered, visited: [...g.progress.visited], complete: g.progress.complete },
             gatherCooldown: g.gatherCooldown, warningLatch: copyJSON(g.warningLatch), effects: copyJSON(g.effects), messages: copyJSON(g.messages),
             notice: { text: $('notice').textContent, until: g.noticeUntil, hidden: $('notice').hidden },
+            romance: w.romance.exportState(),
             social: w.social ? w.social.exportState() : null };
     }
     encode(slot = 'manual') {
@@ -2100,7 +2222,7 @@ class SaveStore {
         try { data = JSON.parse(raw); } catch { throw new Error('Save contains damaged JSON.'); }
         checkJSONTree(data);
         insist(plain(data) && data.format === SaveFormat.name, 'This is not a Flatland save.');
-        insist(data.version === SaveFormat.version || data.version === 1, 'Save version is not supported by this build.');
+        insist([1, 2, 3].includes(data.version), 'Save version is not supported by this build.');
         insist(data.worldVersion === SaveFormat.worldVersion, 'World generator version is incompatible.');
         insist(plain(data.payload) && data.checksum === hash(JSON.stringify(data.payload)), 'Save checksum does not match.');
         insist(numberIn(data.savedAt, 0, 1e15) && integerIn(data.revision, 0, 1e12), 'Invalid save timestamp.');
@@ -2134,6 +2256,7 @@ class SaveStore {
         insist(plain(s.notice) && shortText(s.notice.text) && numberIn(s.notice.until, 0, s.elapsed + 100) && typeof s.notice.hidden === 'boolean', 'Invalid notice.');
         if (w.social) w.social.importState(s.social, envelope.version);
         else insist(s.social === null, 'Social save requires a newer build.');
+        if (envelope.version >= 3) w.romance.importState(s.romance);
         w.rng.state = s.rngState;
         return { world: w, saved: s, envelope };
     }
@@ -2980,7 +3103,7 @@ class Game {
             this.world.move(p, move.x * speed * dt, move.y * speed * dt);
             p.angle = moveAngle(p.angle, Math.atan2(move.y, move.x), dt * 15);
         }
-        const metabolism = p.actual.genome.metabolism;
+        const metabolism = p.actual.genome.metabolism * this.world.romance.household(p);
         v.hunger = Math.max(0, v.hunger - .30 * metabolism * dt * (sprint ? 1.65 : run.resting ? .65 : 1));
         v.thirst = Math.max(0, v.thirst - .46 * metabolism * dt * (sprint ? 1.8 : run.resting ? .72 : 1));
         if (v.hunger <= 0)
@@ -2988,7 +3111,7 @@ class Game {
         if (v.thirst <= 0)
             v.health -= 5 * dt;
         if (run.resting && this.world.refugeAt(p.x, p.y) && v.hunger > 30 && v.thirst > 30)
-            v.health = Math.min(100, v.health + 1.8 * dt);
+            v.health = Math.min(100, v.health + (this.world.romance.spouse(p) ? 2.1 : 1.8) * dt);
         v.health = clamp(v.health, 0, 100);
         for (const [key, label] of [['hunger', 'Food'], ['thirst', 'Water']]) {
             if (v[key] < 23 && !this.warningLatch[key]) {
@@ -3179,6 +3302,11 @@ class SocialUI {
             b.title = topic === 'family' ? 'Intrusive questions can damage trust. Build a trusted relationship first.' : label;
             b.addEventListener('click', () => this.talk(topic)); $('conversationOptions').appendChild(b);
         }
+        for (const [topic, label] of Object.entries(ROMANCE.topics)) {
+            const b = document.createElement('button'); b.type = 'button'; b.className = 'topic'; b.textContent = label; b.dataset.romance = topic;
+            b.addEventListener('click', () => { if (game.state !== 'running') return; const r = game.world.romance.interact(this.selectedId, topic); $('dialogueText').textContent = r.text; $('socialOutcome').textContent = r.outcome; this.refresh(); game.refreshUI(); });
+            $('romanceOptions').appendChild(b);
+        }
         game.canvas.addEventListener('click', e => {
             if (game.state !== 'running') return;
             const box = game.canvas.getBoundingClientRect(), c = game.citizenAtScreen(e.clientX - box.left, e.clientY - box.top);
@@ -3245,6 +3373,10 @@ class SocialUI {
         $('familiarityMeter').value = v.relationship.familiarity;
         $('trustMeter').value = Math.max(0, v.relationship.trust);
         $('playerReputation').textContent = social.reputationLabel();
+        const romance = this.game.world.romance.view(citizen);
+        $('romanceStatus').textContent = `${romance.status} · Affection ${Math.round(romance.affection)}/100 · Your spouse: ${romance.spouse}`;
+        $('romancePreferences').textContent = romance.preferences;
+        for (const b of $('romanceOptions').querySelectorAll('button')) b.disabled = !v.inRange || v.cooldown > .01 || v.remaining <= 0;
         for (const b of $('conversationOptions').querySelectorAll('button')) {
             b.disabled = !v.inRange || v.cooldown > .01 || v.remaining <= 0 || (b.dataset.topic === 'introduce' && v.introduced);
         }
@@ -3336,6 +3468,7 @@ if (new URLSearchParams(location.search).get('debug') === '1') {
         npcVitals(id, values) { const c = game.world.social.citizen(id); if (!c) throw new Error('Unknown citizen'); for (const k of ['health','hunger','thirst','stamina']) if (Object.hasOwn(values,k)) { if (!Number.isFinite(values[k])) throw new TypeError('Non-finite vital'); c.vitals[k] = clamp(values[k],0,100); } },
         socialView(id) { const c = game.world.social.citizen(id); if (!c) throw new Error('Unknown citizen'); return game.world.social.view(c); },
         interact(id, topic) { return game.world.social.interact(id, topic); },
+        romance(id, topic) { return game.world.romance.interact(id, topic); },
         openCitizen(id) { game.socialUI.open(id); }, closeCitizen() { game.socialUI.close(); },
         socialState() { return game.world.social.exportState(); },
         config: C
