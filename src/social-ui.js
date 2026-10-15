@@ -20,6 +20,7 @@ class SocialUI {
             b.addEventListener('click', () => { if (game.state !== 'running') return; const r = game.world.romance.interact(this.selectedId, topic); $('dialogueText').textContent = r.text; $('socialOutcome').textContent = r.outcome; this.refresh(); game.refreshUI(); });
             $('romanceOptions').appendChild(b);
         }
+        $('birthBtn').addEventListener('click', () => { if (game.state !== 'running') return; const result=game.world.family.birth(); $('dialogueText').textContent=result.text; game.refreshUI(); });
         game.canvas.addEventListener('click', e => {
             if (game.state !== 'running') return;
             const box = game.canvas.getBoundingClientRect(), c = game.citizenAtScreen(e.clientX - box.left, e.clientY - box.top);

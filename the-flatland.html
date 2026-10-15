@@ -1130,7 +1130,7 @@ button {
   <div class="relationship-meters"><label>Familiarity <span id="familiarityText">0</span><meter id="familiarityMeter" min="0" max="100" value="0">Familiarity</meter></label><label>Trust <span id="trustText">0</span><meter id="trustMeter" min="0" max="100" value="0">Trust</meter></label></div>
   <div class="social-tabs" role="tablist" aria-label="Citizen information"><button id="conversationTab" role="tab" aria-selected="true" aria-controls="conversationView">Conversation</button><button id="notesTab" role="tab" aria-selected="false" aria-controls="notesView">Discovered notes</button></div>
   <div class="social-scroll" tabindex="0" role="region" aria-label="Scrollable conversation and discovered notes">
-    <section id="conversationView" role="tabpanel" aria-labelledby="conversationTab"><p id="dialogueText" aria-live="polite"></p><p id="socialOutcome" aria-live="polite"></p><div id="conversationOptions"></div><h3>Courtship &amp; marriage</h3><p id="romanceStatus"></p><p id="romancePreferences" class="knowledge-rule"></p><div id="romanceOptions"></div><p class="social-warning">The world is still moving. You still need food and water.</p></section>
+    <section id="conversationView" role="tabpanel" aria-labelledby="conversationTab"><p id="dialogueText" aria-live="polite"></p><p id="socialOutcome" aria-live="polite"></p><div id="conversationOptions"></div><h3>Courtship &amp; marriage</h3><p id="romanceStatus"></p><p id="romancePreferences" class="knowledge-rule"></p><div id="romanceOptions"></div><button class="topic" id="birthBtn">Discuss raising biological children together</button><p class="social-warning">The world is still moving. You still need food and water.</p></section>
     <section id="notesView" role="tabpanel" aria-labelledby="notesTab" hidden><p class="knowledge-rule">Claimed is not confirmed. Trust does not unlock every secret.</p><div id="knownFacts"></div><div class="genetic-lock">Hereditary traits & verified genealogy: undiscovered. A line’s appearance reveals no hidden genome.</div><h3>Rumors</h3><div id="knownRumors"></div></section>
   </div>
   <small id="socialScrollHint" hidden>Scroll inside this panel for more ↓</small><div id="conversationStatus" role="status"></div>
@@ -1248,9 +1248,63 @@ class MinHeap {
 // No inference of her sideCount/ancestry is made by the Phase 1 inspection UI.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ---- genetics.js ----
+// Pure seeded inheritance. Social class has no role in physical fitness.
+const GENETICS = Object.freeze({ cohort: [[2, .65], [3, .30], [4, .05]], maternalExpression: .32,
+    maxSides: 32, improvement: .65, sideGain: .28 });
+function normalizeGenome(input = {}) {
+    const g = { sideCount: 3, regularity: .5, sharpness: .6, size: 1, mobility: 1, metabolism: 1, mutationTendency: .035, ...input };
+    g.geometryStage ||= g.sideCount > 3 ? (g.regularity >= .99 ? 'regular' : 'irregularPolygon') : g.regularity < .72 ? 'irregular' : g.sharpness > .72 ? 'isosceles' : 'regular';
+    g.latentIrregularAncestry ??= g.geometryStage !== 'regular';
+    g.vertexProportions ||= Array.from({length:g.sideCount}, (_, i) => g.geometryStage === 'irregular' || g.geometryStage === 'irregularPolygon' ? 1 - (1-g.regularity) * (i % 2 ? .4 : i % 3 ? .23 : 0) : 1);
+    g.motherId ??= null; g.fatherId ??= null; g.generation ??= 1;
+    return g;
+}
+function inheritGenome(anchor, father, mother, rng, parentIds, generation) {
+    const base = normalizeGenome(anchor), f = normalizeGenome(father), m = normalizeGenome(mother);
+    let sideCount = base.sideCount, geometryStage = base.geometryStage, regularity = base.regularity, sharpness = base.sharpness;
+    const tendency = (f.mutationTendency + m.mutationTendency) / 2;
+    if (rng.next() < GENETICS.improvement) {
+        if (geometryStage === 'irregular') {
+            regularity = Math.min(.85, regularity + rng.range(.10, .21));
+            if (regularity >= .72) { geometryStage = 'isosceles'; sharpness = .94; regularity = .85; }
+        } else if (geometryStage === 'isosceles') {
+            sharpness = Math.max(.55, sharpness - rng.range(.10, .18));
+            if (sharpness <= .72) { geometryStage = 'regular'; regularity = 1; sharpness = .55; }
+        } else if (geometryStage === 'irregularPolygon') {
+            regularity = Math.min(1, regularity + rng.range(.10, .20));
+            if (regularity >= .99) { geometryStage = 'regular'; regularity = 1; }
+        } else if (rng.next() < GENETICS.sideGain + tendency && sideCount < GENETICS.maxSides) sideCount++;
+    }
+    // A carrier can be phenotypically regular. Expression is maternal in this rule
+    // set; the latent allele can be inherited from either parent by either sex.
+    const latentIrregularAncestry = (f.latentIrregularAncestry || m.latentIrregularAncestry) && rng.next() < .72;
+    if (m.latentIrregularAncestry && rng.next() < GENETICS.maternalExpression && geometryStage === 'regular') {
+        geometryStage = sideCount === 3 ? 'irregular' : 'irregularPolygon'; regularity = rng.range(.45, .66); sharpness = rng.range(.6, .85);
+    }
+    const blend = key => clamp((f[key] + m[key]) / 2 + rng.range(-.065, .065), .75, 1.28);
+    return normalizeGenome({ sideCount, geometryStage, regularity, sharpness,
+        size: blend('size'), mobility: blend('mobility'), metabolism: blend('metabolism'),
+        mutationTendency: clamp(tendency + rng.range(-.008,.008),.01,.09),
+        latentIrregularAncestry: latentIrregularAncestry || geometryStage !== 'regular',
+        motherId: parentIds.motherId, fatherId: parentIds.fatherId, generation });
+}
+function birthCohortSize(rng) { let n = rng.next(); for (const [size, probability] of GENETICS.cohort) { n -= probability; if (n < 0) return size; } return 4; }
+function validateGenome(g) {
+    insist(plain(g) && integerIn(g.sideCount,3,GENETICS.maxSides) && ['irregular','isosceles','regular','irregularPolygon'].includes(g.geometryStage), 'Invalid genome stage.');
+    insist(numberIn(g.regularity,.1,1) && numberIn(g.sharpness,0,1) && ['size','mobility','metabolism'].every(k=>numberIn(g[k],.75,1.3)) && numberIn(g.mutationTendency,.001,.1) && typeof g.latentIrregularAncestry === 'boolean', 'Invalid hereditary traits.');
+    insist(Array.isArray(g.vertexProportions) && g.vertexProportions.length === g.sideCount && g.vertexProportions.every(v=>numberIn(v,.6,1)), 'Invalid vertex proportions.');
+    insist(g.sideCount === 3 ? g.geometryStage !== 'irregularPolygon' : ['regular','irregularPolygon'].includes(g.geometryStage), 'Geometry stage disagrees with side count.');
+    insist(g.geometryStage !== 'regular' || (g.regularity === 1 && g.vertexProportions.every(v=>v===1) && (g.sideCount!==3 || g.sharpness<=.72)), 'Regular genome is inconsistent.');
+    insist(g.geometryStage !== 'irregular' || g.regularity < .72, 'Irregular triangle skipped its stage.');
+    insist(g.geometryStage !== 'isosceles' || (g.regularity>=.72 && g.sharpness>.72 && g.vertexProportions.every(v=>v===1)), 'Invalid isosceles triangle.');
+    insist(integerIn(g.generation,1,1000) && [g.motherId,g.fatherId].every(id=>id===null || shortText(id,100)), 'Invalid genome lineage.');
+}
+
 // ---- characters.js ----
 function createCharacter(id, genome, form, x, y, rng, isPlayer = false) {
-    const g = { sideCount: 3, regularity: .5, sharpness: .6, size: 1, mobility: 1, metabolism: 1, mutationTendency: .035, ...genome };
+    const legacyGenome = { sideCount: 3, regularity: .5, sharpness: .6, size: 1, mobility: 1, metabolism: 1, mutationTendency: .035, ...genome };
+    const g = normalizeGenome(legacyGenome);
     const bodyRadius = form === 'line' ? 17 : 17 * g.size;
     const actual = { identity: { id, sex: form === 'line' ? 'female' : 'male', bodyForm: form }, genome: g,
         life: { ageYears: isPlayer ? 19 : rng.int(18, 65), alive: true },
@@ -1264,6 +1318,7 @@ function createCharacter(id, genome, form, x, y, rng, isPlayer = false) {
         ai: isPlayer ? null : { intent: 'wander', activity: 'idle', path: [], pathIndex: 0, targetId: null,
             wait: rng.range(.2, 3), think: rng.range(1, 3), stuck: 0, homeX: x, homeY: y },
         runtime: { resting: false, moving: false, sprinting: false, exhausted: false, sprintRecovery: 0 } };
+    Object.defineProperty(c, 'legacySignature', { value: hash(JSON.stringify({id,genome:legacyGenome,form,age:c.actual.life.ageYears})) });
     c.prevAngle = c.angle;
     if (form === 'line') {
         c.body.visibleType = 'Line-form citizen';
@@ -1272,12 +1327,13 @@ function createCharacter(id, genome, form, x, y, rng, isPlayer = false) {
     }
     else if (g.sideCount === 3) {
         const r = bodyRadius;
-        if (g.regularity < .72) {
+        if (g.geometryStage === 'irregular') {
             c.body.visibleType = 'Irregular triangle';
             c.body.color = '#c9af93';
-            c.body.points = [[r, 0], [-r * .70, r * .53], [-r * .36, -r * .81]];
+            const progress = clamp((g.regularity - .44) / .28, 0, 1);
+            c.body.points = [[r, 0], [-r * lerp(.70,.65,progress), r * lerp(.53,.7,progress)], [-r * lerp(.36,.65,progress), -r * lerp(.81,.7,progress)]];
         }
-        else if (g.sharpness > .72) {
+        else if (g.geometryStage === 'isosceles') {
             c.body.visibleType = 'Isosceles triangle';
             c.body.color = '#a4bbc8';
             const w = lerp(.65, .22, g.sharpness);
@@ -1292,7 +1348,8 @@ function createCharacter(id, genome, form, x, y, rng, isPlayer = false) {
     else {
         c.body.visibleType = ({ 4: 'Square', 5: 'Pentagon', 6: 'Hexagon', 7: 'Heptagon', 8: 'Octagon' })[g.sideCount] || (g.sideCount >= 16 ? 'Near-circle' : g.sideCount + '-sided polygon');
         c.body.color = g.sideCount >= 10 ? '#d5c39a' : g.sideCount >= 5 ? '#bbcbb4' : '#b4c5c5';
-        c.body.points = regularPoints(g.sideCount, bodyRadius);
+        c.body.points = regularPoints(g.sideCount, bodyRadius).map(([x,y],i)=>[x*g.vertexProportions[i],y*g.vertexProportions[i]]);
+        if (g.geometryStage === 'irregularPolygon') c.body.visibleType = `Irregular ${g.sideCount}-sided polygon`; 
     }
     if (isPlayer)
         c.body.color = '#f1a38b';
@@ -1466,6 +1523,7 @@ class World {
         this.generateCitizens();
         this.social = new SocialSystem(this);
         this.romance = new RomanceSystem(this);
+        this.family = new FamilySystem(this);
         this.conversationId = null;
     }
     addObstacle(o) { o.id = 'obstacle-' + this.obstacles.length; this.obstacles.push(o); this.index.insert(o); }
@@ -2102,11 +2160,105 @@ class RomanceSystem {
     }
 }
 
+// ---- family.js ----
+const FAMILY = Object.freeze({ adult:18, fertileUntil:60, birthCooldown:2, retirement:40, maxPopulation:256 });
+class FamilySystem {
+    constructor(world) {
+        this.world = world; this.rng = new RNG(world.seed + ':families'); this.nextId = 1;
+        this.births = []; this.history = []; this.playableIds = [world.player.id]; this.notebooks = {};
+        for (const c of this.actors()) { c.actual.lineage.generation = 1; c.actual.genome.generation = 1; }
+    }
+    actors() { return [this.world.player, ...this.world.npcs]; }
+    character(id) { return this.actors().find(c=>c.id===id); }
+    get year() { return this.world.elapsed / C.DAY; }
+    birthEligibility() {
+        const a = this.world.player, b = this.world.romance.spouse(a);
+        if (!b || !a.actual.life.alive || !b.actual.life.alive) return 'A living spouse and mutual commitment are required.';
+        if (a.actual.identity.sex === b.actual.identity.sex) return 'Your marriage provides household support. Joint biological births require a male and female parent under the current inheritance rules.';
+        if ([a,b].some(c=>c.actual.life.ageYears < FAMILY.adult || c.actual.life.ageYears > FAMILY.fertileUntil)) return 'Both biological parents must be aged 18–60.';
+        const pair = this.world.romance.pair(a,b);
+        if (pair.affection < ROMANCE.affectionToMarry || b.playerKnowledge.relationship.trust < ROMANCE.trustToMarry || this.world.romance.preferences(b).familyLife < .3) return 'Your spouse is not ready to consent to raising children.';
+        if (this.year - pair.lastBirthYear < FAMILY.birthCooldown) return `Allow ${Math.ceil(FAMILY.birthCooldown - (this.year-pair.lastBirthYear))} more family year(s) between births.`;
+        if (this.actors().length > FAMILY.maxPopulation - 4) return 'This dynasty has reached the current population budget.';
+        if (a.vitals.health < 35 || a.vitals.hunger < 30 || a.vitals.thirst < 30) return 'Recover your health and supplies before expanding the household.';
+        return '';
+    }
+    birth() {
+        const reason = this.birthEligibility(); if (reason) return {ok:false,text:reason};
+        const w=this.world, a=w.player, b=w.romance.spouse(a), mother=a.actual.identity.sex==='female'?a:b, father=a.actual.identity.sex==='male'?a:b;
+        const count=birthCohortSize(this.rng), ids=[], generation=Math.max(a.actual.lineage.generation,b.actual.lineage.generation)+1;
+        for(let i=0;i<count;i++) {
+            const id=`descendant-${this.nextId++}`, sex=this.rng.next()<.5?'female':'male';
+            const genome=inheritGenome(a.actual.genome,father.actual.genome,mother.actual.genome,this.rng,{motherId:mother.id,fatherId:father.id},generation);
+            const spot=w.nav.free.map(index=>w.nav.point(index)).filter(p=>w.circleClear(p.x,p.y,24)).sort((p,q)=>dist2(p.x,p.y,a.x,a.y)-dist2(q.x,q.y,a.x,a.y))[i] || w.refuges[0];
+            const c=createCharacter(id,genome,sex==='female'?'line':'polygon',spot.x,spot.y,this.rng);
+            populateSocialIdentity(w,c,64+this.nextId);
+            c.actual.identity.name=`${sex==='female'?'Lina':'Ari'} ${id.slice(11)}`; c.publicIdentity.displayName=c.actual.identity.name;
+            c.actual.life={ageYears:0,alive:true}; c.actual.lineage={generation,motherId:mother.id,fatherId:father.id,childrenIds:[],ancestryKnownToSelf:false};
+            c.playerKnowledge.relationship=emptyRelationship(); w.social.learn(c,'name',c.actual.identity.name,'confirmed','player');
+            w.npcs.push(c); mother.actual.lineage.childrenIds.push(id); father.actual.lineage.childrenIds.push(id); ids.push(id);
+        }
+        this.world.romance.pair(a,b).lastBirthYear=this.year;
+        const record={id:`birth-${this.births.length+1}`,motherId:mother.id,fatherId:father.id,childIds:ids,at:w.elapsed};
+        this.births.push(record); this.history.push({kind:'birth',ids:[mother.id,father.id,...ids],at:w.elapsed});
+        return {ok:true,text:`You both choose family life. ${count} children are born; each has an individual inherited genome. Open Family to meet them.`,ids};
+    }
+    exportState() { return copyJSON({rngState:this.rng.state,nextId:this.nextId,births:this.births,history:this.history,playableIds:this.playableIds,notebooks:this.notebooks}); }
+    importState(data) {
+        insist(plain(data) && integerIn(data.rngState,0,4294967295) && integerIn(data.nextId,1,100000) && Array.isArray(data.births) && data.births.length<=256 && Array.isArray(data.history) && data.history.length<=2000 && Array.isArray(data.playableIds) && data.playableIds.length<=256 && data.playableIds.length>0 && new Set(data.playableIds).size===data.playableIds.length && data.playableIds.every(id=>this.character(id)) && data.playableIds.at(-1)===this.world.player.id && plain(data.notebooks), 'Invalid dynasty state.');
+        const childIds=new Set(), birthIds=new Set();
+        for(const b of data.births) {
+            insist(plain(b) && shortText(b.id,100) && !birthIds.has(b.id) && numberIn(b.at,0,this.world.elapsed+.001) && this.character(b.motherId)?.actual.identity.sex==='female' && this.character(b.fatherId)?.actual.identity.sex==='male' && Array.isArray(b.childIds) && b.childIds.length>=2 && b.childIds.length<=4, 'Invalid birth event.'); birthIds.add(b.id);
+            for(const id of b.childIds) { const c=this.character(id); insist(c && !childIds.has(id) && c.actual.lineage.motherId===b.motherId && c.actual.lineage.fatherId===b.fatherId, 'Birth does not match genealogy.'); childIds.add(id); }
+        }
+        for(const c of this.actors()) {
+            const l=c.actual.lineage, g=c.actual.genome;
+            insist(plain(l) && integerIn(l.generation,1,1000) && Array.isArray(l.childrenIds) && l.childrenIds.length<=256 && new Set(l.childrenIds).size===l.childrenIds.length && l.motherId===g.motherId && l.fatherId===g.fatherId && l.generation===g.generation, 'Invalid genealogy.');
+            const parents=[l.motherId,l.fatherId].filter(Boolean); insist(parents.length===0 || parents.length===2,'Incomplete biological parentage.');
+            for(const id of parents) { const p=this.character(id); insist(p && p.actual.lineage.generation<l.generation && p.actual.lineage.childrenIds.includes(c.id), 'Broken parent link.'); }
+            if(parents.length) insist(childIds.has(c.id) && l.generation===Math.max(...parents.map(id=>this.character(id).actual.lineage.generation))+1,'Missing birth or wrong generation.');
+            for(const id of l.childrenIds) { const child=this.character(id); insist(child && [child.actual.lineage.motherId,child.actual.lineage.fatherId].includes(c.id),'Broken child link.'); }
+        }
+        insist(data.history.every(e=>plain(e) && ['birth','death','retirement','succession'].includes(e.kind) && Array.isArray(e.ids) && e.ids.length>0 && e.ids.every(id=>this.character(id)) && numberIn(e.at,0,this.world.elapsed+.001)), 'Invalid family history.');
+        for(const [id,book] of Object.entries(data.notebooks)) {
+            insist(this.character(id) && plain(book) && plain(book.knowledge) && plain(book.reputation), 'Invalid family notebook.');
+            for(const [cid,k] of Object.entries(book.knowledge)) { insist(this.character(cid),'Unknown notebook subject.'); validateKnowledge(k,this.world.elapsed,this.world); }
+            const current=this.world.social.exportState(); this.world.social.importState({version:1,rngState:current.rngState,reputation:book.reputation},4); this.world.social.importState(current,4);
+        }
+        this.rng.state=data.rngState; this.nextId=data.nextId; this.births=copyJSON(data.births); this.history=copyJSON(data.history); this.playableIds=copyJSON(data.playableIds); this.notebooks=copyJSON(data.notebooks);
+        insist(this.actors().filter(c=>c.id.startsWith('descendant-')).every(c=>Number(c.id.slice(11))<this.nextId),'Invalid next descendant ID.');
+    }
+}
+function restoreFamilyPopulation(w, records) {
+    insist(Array.isArray(records) && records.length>=65 && records.length<=FAMILY.maxPopulation, 'Invalid saved population.');
+    const ids=new Set();
+    const actors=records.map((s,index)=> {
+        const a=s.actual, pub=s.publicIdentity;
+        insist(plain(s) && shortText(s.id,100) && /^(founder-000|citizen-\d{3}|descendant-[1-9]\d*)$/.test(s.id) && !ids.has(s.id), 'Invalid or duplicate character ID.'); ids.add(s.id);
+        insist(plain(a) && plain(a.identity) && a.identity.id===s.id && ['male','female'].includes(a.identity.sex) && a.identity.bodyForm===(a.identity.sex==='female'?'line':'polygon') && shortText(a.identity.name,100), 'Invalid character identity.');
+        validateGenome(a.genome);
+        insist(plain(a.life) && numberIn(a.life.ageYears,0,200) && typeof a.life.alive==='boolean' && a.life.alive===(s.vitals?.health>0), 'Invalid age or life state.');
+        if(a.life.deathAt!==undefined) insist(!a.life.alive && numberIn(a.life.deathAt,0,w.elapsed+.001) && shortText(a.life.deathCause,100), 'Invalid death record.');
+        if(a.profile) {
+            const p=a.profile;
+            insist(plain(p) && shortText(p.occupation,100) && plain(p.personality) && ['warmth','candor','reserve','curiosity','prejudice'].every(k=>numberIn(p.personality[k],0,1)) && plain(p.preferences) && ['likes','dislikes'].every(k=>shortText(p.preferences[k],100)) && numberIn(p.disposition,-3,5) && plain(p.background), 'Invalid social profile.');
+            insist(['origin','family','ambition','concern','sensitive'].every(k=>shortText(p.background[k],1000)) && ['knowsFamily','discloseSensitive'].every(k=>typeof p.background[k]==='boolean'), 'Invalid background.');
+        } else insist(s.id==='founder-000','Citizen is missing a social profile.');
+        insist(plain(pub) && (pub.displayName===null || shortText(pub.displayName,100)) && (pub.claimedOccupation===null || shortText(pub.claimedOccupation,100)) && numberIn(pub.reputation,-100,100) && Array.isArray(pub.claims) && pub.claims.length<=30 && plain(pub.standing) && integerIn(pub.standing.tier,0,7) && shortText(pub.standing.label,160), 'Invalid public identity.');
+        const c=createCharacter(s.id,a.genome,a.identity.bodyForm,s.x,s.y,new RNG(s.id),index===0);
+        c.actual=copyJSON(a); c.publicIdentity=copyJSON(pub);
+        return c;
+    });
+    insist(ids.has('founder-000') && Array.from({length:64},(_,i)=>`citizen-${String(i+1).padStart(3,'0')}`).every(id=>ids.has(id)), 'Seeded citizens are missing.');
+    w.player=actors[0]; w.npcs=actors.slice(1);
+    records.forEach((s,i)=>restoreCharacter(actors[i],s,w));
+}
+
 // ---- persistence.js ----
 // Versioned, transactional local saves. Immutable terrain and identities are seeded;
 // every mutable simulation field is restored into a candidate World before install.
 // The checksum detects accidental corruption; it is NOT an anti-cheat mechanism.
-const SaveFormat = Object.freeze({ name: 'the-flatland', version: 3, worldVersion: 1,
+const SaveFormat = Object.freeze({ name: 'the-flatland', version: 4, worldVersion: 1,
     keys: { manual: 'flatland.manual.v1', auto: 'flatland.auto.v1' }, maxBytes: 2_000_000 });
 const copyJSON = value => JSON.parse(JSON.stringify(value));
 function insist(ok, message) { if (!ok) throw new Error(message); }
@@ -2130,7 +2282,7 @@ function identitySignature(c) {
     return hash(JSON.stringify({ id: c.id, genome: c.actual.genome, form: c.body.form, age: c.actual.life.ageYears }));
 }
 function captureCharacter(c) {
-    const out = { id: c.id, identitySignature: identitySignature(c) };
+    const out = { id: c.id, identitySignature: identitySignature(c), actual: copyJSON(c.actual), publicIdentity: copyJSON(c.publicIdentity) };
     for (const key of ['x', 'y', 'px', 'py', 'angle', 'prevAngle', 'vitals', 'ai', 'runtime', 'playerKnowledge']) out[key] = copyJSON(c[key]);
     return out;
 }
@@ -2142,8 +2294,8 @@ function validateKnowledge(k, elapsed, world) {
     if (typeof SocialSystem !== 'undefined') SocialSystem.validateKnowledge(k, elapsed, world);
     else insist(Object.keys(k.discoveredFacts).length === 0 && k.rumors.length === 0, 'Unsupported social knowledge.');
 }
-function restoreCharacter(target, s, world) {
-    insist(plain(s) && s.id === target.id && s.identitySignature === identitySignature(target), 'Citizen identity or generator does not match.');
+function restoreCharacter(target, s, world, legacy = false) {
+    insist(plain(s) && s.id === target.id && s.identitySignature === (legacy ? target.legacySignature : identitySignature(target)), 'Citizen identity or generator does not match.');
     for (const key of ['x', 'px']) insist(numberIn(s[key], 0, C.W), 'Invalid citizen X coordinate.');
     for (const key of ['y', 'py']) insist(numberIn(s[key], 0, C.H), 'Invalid citizen Y coordinate.');
     insist(world.circleClear(s.x, s.y, target.body.radius - .001), 'Saved citizen overlaps solid terrain.');
@@ -2208,7 +2360,7 @@ class SaveStore {
             pack: copyJSON(g.pack), progress: { gathered: g.progress.gathered, visited: [...g.progress.visited], complete: g.progress.complete },
             gatherCooldown: g.gatherCooldown, warningLatch: copyJSON(g.warningLatch), effects: copyJSON(g.effects), messages: copyJSON(g.messages),
             notice: { text: $('notice').textContent, until: g.noticeUntil, hidden: $('notice').hidden },
-            romance: w.romance.exportState(),
+            family: w.family.exportState(), romance: w.romance.exportState(),
             social: w.social ? w.social.exportState() : null };
     }
     encode(slot = 'manual') {
@@ -2222,7 +2374,7 @@ class SaveStore {
         try { data = JSON.parse(raw); } catch { throw new Error('Save contains damaged JSON.'); }
         checkJSONTree(data);
         insist(plain(data) && data.format === SaveFormat.name, 'This is not a Flatland save.');
-        insist([1, 2, 3].includes(data.version), 'Save version is not supported by this build.');
+        insist([1, 2, 3, 4].includes(data.version), 'Save version is not supported by this build.');
         insist(data.worldVersion === SaveFormat.worldVersion, 'World generator version is incompatible.');
         insist(plain(data.payload) && data.checksum === hash(JSON.stringify(data.payload)), 'Save checksum does not match.');
         insist(numberIn(data.savedAt, 0, 1e15) && integerIn(data.revision, 0, 1e12), 'Invalid save timestamp.');
@@ -2234,9 +2386,12 @@ class SaveStore {
         insist(numberIn(s.elapsed, 0, 1e10) && integerIn(s.rngState, 0, 4294967295) && typeof s.ended === 'boolean', 'Invalid simulation time or random state.');
         const w = new World(s.seed); // Candidate only. Failed validation never touches the live world.
         w.elapsed = s.elapsed;
-        insist(Array.isArray(s.characters) && s.characters.length === w.npcs.length + 1, 'Saved population does not match.');
-        const chars = [w.player, ...w.npcs];
-        s.characters.forEach((c, i) => restoreCharacter(chars[i], c, w));
+        if (envelope.version >= 4) restoreFamilyPopulation(w, s.characters);
+        else {
+            insist(Array.isArray(s.characters) && s.characters.length === w.npcs.length + 1, 'Saved population does not match.');
+            const chars = [w.player, ...w.npcs];
+            s.characters.forEach((c, i) => restoreCharacter(chars[i], c, w, true));
+        }
         insist(s.ended === (w.player.vitals.health <= 0), 'Life state and health disagree.');
         w.player.actual.life.alive = !s.ended;
         insist(Array.isArray(s.resources) && s.resources.length === w.resources.length, 'Saved resource population does not match.');
@@ -2257,6 +2412,7 @@ class SaveStore {
         if (w.social) w.social.importState(s.social, envelope.version);
         else insist(s.social === null, 'Social save requires a newer build.');
         if (envelope.version >= 3) w.romance.importState(s.romance);
+        if (envelope.version >= 4) w.family.importState(s.family);
         w.rng.state = s.rngState;
         return { world: w, saved: s, envelope };
     }
@@ -3307,6 +3463,7 @@ class SocialUI {
             b.addEventListener('click', () => { if (game.state !== 'running') return; const r = game.world.romance.interact(this.selectedId, topic); $('dialogueText').textContent = r.text; $('socialOutcome').textContent = r.outcome; this.refresh(); game.refreshUI(); });
             $('romanceOptions').appendChild(b);
         }
+        $('birthBtn').addEventListener('click', () => { if (game.state !== 'running') return; const result=game.world.family.birth(); $('dialogueText').textContent=result.text; game.refreshUI(); });
         game.canvas.addEventListener('click', e => {
             if (game.state !== 'running') return;
             const box = game.canvas.getBoundingClientRect(), c = game.citizenAtScreen(e.clientX - box.left, e.clientY - box.top);

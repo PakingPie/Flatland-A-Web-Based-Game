@@ -1,7 +1,7 @@
 // Versioned, transactional local saves. Immutable terrain and identities are seeded;
 // every mutable simulation field is restored into a candidate World before install.
 // The checksum detects accidental corruption; it is NOT an anti-cheat mechanism.
-const SaveFormat = Object.freeze({ name: 'the-flatland', version: 3, worldVersion: 1,
+const SaveFormat = Object.freeze({ name: 'the-flatland', version: 4, worldVersion: 1,
     keys: { manual: 'flatland.manual.v1', auto: 'flatland.auto.v1' }, maxBytes: 2_000_000 });
 const copyJSON = value => JSON.parse(JSON.stringify(value));
 function insist(ok, message) { if (!ok) throw new Error(message); }
@@ -25,7 +25,7 @@ function identitySignature(c) {
     return hash(JSON.stringify({ id: c.id, genome: c.actual.genome, form: c.body.form, age: c.actual.life.ageYears }));
 }
 function captureCharacter(c) {
-    const out = { id: c.id, identitySignature: identitySignature(c) };
+    const out = { id: c.id, identitySignature: identitySignature(c), actual: copyJSON(c.actual), publicIdentity: copyJSON(c.publicIdentity) };
     for (const key of ['x', 'y', 'px', 'py', 'angle', 'prevAngle', 'vitals', 'ai', 'runtime', 'playerKnowledge']) out[key] = copyJSON(c[key]);
     return out;
 }
@@ -37,8 +37,8 @@ function validateKnowledge(k, elapsed, world) {
     if (typeof SocialSystem !== 'undefined') SocialSystem.validateKnowledge(k, elapsed, world);
     else insist(Object.keys(k.discoveredFacts).length === 0 && k.rumors.length === 0, 'Unsupported social knowledge.');
 }
-function restoreCharacter(target, s, world) {
-    insist(plain(s) && s.id === target.id && s.identitySignature === identitySignature(target), 'Citizen identity or generator does not match.');
+function restoreCharacter(target, s, world, legacy = false) {
+    insist(plain(s) && s.id === target.id && s.identitySignature === (legacy ? target.legacySignature : identitySignature(target)), 'Citizen identity or generator does not match.');
     for (const key of ['x', 'px']) insist(numberIn(s[key], 0, C.W), 'Invalid citizen X coordinate.');
     for (const key of ['y', 'py']) insist(numberIn(s[key], 0, C.H), 'Invalid citizen Y coordinate.');
     insist(world.circleClear(s.x, s.y, target.body.radius - .001), 'Saved citizen overlaps solid terrain.');
@@ -103,7 +103,7 @@ class SaveStore {
             pack: copyJSON(g.pack), progress: { gathered: g.progress.gathered, visited: [...g.progress.visited], complete: g.progress.complete },
             gatherCooldown: g.gatherCooldown, warningLatch: copyJSON(g.warningLatch), effects: copyJSON(g.effects), messages: copyJSON(g.messages),
             notice: { text: $('notice').textContent, until: g.noticeUntil, hidden: $('notice').hidden },
-            romance: w.romance.exportState(),
+            family: w.family.exportState(), romance: w.romance.exportState(),
             social: w.social ? w.social.exportState() : null };
     }
     encode(slot = 'manual') {
@@ -117,7 +117,7 @@ class SaveStore {
         try { data = JSON.parse(raw); } catch { throw new Error('Save contains damaged JSON.'); }
         checkJSONTree(data);
         insist(plain(data) && data.format === SaveFormat.name, 'This is not a Flatland save.');
-        insist([1, 2, 3].includes(data.version), 'Save version is not supported by this build.');
+        insist([1, 2, 3, 4].includes(data.version), 'Save version is not supported by this build.');
         insist(data.worldVersion === SaveFormat.worldVersion, 'World generator version is incompatible.');
         insist(plain(data.payload) && data.checksum === hash(JSON.stringify(data.payload)), 'Save checksum does not match.');
         insist(numberIn(data.savedAt, 0, 1e15) && integerIn(data.revision, 0, 1e12), 'Invalid save timestamp.');
@@ -129,9 +129,12 @@ class SaveStore {
         insist(numberIn(s.elapsed, 0, 1e10) && integerIn(s.rngState, 0, 4294967295) && typeof s.ended === 'boolean', 'Invalid simulation time or random state.');
         const w = new World(s.seed); // Candidate only. Failed validation never touches the live world.
         w.elapsed = s.elapsed;
-        insist(Array.isArray(s.characters) && s.characters.length === w.npcs.length + 1, 'Saved population does not match.');
-        const chars = [w.player, ...w.npcs];
-        s.characters.forEach((c, i) => restoreCharacter(chars[i], c, w));
+        if (envelope.version >= 4) restoreFamilyPopulation(w, s.characters);
+        else {
+            insist(Array.isArray(s.characters) && s.characters.length === w.npcs.length + 1, 'Saved population does not match.');
+            const chars = [w.player, ...w.npcs];
+            s.characters.forEach((c, i) => restoreCharacter(chars[i], c, w, true));
+        }
         insist(s.ended === (w.player.vitals.health <= 0), 'Life state and health disagree.');
         w.player.actual.life.alive = !s.ended;
         insist(Array.isArray(s.resources) && s.resources.length === w.resources.length, 'Saved resource population does not match.');
@@ -152,6 +155,7 @@ class SaveStore {
         if (w.social) w.social.importState(s.social, envelope.version);
         else insist(s.social === null, 'Social save requires a newer build.');
         if (envelope.version >= 3) w.romance.importState(s.romance);
+        if (envelope.version >= 4) w.family.importState(s.family);
         w.rng.state = s.rngState;
         return { world: w, saved: s, envelope };
     }
