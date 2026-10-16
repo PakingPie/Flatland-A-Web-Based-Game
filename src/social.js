@@ -172,6 +172,13 @@ class SocialSystem {
                 if (p.personality.reserve > .82) return this.response(c, topic, '“I trust you in many things. My family history is still mine to keep.” Trust does not unlock every secret.', 0, 0, 0, 'refused');
                 this.learn(c, 'family', p.background.knowsFamily ? `I was raised near ${p.background.origin}. ${p.background.family}` : 'I do not know my ancestry. The surviving records tell me very little.');
                 this.learn(c, 'ambition', p.background.ambition);
+                const shared=[...this.world.romance.marriages.filter(m=>m.ids.includes(c.id)).flatMap(m=>m.ids),...c.actual.lineage.childrenIds].filter(id=>id!==c.id);
+                if(shared.length) {
+                    this.world.renewal.learnEvents(c);
+                    const members=[...new Set(shared)].map(id=>this.world.registry.get(id));
+                    this.learn(c,'publicRelationships',`Shared household names: ${members.slice(0,12).map(n=>n.publicIdentity.displayName).join(', ')}.`,'claim',c.id);
+                    for(const member of members) this.learn(member,'name',member.publicIdentity.displayName,'claim',c.id);
+                }
                 if (stage >= 4) {
                     this.learn(c, 'concern', p.background.concern);
                     if (p.background.discloseSensitive) this.learn(c, 'privateHistory', p.background.sensitive);

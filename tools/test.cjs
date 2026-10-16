@@ -18,6 +18,118 @@ function prepare(w, c) { c.x = c.px = w.player.x + 40; c.y = c.py = w.player.y; 
 function compatible(w, sex) { return w.npcs.find(c => c.actual.identity.sex===sex && w.romance.compatibility(w.player,c).ok); }
 function action(w,c,topic) { w.elapsed += 4; return w.romance.interact(c.id,topic); }
 function marry(w,c) { prepare(w,c); for(let day=0;day<5 && !w.romance.spouse(w.player);day++) { w.elapsed += 120; for(const t of ['compliment','outing','commitment']) action(w,c,t); } w.elapsed+=120; assert.equal(action(w,c,'propose').ok,true); }
+function npcPair(w,sameSex=false) {
+    const list=w.npcs.filter(c=>c.actual.life.ageYears<=45 && w.romance.preferences(c).familyLife>=.3 && !w.romance.spouse(c));
+    for(const a of list) for(const b of list) if((a.actual.identity.sex===b.actual.identity.sex)===sameSex && w.renewal.mutual(a,b)) return [a,b];
+    assert.fail('No mutual NPC fixture');
+}
+function renewing(seed='renewal-test') {const w=new World(seed);w.renewal.setEnabled(true);return w;}
+function demographics(w) {return json({family:w.family.exportState(),romance:w.romance.exportState(),renewal:w.renewal.exportState(),people:w.registry.all().map(c=>({id:c.id,actual:{...c.actual,life:{...c.actual.life,ageYears:+c.actual.life.ageYears.toFixed(7)}}}))});}
+
+test('renewal builds mutual NPC commitment over four years, births privately and preserves playable RNG',()=>{
+    const w=renewing(),[a,b]=npcPair(w),key=w.romance.key(a,b),familyRng=w.family.rng.state,socialRng=w.social.rng.state;
+    w.renewal.addPair(a,b,0);w.family.elapse(3*120);assert.equal(w.romance.spouse(a),null);
+    w.family.elapse(120);assert.equal(w.romance.spouse(a).id,b.id);assert.equal(w.family.births.length,0);
+    w.family.elapse(120);const birth=w.family.births.find(e=>e.motherId===a.id || e.fatherId===a.id);assert.ok(birth);
+    assert.ok(birth.childIds.length>=2 && birth.childIds.length<=4);assert.equal(w.family.rng.state,familyRng);assert.equal(w.social.rng.state,socialRng);
+    for(const id of birth.childIds) {const c=w.registry.get(id);assert.equal(w.family.name(c),'Unknown citizen');assert.deepEqual(json(c.playerKnowledge.discoveredFacts),{});assert.ok(!w.family.view().members.some(m=>m.id===id));}
+    assert.equal(w.renewal.pairs[key].trust[a.id],50);saveFor(w).decode(saveFor(w).encode());
+    w.renewal.pairs[key].trust[b.id]=0;w.renewal.pairs[key].affection[b.id]=0;
+    assert.equal(w.renewal.birthReason(w.romance.marriages.find(m=>m.ids.includes(a.id))),'mutual readiness');
+    w.family.elapse(10*120);
+    assert.equal(w.renewal.households[w.romance.marriages.find(m=>m.ids.includes(a.id)).id].cohorts,2);
+});
+
+test('renewal respects same-sex households, independent refusal and no joint births',()=>{
+    const w=renewing('renewal-same-sex'),[a,b]=npcPair(w,true);w.renewal.addPair(a,b,0);w.family.elapse(5*120);
+    assert.equal(w.romance.spouse(a).id,b.id);assert.equal(w.romance.household(a),.88);
+    assert.ok(!w.family.births.some(e=>[e.motherId,e.fatherId].includes(a.id)));
+    const p=w.renewal.pairs[w.romance.key(a,b)];p.trust[a.id]=0;p.affection[a.id]=0;
+    assert.equal(w.romance.readinessFrom(.25,p.trust[a.id],p.affection[a.id]).ready,false);
+    assert.equal(w.romance.readinessFrom(.25,100,100).ready,true);
+    const [c,d]=npcPair(w);assert.equal(w.renewal.mutual(c,c),false);
+    const before=w.social.reputation.score;w.social.reputation.score=-100;const mutual=w.renewal.mutual(c,d);w.social.reputation.score=100;assert.equal(w.renewal.mutual(c,d),mutual);w.social.reputation.score=before;
+});
+
+test('renewal commitment closes unfinished player courtship without stealing a marriage or revealing a partner',()=>{
+    const w=renewing('renewal-competition'),[a,b]=npcPair(w);w.romance.pair(w.player,a).status='courting';
+    w.renewal.addPair(a,b,0);w.family.elapse(4*120);
+    assert.equal(w.romance.spouse(a).id,b.id);assert.equal(w.romance.pair(w.player,a).status,'declined');assert.equal(w.romance.spouse(w.player),null);
+    prepare(w,a);w.elapsed+=4;const reply=w.romance.interact(a.id,'propose');assert.equal(reply.ok,false);assert.ok(!reply.text.includes(b.actual.identity.name));
+    const family=familyWorld().w,spouse=family.romance.spouse(family.player);family.renewal.setEnabled(true);family.family.elapse(10*120);
+    assert.equal(family.romance.spouse(family.player).id,spouse.id);assert.equal(family.romance.marriages[0].endedAt,null);
+});
+
+test('renewal ordinary boundaries, refuge batches, single years and restarted years agree',()=>{
+    const a=renewing('renewal-clock'),b=renewing('renewal-clock'),c=renewing('renewal-clock');let d=renewing('renewal-clock');
+    a.family.elapse(10*120);b.family.advance(5);b.family.advance(5);
+    for(let year=0;year<10;year++) {c.family.advance(1);d.family.advance(1);d=saveFor(d).decode(saveFor(d).encode()).world;}
+    assert.deepEqual(demographics(a),demographics(b));assert.deepEqual(demographics(b),demographics(c));assert.deepEqual(demographics(c),demographics(d));
+});
+
+test('renewal activation, disable and re-enable never replay historical years',()=>{
+    const w=new World('renewal-policy');w.elapsed=25.5*120;w.renewal.setEnabled(true);
+    w.family.elapse(59);assert.equal(Object.keys(w.renewal.pairs).length,0);w.family.elapse(1);assert.equal(w.renewal.processedYear,26);assert.equal(Object.keys(w.renewal.pairs).length,1);
+    w.renewal.setEnabled(false);const before=json(w.renewal.pairs),rng=w.renewal.matchingRng.state;w.family.elapse(5*120);
+    assert.deepEqual(json(w.renewal.pairs),before);assert.equal(w.renewal.matchingRng.state,rng);
+    w.renewal.setEnabled(true);assert.equal(w.renewal.processedYear,31);assert.deepEqual(json(w.renewal.pairs),before);
+    saveFor(w).decode(saveFor(w).encode());
+    w.family.elapse(120);const once=demographics(w);w.renewal.evaluateYear(w.renewal.processedYear);assert.deepEqual(demographics(w),once);
+});
+
+test('renewal preserves fractional NPC death timing across elapsed chunks and suppresses boundary events on survival death',()=>{
+    const a=renewing('fractional-death'),b=renewing('fractional-death');
+    for(const w of [a,b]) w.npcs[0].actual.life.ageYears=w.family.deathAge(w.npcs[0])-.5;
+    a.family.elapse(120);for(let n=0;n<4;n++) b.family.elapse(30);
+    assert.equal(a.npcs.some(c=>c.id==='citizen-000'),false);
+    assert.deepEqual(json(a.family.history),json(b.family.history));assert.equal(a.family.history[0].at,60);
+    a.npcs[0].actual.life.ageYears=100;a.family.elapse(.1);assert.equal(a.player.actual.life.alive,true);
+    const w=renewing('boundary-death');w.family.elapse(120,{deferRenewal:true});assert.equal(Object.keys(w.renewal.pairs).length,0);
+    w.family.markDeath(w.player,'thirst');w.family.flushRenewal();assert.equal(Object.keys(w.renewal.pairs).length,0);assert.equal(w.renewal.processedYear,1);
+});
+
+test('renewal stops before boundary events on player death and retains pending heirs',()=>{
+    const {w}=familyWorld();const children=w.family.birth().ids;mature(w);w.renewal.setEnabled(true);
+    w.player.actual.life.ageYears=w.family.deathAge(w.player)-1;w.elapsed=Math.floor(w.elapsed/120)*120;
+    const births=w.family.births.length;w.family.elapse(5*120);
+    assert.equal(w.player.actual.life.alive,false);assert.equal(w.family.births.length,births);assert.equal(Object.keys(w.renewal.pairs).length,0);assert.ok(w.family.candidates().some(c=>children.includes(c.id)));
+    const restored=saveFor(w).decode(saveFor(w).encode()).world;assert.equal(restored.player.actual.life.alive,false);assert.ok(restored.family.candidates().length);
+});
+
+test('renewal married daughter inherits her own anchor and experienced household only',()=>{
+    let w,ids,daughter,spouse;
+    for(let seed=0;seed<20 && !spouse;seed++) {
+        w=familyWorld(`married-heir-${seed}`).w;ids=w.family.birth().ids;mature(w);w.renewal.setEnabled(true);
+        daughter=ids.map(id=>w.registry.get(id)).find(c=>c.actual.identity.sex==='female');
+        if(daughter) spouse=w.npcs.find(c=>c.actual.identity.sex==='male' && c.actual.life.ageYears<=50 && w.renewal.mutual(daughter,c) && !w.romance.spouse(c));
+    }
+    assert.ok(spouse);
+    const year=Math.floor(w.elapsed/120);w.renewal.addPair(daughter,spouse,year);const p=w.renewal.pairs[w.romance.key(daughter,spouse)];
+    for(const id of p.ids) {p.trust[id]=80;p.affection[id]=90;}w.renewal.marry(p,year);
+    const m=w.romance.marriages.at(-1),anchor=w.renewal.households[m.id].anchorId;assert.equal(anchor,daughter.id);
+    w.family.elapse(120);
+    const privateBirth=w.family.births.find(b=>[b.motherId,b.fatherId].includes(daughter.id));assert.ok(privateBirth);
+    const privateChild=w.registry.get(privateBirth.childIds[0]);privateChild.actual.life.ageYears=18; // Controlled adult-heir fixture.
+    const dto=w.family.view();assert.ok(dto.undiscoveredHeirs.some(h=>h.id===privateChild.id));
+    assert.ok(!dto.members.some(m=>m.id===privateChild.id));assert.ok(!JSON.stringify(dto).includes(privateChild.actual.identity.name));
+    const stranger=w.npcs.find(c=>c!==spouse && !ids.includes(c.id) && !w.family.knownFamily().includes(c));
+    w.social.learn(stranger,'privateHistory','Founder-only claim','claim',stranger.id);
+    assert.equal(w.family.succeed(daughter.id).ok,true);assert.equal(w.romance.spouse(w.player).id,spouse.id);
+    assert.equal(spouse.playerKnowledge.relationship.trust,90);assert.equal(w.romance.pair(w.player,spouse).affection,100);
+    assert.equal(stranger.playerKnowledge.discoveredFacts.privateHistory,undefined);
+    const restored=saveFor(w).decode(saveFor(w).encode()).world;assert.equal(restored.renewal.households[m.id].anchorId,anchor);
+    restored.family.elapse(241);assert.equal(restored.family.birth().ok,true);assert.equal(restored.renewal.households[m.id].cohorts,2);
+});
+
+test('renewal capacity refusal does not draw RNG or consume IDs and respects the player reserve',()=>{
+    const {w}=familyWorld();while(w.registry.all().length<245) {w.elapsed+=241;assert.equal(w.family.birth().ok,true);}
+    const [a,b]=npcPair(w);w.renewal.setEnabled(true);const year=Math.floor(w.elapsed/120);w.renewal.addPair(a,b,year);
+    const p=w.renewal.pairs[w.romance.key(a,b)];for(const id of p.ids) {p.trust[id]=100;p.affection[id]=100;}w.renewal.marry(p,year);
+    const rng=[w.rng.state,w.family.rng.state,w.social.rng.state,w.renewal.birthRng.state,w.renewal.matchingRng.state],nextId=w.family.nextId,count=w.family.births.length;
+    w.family.elapse(120);assert.equal(w.family.births.length,count);assert.equal(w.family.nextId,nextId);
+    assert.deepEqual([w.rng.state,w.family.rng.state,w.social.rng.state,w.renewal.birthRng.state,w.renewal.matchingRng.state],rng);
+    assert.equal(w.renewal.lastFailure,'population capacity');
+});
 test('seeded baseline and existing simulation state round-trip', () => {
     const a = new World('baseline'), b = new World('baseline'); assert.deepEqual(json(a.resources),json(b.resources)); assert.equal(a.rng.state,b.rng.state);
     const store=saveFor(a), raw=store.encode(), out=store.decode(raw); assert.deepEqual(json(out.world.player),json(a.player)); assert.equal(out.world.social.rng.state,a.social.rng.state);

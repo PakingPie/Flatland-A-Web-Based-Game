@@ -1,14 +1,13 @@
 # The Flatland
-## Version 0.3.1 — Action bubbles and playable generations
+## Version 0.3.2 — Autonomous NPC families and lossless archives
 
-Phase 3.5 core architecture is hardened: a stable character registry separates
-living actors from deceased records; save validation/migration runs independently
-of browser storage; family views, observer notebooks and household support have
-explicit boundaries. Population rules remain unchanged. The selected next design
-direction is [autonomous NPC families](docs/POPULATION_RENEWAL_DESIGN.md).
-The next sequence is to resolve renewal and archive design first, then implement
-and validate renewal before the proposed [Phase 4A sparring milestone](docs/PHASE4A_PLAN.md).
-The detailed rule bundle and combat scope remain proposals; gameplay is unchanged.
+Phase 3.5 now includes bounded [autonomous NPC families](docs/POPULATION_RENEWAL_DESIGN.md),
+with mutual private relationships, yearly marriages/births and stable household
+inheritance. New expeditions enable renewal; existing saves keep their founding-only
+policy until you choose **Pause → Population & families → Enable NPC families**.
+Export a backup first. Disabling stops future events and keeps existing families.
+The population remains finite. The subsequent [Phase 4A sparring plan](docs/PHASE4A_PLAN.md)
+remains a proposal; combat, law, guards and civilization are not implemented.
 
 A lightweight offline Canvas survival and society simulation inspired by Edwin
 Abbott's *Flatland*. Survive as an irregular triangle, meet citizens, court a
@@ -121,7 +120,7 @@ rank. See [implemented rules and balance defaults](docs/FAMILY_RULES.md).
 - **Export save file** downloads portable JSON. **Import save file** validates before
   replacing active progress and asks before discarding an active expedition.
   Browser slots remain until an explicit save or subsequent autosave.
-- Schema **v4**, generator **v1**, supports v1/v2 and the v3 marriage checkpoint.
+- Schema **v5**, generator **v1**, supports v1/v2/v3 and both frozen v4 checkpoints.
   Phase 2A inventory, resources, NPC state, knowledge, trust, reputation and RNG
   migrate. Failed loads/imports do not replace active progress.
 
@@ -162,7 +161,8 @@ remains unchanged.
 | [genetics](src/genetics.js) | Pure staged inheritance and genome validation |
 | [registry](src/registry.js) | Private stable-ID records and living world projections |
 | [romance](src/romance.js) | Preferences, attraction, consent and marriage history |
-| [family](src/family.js) | Birth, death, aging and succession commands/events |
+| [family](src/family.js) | Transactional cohorts, death, shared time advancement and succession |
+| [renewal](src/renewal.js) | Saved policy, mutual NPC relationships, household anchors and private yearly events |
 | [family invariants](src/family-invariants.js) | Reciprocal spouse links and generation DAGs |
 | [observer notebooks](src/observer-notebooks.js), [household](src/household.js) | Observer transfer and derived household support |
 | [family view](src/family-view.js) | Privacy-safe family presentation DTO |
@@ -192,7 +192,12 @@ node tools/browser-regressions.cjs
 node tools/browser-architecture.cjs
 node tools/browser-inspector.cjs
 node tools/browser-parenthood.cjs
+node tools/browser-renewal.cjs
 ```
+
+The dependency-free `node tools/population-study.cjs` runs a separate 20-seed,
+100-year demographic fixture, continuing after founder extinction without reviving
+anyone. It is not evidence of unassisted human play or an indefinitely viable dynasty.
 
 Use `FLATLAND_NODE_MODULES` for a bundled Playwright package directory and
 `FLATLAND_CHROMIUM` for an explicit executable. Otherwise normal module resolution
@@ -204,13 +209,20 @@ See [current QA](docs/QA_REPORT.md), [checkpoints](docs/IMPLEMENTATION_STATUS.md
 
 ## Current limits
 
-There is no autonomous NPC courtship/reproduction, immigration, adoption or new
-founding population. The founding society ages; unrelated fertile partners can
-eventually run out in a long dynasty. Validation covers Generation 2 control and
-Generation 3 births, rather than an indefinitely replenishing population.
-Births are immediate abstract events with no scheduled pregnancy. The tree is a
-compact linked register. Budgets are 256 total individuals, including deceased
-records, and a 2 MB save envelope; failures visibly preserve existing saves.
+NPC renewal extends partner availability but cannot guarantee unrelated partners
+forever. Kinship is unchanged. NPC births reserve room for four children below
+96 living / 248 total records, with eight records of player headroom under the
+256-record global cap. Each NPC marriage permits two autonomous cohorts; player
+births retain their existing rules. No immigration or adoption is implemented.
+Births are immediate abstract events with no scheduled pregnancy. Full deceased
+records, event sources and observer notebooks remain in each export; no archive
+compaction or ID reuse occurs. V5 writes enforce a 2 MB UTF-8 envelope plus existing
+structural/event budgets. Old builds cannot read v5 exports; retain a pre-upgrade backup.
+
+The demographic fixture produced first cohorts in years 6–17; two of twenty seeds
+had no living population at year 100. Yearly callbacks can briefly pause the game:
+the fixture observed a median 159 ms and maximum 590 ms under concurrent QA load.
+These timings are not frame-rate or device guarantees. See the detailed [QA report](docs/QA_REPORT.md).
 
 Firefox, Safari, physical phones, long human play sessions and abrupt process-kill
 durability remain unverified. QA documents all scenario controls. Combat, law,

@@ -1,4 +1,4 @@
-# Implemented family and inheritance rules (v0.3.1)
+# Implemented family and inheritance rules (v0.3.2)
 
 These adjustable gameplay defaults resolve Phase 2B/3 implementation questions.
 They are not statements about real genetics or moral worth.
@@ -100,7 +100,10 @@ A supplied player at a refuge can advance one or five years. Each year processes
 aging, natural deaths, widowhood, maturation and resource regeneration. Community
 subsistence holds living characters' food/water at least 55 and restores stamina.
 The pack, positions and AI paths remain; ordinary survival frames are not replayed.
-The advance stops when the current player dies. There are no scheduled births.
+The shared clock splits at year boundaries and natural deaths. NPC family events
+run after deaths/widowhood, with no aging before a child's birth. Both ordinary
+time and refuge years use the same scheduler; the advance stops when the current
+player dies, before new family events at that boundary.
 
 Voluntary retirement opens at 40. A living adult biological descendant can inherit
 control, including a daughter, son or later descendant. Retirement retains the old
@@ -116,9 +119,10 @@ Marriage history and biological links never change merely because control change
 
 ## Persistence and limits
 
-Original slot keys and generator version remain. Schema v4 persists private
+Original slot keys and generator version remain. Schema v5 persists private
 characters, dynamic population, life state, family records, current observer,
-archived notebooks and all three RNG streams. A candidate world is fully validated
+archived notebooks, the original three RNG streams and two separate renewal streams.
+A candidate world is fully validated
 before installation, including reciprocal family links and playable descent.
 The private registry retains deceased identities outside living world simulation.
 The explicitly enabled F8 testing inspector can display private simulation truth,
@@ -133,12 +137,52 @@ family defaults. The legacy generation-zero founder becomes Generation 1.
 Export/import is available from the menu/pause flow. Import validates before
 confirmation and installation; browser slots remain until explicit saving or a
 later autosave. The checksum detects accidental corruption, not deliberate editing.
-The save budget is 2 MB. Developer hooks require the debug query parameter.
+V5's save budget is 2 MB of UTF-8, plus the existing tree/array/event limits. Legacy
+readers retain their original string-unit acceptance; no load rewrites a slot.
+Old builds reject v5 exports, so keep a pre-upgrade backup. Developer hooks require
+the debug query parameter.
 
-The founding population ages without autonomous NPC reproduction or immigration.
-Unrelated fertile partners can eventually run out. The selected next direction is
-[autonomous NPC families](POPULATION_RENEWAL_DESIGN.md), with proposed pacing and
-activation still open for discussion. Reproduction in a closed population cannot
-guarantee unrelated partners forever under the current kinship/budget rules.
-Archival compaction and adoption remain unimplemented; see the
-[Phase 3.5 handoff](PHASE35_HANDOFF.md).
+## Autonomous NPC families
+
+The user adopted [bundle A–E](POPULATION_RENEWAL_DESIGN.md#adopted-decision-bundle--2026-10-16).
+New expeditions enable renewal. Existing saves retain founding-only behavior
+until **Pause → Population & families → Enable NPC families**. Activation and
+re-enabling begin at the next family year without historical catch-up. Disabling
+keeps existing people, marriages and history.
+
+Each year permits at most one new private courting pair, one new NPC marriage and
+one NPC cohort globally. Adults must be unrelated and mutually compatible, using
+each counterpart's public reputation rather than the observer's. Private directed
+trust/affection start at zero and gain 10/12 per eligible yearly evaluation. Each
+side needs trust 18+ and affection 42+ to commit: four successful evaluations.
+Newly formed marriages cannot give birth in that year. Same-sex marriages retain
+the same household support and no joint biological births.
+
+Each NPC parent must independently meet the current willingness formula; both
+must be alive, aged 18–60 and at health 35+. Background community subsistence
+abstracts food/water eligibility without refilling ordinary NPC meters or helping
+the playable character. Cohorts retain the 2–4 distribution and two-year cooldown.
+Two autonomous cohorts are permitted per marriage, counting player cohorts too;
+player commands keep their existing rules. Require room for four NPC children
+under 96 living / 248 total records. The global 256-record cap is unchanged; deaths
+free only living capacity. Complete candidate-save validation precedes every
+cohort, so refusal consumes no live IDs, birth RNG, cooldown, links or discoveries.
+
+Household anchors persist: the sole founder-lineage spouse anchors that household;
+other families use a seeded choice between parents. Control transfer does not
+switch the anchor. A married NPC heir retains the marriage, cooldown and cohort
+count and begins with their experienced household relationship, without another
+observer's private claims. Ordinary existing successions keep their notebook rules.
+
+The current player is excluded from automation; retired founders and unchosen
+siblings can participate. NPC marriage can close unfinished player courtship, with
+a brief commitment response that names no undiscovered partner. Existing marriages
+cannot be stolen. Background events do not automatically teach names, ancestry or
+traits. Consenting family conversation can share household names as sourced claims.
+An otherwise unknown adult heir is offered anonymously when succession opens.
+
+Full deceased records, final runtime, genealogy, event sources and observer
+notebooks remain in the export. No compaction, immigration, adoption, ID reuse or
+kinship relaxation occurs. A closed population can still lose all eligible partners
+or become extinct. See [current evidence and limits](QA_REPORT.md) and the
+[handoff](PHASE35_HANDOFF.md).

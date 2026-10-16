@@ -1,5 +1,29 @@
 # Implementation checkpoints — Phase 2B / 3 / 3.5
 
+## Autonomous NPC renewal checkpoint — 2026-10-16
+
+Adopted bundle A–E is implemented as v0.3.2 / save v5. New expeditions enable it;
+legacy saves require explicit Pause opt-in and retain their original input/slots
+on load. Private directed NPC relationships, yearly marriage/cohorts, fixed
+household anchors, shared death-aware scheduling, separate saved RNGs and full
+candidate preflight are in place. Retired founders and siblings can participate;
+player marriages remain exclusive. Background events do not teach observer facts.
+A married daughter retains her own anchor and experienced household on control
+transfer; otherwise unknown adult descendants remain selectable anonymously.
+Full deceased records/notebooks, F8, bubbles, playable willingness and standalone
+HTML are preserved. No compaction or increased cap was introduced.
+
+Validation: 78 deterministic cases, all eight Chromium scripts and build/docs pass.
+The 20-seed / 100-year demographic census includes ten-year exact save reloads;
+two seeds lost all living population. Peak living/total was 87/139, size 373,393
+bytes, tree 20,189 nodes. Year callback timing under concurrent QA load was median
+159 ms / p95 376 ms / max 590 ms. Raw evidence stays local. See [QA](QA_REPORT.md).
+Human balance/travel/courtship play is uncompleted and unwaived; that report or
+explicit deferral remains the gate before Phase 4A. No combat, law, guards or
+civilization is implemented. Preparation/archive commits are `f8f8b79`/`aa447b6`;
+this renewal milestone is a separate tested commit, not a push or PR merge.
+
+
 ## V5 lossless archive and transactional cohort checkpoint — 2026-10-16
 
 Schema v5 retains the complete character array, deceased runtime snapshots,

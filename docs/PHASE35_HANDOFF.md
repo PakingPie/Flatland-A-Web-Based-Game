@@ -1,129 +1,99 @@
-# Phase 3.5 architecture handoff
+# Phase 3.5 renewal handoff
 
-## Current checkpoint — 2026-10-16
+## Current state — 2026-10-16
 
-Gameplay remains at `a54a872` (parenthood willingness), with a clean checkout and
-seven unpushed commits at session start. PR #1's remote head is still `87feb3c`.
-The 2026-10-16 baseline rerun passes build/docs, all 63 deterministic cases and all
-seven Chromium scripts. Design documentation is a separate local milestone.
+The user adopted population decision bundle A–E after design checkpoint `8389cfa`.
+The approved implementation has three separate milestones: `f8f8b79` freezes the
+`a54a872` save and extracts explicit parents/readiness; `aa447b6` adds lossless v5
+archives and transactional cohort preflight; the following renewal checkpoint
+adds the scheduler, private relationships, policy UI and population evidence.
+The branch remains `codex/phase-2b-3-generations`, continuing PR #1. The upstream
+tracking ref was already at `8389cfa` when implementation began; these new commits
+have not been pushed by this session.
 
-The user confirmed **resolve renewal and archive design first**. Review the
-[recommended decision bundle A–E](POPULATION_RENEWAL_DESIGN.md#recommended-decision-bundle--2026-10-16-pending-adoption)
-before implementing renewal. It proposes full deceased snapshots in v5, unchanged
-caps, explicit activation for legacy saves, mutual private NPC consent, stable
-lineage-aware anchors and bounded yearly events. Only the sequence is selected;
-the numerical rules, anchor policy and new-game defaults still await adoption.
-The [Phase 4A plan](PHASE4A_PLAN.md) gives completion/deferral gates and proposes
-voluntary nonlethal sparring after renewal, excluding law, guards and civilization.
-No renewal, compaction, save-format change or combat has been implemented.
+V0.3.2 now supports autonomous NPC families. New expeditions enable renewal;
+existing v1–v4 saves load disabled, without rewriting the input or slots. The player
+can export a backup and explicitly enable/disable it from Pause → Population &
+families. Changes start at the next family year, without catch-up. Disabling keeps
+all existing people and history.
 
-## Architecture implementation history
-
-Core architecture hardening is implemented on `codex/phase-2b-3-generations`,
-continuing PR #1 from clean checkpoint `87feb3c`. Tested commits:
-
-- `46ab6f5`: baseline evidence and frozen released-v4 family save.
-- `831a9a5`: stable character registry and living/deceased separation.
-- `743130c`: storage-independent save codec and explicit v1–v4 schema readers.
-- `14b9fdf`: family DTO, observer notebooks, household support and integrity checks.
-- Follow-up at branch HEAD: incremental family rows, architecture browser checks,
-  population-budget stress and the NPC-family design discussion.
-
-Action bubbles, paused choices, automatic approach, stable IDs, hidden ancestry,
-legacy fixtures, original slot keys, save v4, generator v1 and standalone HTML are
-preserved. No normal player storage is used in validation. Combat, law and
-civilization remain outside this phase.
+Action bubbles, paused choices, approach/cancellation, stable IDs, private ancestry,
+relationship-dependent playable willingness, sons/daughters, succession, read-only
+F8 and the standalone HTML remain. The world generator and browser slot keys are
+unchanged. Schema v5 retains full deceased snapshots and observer sources; old
+executables reject v5 exports, so keep pre-upgrade exports. Compaction, increased
+budgets, immigration and indefinite renewal remain deferred.
 
 ## Implemented boundaries
 
 | Boundary | Responsibility |
 |---|---|
-| Character registry | Private records by stable ID; living actors are a projection; death retains genealogy |
-| Family commands | Births, deaths, aging and succession update the same registry and event records |
-| Genetics | Pure seeded biological inheritance independent of rendering |
-| Observer notebooks | Archive and restore personal knowledge/reputation during control transfer |
-| Household support | Derived marriage benefits independent of biological parentage |
-| Family view | Small observer-facing DTO; no hidden genomes or carrier state |
-| Save codec/validation | Parse an envelope and build a fully validated candidate without DOM/storage/game access |
-| Schema readers | Explicit released-v1/v2/v3/v4 restoration; no rewriting input or slots |
-| Save store | Native storage, file I/O, slot fallback and transactional installation |
-| Family screen | Keyed row updates retain expanded details and DOM identity |
+| Registry | One stable-ID record per person; living actors are a projection; no ID reuse |
+| Family cohort commands | Detached explicit-parent/anchor planning and full candidate-save validation before publication |
+| Shared clock | Ordinary/refuge years split at boundaries and natural deaths; player death suppresses later events |
+| Renewal | Saved policy/cursor, matching/birth RNGs, private directed relationships, household anchors/cohort counts |
+| Discovery | Private NPC events do not teach the observer names or ancestry; consenting household sharing has source provenance |
+| Observer transfer | Archive personal knowledge; a married NPC heir retains their own experienced household |
+| Family DTO/UI | Known family only; otherwise unknown adult heirs are selectable anonymously without disclosing private traits |
+| Save codec | Storage-independent v1–v5 validation, complete dead-record recovery and transactional import |
+| F8 | Paused, transient private truth including NPC pairs/anchors; no discoveries, RNG or saved-mode changes |
 
-Generation ordering proves the family graph is acyclic; parent/child links must
-be reciprocal. V4 spouse bonds must agree with marriage history. The registry has
-no removal path for referenced ancestors; deceased records still count toward the
-256-record limit. Full deceased runtime and archived notebooks remain stored.
+The adopted rules remain in [the population design](POPULATION_RENEWAL_DESIGN.md)
+and the [implemented family rules](FAMILY_RULES.md). At most one new courtship,
+marriage and NPC cohort occur per year. Mutual private trust/affection progresses
+10/12 per successful yearly evaluation; commitment requires four evaluations.
+Background needs use abstract subsistence without refilling ordinary meters.
+Both parents must be willing and biologically eligible. Two autonomous cohorts
+per marriage; room for four children under 96 living / 248 total records. Player
+birth rules and the global 256-record cap remain. Refused additions preserve IDs,
+birth RNG, cooldown and discoveries. No ancestry deletion or weakened kinship.
 
-## Current validation
+## Validation and limits
 
-Build agreement, documentation links and 63 deterministic cases pass. All seven
-Chromium scripts pass: smoke, generations (8 groups), bubbles (5), preservation
-(9), architecture (7), inspector (6), parenthood (4). The architecture suite includes native released-v4 loading,
-three Continue cycles/two complete browser restarts, preserved family row expansion,
-injected Storage quota/denial, and a genuine cross-tab storage event. The
-population stress test fills the record budget, kills non-household actors and
-proves deaths do not free IDs/capacity or consume RNG on refused births.
+The [QA report](QA_REPORT.md) records the deterministic suite, all eight isolated
+Chromium scripts and the 20-seed / 100-year demographic study. Native v5 shutdown and
+Continue, original v1–v4 fields, dead records, notebooks, pending heirs, daughter
+anchors, policy controls, F8 and standalone opening are covered. Population and
+browser artifacts remain under ignored local output; no normal player save or
+profile was used.
 
-Browser execution uses explicit installed Chromium and an unsandboxed process,
-with fresh test-owned profiles and localhost servers. Generated JSON, screenshots,
-exports and profiles stay under ignored local output. Failure injection is not
-physical disk exhaustion. Existing gameplay suites still control clock, needs,
-proximity and compatible candidate discovery.
+The census continues after founder extinction without reviving or replacing any
+character; it is not a successfully played dynasty. First cohorts occurred in
+years 6–17; two seeds lost all living people by year 100. Peak living/total records
+were 87/139. Peak envelope size was 373,393 bytes and 20,189 tree nodes. No capacity
+refusals arose in that small census; separate capacity/large-notebook fixtures test
+refusal. Year callback timing under concurrent QA load was median 159 ms, p95
+376 ms, maximum 590 ms. This is a bounded prototype, not a frame-rate guarantee;
+optimization remains a documented follow-up within the existing caps.
 
-## Population discussion before renewal rule changes
+The unassisted human survival/travel/courtship/competing-commitment playtest is
+**not completed or waived**. Controlled QA does not satisfy it. This is the
+remaining decision/evidence gate before combat. Firefox/Safari, physical mobile,
+assistive technology, abrupt process-kill and long human sessions remain deferred
+and unverified. Text genealogy remains; no graphical tree or adoption.
 
-The user selected **design autonomous NPC families first**. Read the
-[concrete proposal](POPULATION_RENEWAL_DESIGN.md). Direction is selected; pacing,
-NPC needs/consent, inheritance anchors and activation for existing saves are not
-adopted. No autonomous reproduction or immigration is implemented.
+## Phase 4A boundary
 
-The proposal starts with bounded yearly matching/births and separate private pair
-state and RNG. A closed population cannot guarantee unrelated partners forever
-under the existing shared-ancestor rule and record/save limits. Do not silently
-weaken kinship, delete ancestors or promise unlimited generations. Discuss the
-proposal with the user before implementing population rules.
-
-The later user-approved parenthood follow-up lets hesitant spouses reconsider
-through trust/affection support and adds Discuss children. It applies to existing
-playable couples, uses no new save fields and needs no new game. This does not
-adopt the separate autonomous NPC-family proposal. See [current rules](FAMILY_RULES.md).
-
-## Remaining work and limits
-
-1. Adopt population rules before implementing NPC households. Generalize parent
-   commands and consent without borrowing the current observer's relationships.
-2. Adopt and verify the proposed lossless archive contract before increasing
-   population churn. Full deceased snapshots stay in each export; compaction and
-   larger budgets are recommended explicit deferrals. Existing limits remain 256
-   total records and a nominal 2 MB envelope; the current parser checks string
-   units, so v5 byte accounting needs an explicit compatibility-preserving change.
-3. Complete an unassisted human survival/courtship/travel playthrough. Controlled
-   browser integration is not evidence of natural partner discovery/balance.
-4. Expand to Firefox/Safari, physical mobile rotation, assistive technology,
-   abrupt termination and long-session durability. Repeated controlled Chromium
-   resumes and emulated touch do not establish those environments.
-5. Consider a compact graphical tree only when population size and playtesting
-   justify it. Current keyed text rows retain concise expandable relationships.
-
-The user-requested F8 inspector is an explicit testing exception to ordinary
-disclosure: it pauses time and shows private truth without teaching discoveries
-or changing saved state. F8/Escape returns to normal and clears private details.
-Pause → Testing supports touch; the view is transient and does not require the
-optional debug API. Use it for inspection, not as evidence of natural discovery.
+The [Phase 4A plan](PHASE4A_PLAN.md) remains a bounded proposal: voluntary nonlethal
+sparring, one opponent, visible-shape attacks, defense and retreat, delivered in
+three tested commits. No combat is implemented here. Obtain the human playtest
+report or an explicit deferral before beginning that milestone. Law, guards,
+soldiers, civilization, lethal attacks and lasting injuries stay outside 4A.
 
 ## Ready-to-copy next-session prompt
 
-> Continue The Flatland Phase 3.5 on `codex/phase-2b-3-generations`, PR #1. Inspect
-> Git status and recent commits first and preserve existing work. Read README and
-> docs/PHASE35_HANDOFF, ROADMAP, FAMILY_RULES, QA_REPORT, IMPLEMENTATION_STATUS,
-> POPULATION_RENEWAL_DESIGN and PHASE4A_PLAN. Gameplay checkpoint `a54a872` passed
-> 63 deterministic cases and all seven Chromium scripts on 2026-10-16. Later design
-> documents are not implemented rules. The user selected renewal/archive design
-> first: check for adoption/amendments to bundle A–E in conversation before
-> implementing its staged milestones. Rerun build/docs/rules/browser baseline.
-> Preserve saves, stable IDs, hidden ancestry, bubbles, succession, F8, current
-> relationship-dependent parenthood, original slots and standalone HTML. No
-> archive deletion, kinship relaxation or unlimited-population promise. Finish
-> renewal and record all Phase 4A entry gates before combat; 4A is proposed as
-> nonlethal sparring only. Keep law, guards and civilization outside that milestone.
-> Commit tested milestones, retain raw evidence locally, and document limits.
+> Continue The Flatland on `codex/phase-2b-3-generations`, PR #1. Inspect Git status
+> and log first. Read README and docs/ROADMAP, PHASE35_HANDOFF,
+> POPULATION_RENEWAL_DESIGN, FAMILY_RULES, QA_REPORT, IMPLEMENTATION_STATUS and
+> PHASE4A_PLAN. Bundle A–E is adopted and renewal is implemented; do not ask to
+> reapprove it. Preserve the tested preparation/archive/renewal milestones and
+> any parallel work. Rerun build/docs/rules and all eight Chromium suites before
+> changing gameplay. Keep v1–v4 migration, v5 full deceased archives, stable IDs,
+> ancestry privacy, bubbles, succession, F8, playable willingness, original slot
+> keys and standalone HTML. New games enable renewal; legacy saves require explicit
+> opt-in. The 20-seed census is demographic evidence, not human balance or unlimited
+> renewal. Human survival/travel/courtship/competing-commitment playtesting is still
+> uncompleted and unwaived: obtain its report or explicit deferral before 4A.
+> Then use the bounded nonlethal sparring proposal, without law, guards or
+> civilization. Commit tested milestones and document limits; retain raw evidence
+> locally. Do not push or merge merely because PR #1 exists.

@@ -74,6 +74,11 @@ class FamilyUI {
             const row=this.memberRow(m,v.canSucceed);
             if(list.children[index]!==row.card) list.insertBefore(row.card,list.children[index] || null);
         });
+        const unseen=$('undiscoveredHeirs');unseen.replaceChildren();
+        for(const heir of v.undiscoveredHeirs) {
+            const button=document.createElement('button');button.className='small-btn';button.textContent=heir.label;
+            button.dataset.successor=heir.id;button.addEventListener('click',()=>this.choose(heir.id));unseen.appendChild(button);
+        }
         $('familyMarriages').textContent=v.marriages.map(m=>`${m.names.join(' + ')} · married year ${m.at} · ${m.end}`).join('\n') || 'No recorded marriages.';
         $('familyHistory').textContent=v.events.map(e=>`Year ${e.year} · ${e.kind} · ${e.names.join(', ')}`).join('\n') || 'Your family history begins here.';
     }

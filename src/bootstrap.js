@@ -62,6 +62,7 @@ if (new URLSearchParams(location.search).get('debug') === '1') {
         parenthoodReadiness(id) { const w=game.world,c=w.registry.get(id); if(!c || c===w.player) throw new Error('Choose another character'); return clone(w.romance.parenthoodReadiness(w.player,c)); },
         courtshipCandidate(sex='female',familyPreference='ready') { const w=game.world; return w.npcs.find(c=>c.actual.life.alive && c.actual.identity.sex===sex && c.actual.life.ageYears>=18 && c.actual.life.ageYears<=55 && c.actual.profile?.personality.warmth>.5 && !w.romance.isCloseKin(w.player,c) && w.romance.compatibility(w.player,c).ok && (familyPreference==='hesitant'?w.romance.preferences(c).familyLife<.3:w.romance.preferences(c).familyLife>=.3))?.id || null; },
         familyBirth() { return game.world.family.birth(); },
+        renewal(enabled) { if(enabled!==undefined) game.world.renewal.setEnabled(enabled);return game.world.renewal.exportState(); },
         advanceYears(years) { const r=game.world.family.advance(years); if(!game.world.player.actual.life.alive) game.die(); game.refreshUI(); return r; },
         successor(id) { game.familyUI.choose(id); return this.snapshot(); },
         importSave(raw) { try { const restored=game.saves.decode(raw); game.installSave(restored); return true; } catch { return false; } },

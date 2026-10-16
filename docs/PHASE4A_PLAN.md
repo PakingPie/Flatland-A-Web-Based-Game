@@ -3,18 +3,19 @@
 **2026-10-16 · design only.** Baseline `a54a872` on
 `codex/phase-2b-3-generations`, continuing
 [PR #1](https://github.com/PakingPie/Flatland-A-Web-Based-Game/pull/1).
-The user selected resolving renewal and archival design first. No population rule,
-archive deletion or combat mechanic is adopted by this document.
+The user subsequently adopted renewal bundle A–E. Its bounded renewal and
+lossless v5 archives are now implemented and tested. Combat mechanics below
+remain proposed; no archive deletion or combat is implemented.
 
 ## What must happen before combat
 
 | Item | Recommended disposition | Evidence needed to close it |
 |---|---|---|
-| Population policy | Complete before 4A, following the user's chosen sequence | Adopt/amend [decision bundle A–E](POPULATION_RENEWAL_DESIGN.md#recommended-decision-bundle--2026-10-16-pending-adoption), then implement bounded autonomous NPC families |
-| Private NPC consent and explicit parent commands | Complete | Two-sided trust/affection, refusal, same-sex support, biological limits, stable anchors; no player-observer substitution |
-| Archive recovery | Complete the lossless contract before renewal | Complete deceased records, genealogy, notebooks, F8 and pending heir restoration round-trip through v5; no removed history |
+| Population policy | Implemented in v0.3.2, following the chosen sequence | [Bundle A–E](POPULATION_RENEWAL_DESIGN.md#adopted-decision-bundle--2026-10-16) adopted; deterministic/browser and census evidence recorded in QA |
+| Private NPC consent and explicit parent commands | Implemented and tested | Two-sided trust/affection, refusal, same-sex support, biological limits, stable anchors; no player-observer substitution |
+| Archive recovery | Verified in v5 | Complete deceased records, genealogy, notebooks, F8 and pending heir restoration round-trip through v5; no removed history |
 | Compaction and larger budgets | Explicitly defer | Retain 256 total records and existing save/parser/event limits; archival is not extra capacity |
-| Scheduler and long population runs | Complete before calling renewal ready | Fixed seeds, ordinary/refuge boundary equivalence, repeated restarts, failures/extinctions/capacity and measured cost/size |
+| Scheduler and long population runs | Verified bounded behavior; extinction remains possible | Fixed seeds, ordinary/refuge boundary equivalence, repeated restarts, failures/extinctions/capacity and measured cost/size |
 | Natural play balance | Complete or explicitly defer before 4A starts | Unassisted survival, travel, partner discovery, courtship and competing NPC commitment; controlled scripts do not establish this |
 | Firefox/Safari, physical phones, assistive technology and abrupt termination | Explicitly defer for this bounded prototype | Keep these listed as unverified; emulated touch and normal Chromium restarts have narrower coverage |
 | Graphical family tree, adoption, immigration, indefinite renewal | Explicitly defer | Keep text register, current biological heirs/kinship, finite-population promise |
@@ -153,19 +154,18 @@ deterministic cases pass at `a54a872`. All seven existing real Chromium scripts
 pass; no page exceptions were reported. See [QA](QA_REPORT.md) for scope/limits.
 The browser sandbox denied the first launch; isolated runs outside the sandbox
 passed with Chromium 149.0.7827.55. No normal browser profile or save was opened.
-PR #1 still points at `87feb3c`; local work has not been pushed.
+At that planning baseline PR #1 pointed at `87feb3c`. The updated handoff and
+Git history record the subsequent implementation checkpoints.
 
 > Continue The Flatland on `codex/phase-2b-3-generations`, PR #1. Inspect Git status
 > and recent commits first. Read README and docs/ROADMAP, PHASE35_HANDOFF,
 > POPULATION_RENEWAL_DESIGN, PHASE4A_PLAN, FAMILY_RULES, QA_REPORT and
-> IMPLEMENTATION_STATUS. The tested gameplay checkpoint is `a54a872`; later design
-> commits do not implement renewal or combat. The user selected renewal/archive
-> design first. Check the conversation for explicit adoption/amendments to bundle
-> A–E; do not treat the recommended rules as adopted. Validate baseline, then
-> implement renewal in separate tested commits only after those decisions are
-> settled. Preserve saves, stable IDs, ancestry privacy, bubbles, succession,
-> read-only F8, relationship-dependent parenthood and standalone HTML. Keep full
-> deceased records and caps unless a later explicit decision changes archival.
-> Keep Phase 4A to the approved bounded melee scope after its entry gates; law,
-> guards and civilization remain outside. Record evidence/limits and commit each
-> passing milestone. Do not push or merge merely because PR #1 exists.
+> IMPLEMENTATION_STATUS. Bundle A–E is adopted and bounded renewal/lossless v5
+> archives are implemented; do not ask to reapprove them. Validate the current
+> baseline with all eight browser suites. The human balance playtest is still
+> uncompleted and unwaived; obtain its report or explicit deferral before combat.
+> Preserve saves, stable IDs, ancestry privacy, bubbles, succession, read-only F8,
+> relationship-dependent parenthood and standalone HTML. Keep full deceased
+> records and existing caps. Use this bounded nonlethal melee proposal after its
+> entry gates; keep law, guards and civilization outside. Commit tested milestones,
+> retain raw evidence locally, and do not push or merge merely because PR #1 exists.

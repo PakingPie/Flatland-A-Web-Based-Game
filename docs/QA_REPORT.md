@@ -1,9 +1,77 @@
-# QA report — Phase 3.5 core hardening (v0.3.1 / save v4)
+# QA report — Phase 3.5 renewal (v0.3.2 / save v5)
 
-Executed 2026-10-15 on Windows with Node 24.12.0, Python 3.14.2 and real Chromium
+Executed 2026-10-16 on Windows with Node 24.12.0, Python 3.14.2 and real Chromium
 149.0.7827.55 using the bundled Playwright runtime. The
 [historical Phase 1.1/2A report](QA_PHASE2A_HISTORICAL.md) remains separately
 preserved; its old counts are **not** added to current results.
+
+## Renewal implementation results — 2026-10-16
+
+Current validation: **78 deterministic cases**, all **eight Chromium scripts**,
+build agreement and documentation links pass. The earlier 63/65/69-case results
+below describe prior checkpoints and are not added to this total.
+
+- New renewal cases cover mutual refusal and same-sex support, four-evaluation
+  commitment, independent parenthood willingness, two-cohort limits, competing
+  player courtship and protected existing marriage, separate RNGs, privacy,
+  activation/off/re-enable, duplicate-year suppression, fractional deaths,
+  same-boundary survival death, married daughter control, anonymous adult heirs,
+  capacity reserve and atomic oversized-notebook refusal.
+- Ordinary-time family outcomes, refuge batches, single years and repeated reloads
+  agree with controlled boundary inputs. Whole-world ordinary/refuge payloads are
+  intentionally not equated because movement/needs differ. Equivalent execution
+  paths and native browser restarts still compare complete payloads.
+- Both frozen v4 checkpoints retain every original payload field, including full
+  deceased runtime, birth/death records and notebooks; v5 adds renewal state.
+  Legacy policy remains disabled. Anchor/count/cursor/RNG corruption rejects the
+  candidate; v5 uses UTF-8 bytes while legacy string-unit parsing is retained.
+- The new [renewal browser suite](../tools/browser-renewal.cjs) passes six groups:
+  explicit legacy opt-in and untouched manual slot; normal-clock/year-button NPC
+  births; read-only F8; native v5 shutdown/reopen; off/re-enable without catch-up;
+  desktop/portrait/short-landscape and emulated touch controls. No page exceptions.
+  Policy screenshots were inspected. The seven prior scripts also pass. The older
+  generational scenario explicitly disables renewal to preserve its finite-world
+  baseline; renewal-enabled behavior has its own scenario and headless fixtures.
+
+### Population census and measured cost
+
+[The population study](../tools/population-study.cjs) ran 20 fixed seeds for 100
+family years each (2,000 samples), including exact export/reload checks every ten
+years. It is a demographic fixture: no player courtship/births or survival-needs
+simulation, and the census continues after founder extinction without reviving or
+replacing anyone. It does not establish natural discovery, human balance or an
+indefinitely viable playable lineage. The final-source rerun used four independent batches of five fixed seeds; every
+seed has 100 recorded samples, with the full twenty-seed report aggregated locally.
+
+| Measure | Observed |
+|---|---|
+| First NPC cohort | Years 6–17 across seeds |
+| Living population at year 100 | 0–66; seeds 2 and 6 had no survivors |
+| Peak living / total records | 87 / 139 |
+| Largest compact envelope / tree | 373,393 UTF-8 bytes / 20,189 nodes |
+| Deferred evaluations in this census | 0; no capacity pressure was reached |
+| Year callback time under concurrent QA load | Median 158.8 ms; p95 375.9 ms; maximum 590.1 ms |
+
+Each sample records births/children/deaths, courting/married households, eligible
+unrelated adults by sex and preferences, eligible pairs, extinction, size/tree
+nodes and scheduler time. Separate synthetic capacity and large-notebook scenarios
+exercise limits that this census did not reach. Timings include complete candidate
+validation; they are not frame-rate, device or long-human-session guarantees.
+Year boundaries can briefly pause; optimization remains a follow-up within the
+same caps. The finite/extinction promise is retained without tuning away failures.
+
+Run the population study from the repository root using the
+[README validation commands](../README.md#source-and-validation). Raw JSON, screenshots, exports,
+profiles and logs stay under ignored local output. No normal browser saves were
+loaded. Node 24.12.0, Python 3.14.2 and Chromium 149.0.7827.55 were used; browser
+processes ran outside the sandbox with isolated test-owned profiles/local servers.
+
+**Remaining gate:** the unassisted human survival/travel/courtship/competing-
+commitment playthrough is uncompleted and unwaived. A user report or explicit
+deferral is required before combat. Firefox/Safari, physical mobile, assistive
+technology, abrupt termination and long human sessions remain unverified. No
+combat, law, guards, civilization, archive compaction or increased budgets ship
+in this milestone.
 
 ## Baseline refreshed before Phase 4 planning — 2026-10-16
 
@@ -34,7 +102,7 @@ The design-only [renewal bundle](POPULATION_RENEWAL_DESIGN.md) and
 [Phase 4A plan](PHASE4A_PLAN.md) distinguish recommendations from adopted rules.
 No implementation or save-format change accompanies this planning checkpoint.
 
-## Current executed results
+## Architecture-only checkpoint results — historical
 
 | Suite | Result | Scope |
 |---|---|---|
@@ -159,8 +227,8 @@ through Pause. No page exceptions remained in executed browser scenarios.
   abrupt process-kill, power-loss and simultaneous-tab atomicity are unverified.
 - File-origin opening passed, but file-origin save shutdown/reopen was not tested.
   Use a stable served origin and exported files for important progress.
-- No autonomous NPC families, immigration or adoption. Unrelated fertile founding
-  citizens eventually age out; indefinite population renewal is not implemented.
+- Autonomous NPC families are implemented in the renewal checkpoint above. No
+  immigration or adoption; closed-population extinction remains possible.
 - Immediate abstract births have no scheduled pregnancy events. No hidden-genome
   investigation system is added; marriage cannot reveal carrier status.
 - The compact family register is functional but has no graphical layout. Current

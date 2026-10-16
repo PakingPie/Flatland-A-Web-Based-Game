@@ -71,6 +71,8 @@ class InformationInspector {
             compatibilityWithPlayer:c.id===w.player.id?null:w.romance.compatibility(w.player,c),
             closeKinToPlayer:w.romance.isCloseKin(w.player,c),
             pairs:Object.values(w.romance.pairs).filter(p=>p.ids.includes(c.id)),
+            npcRelationships:Object.values(w.renewal.pairs).filter(p=>p.ids.includes(c.id)),
+            households:Object.fromEntries(w.romance.marriages.filter(m=>m.ids.includes(c.id)).map(m=>[m.id,w.renewal.households[m.id]])),
             marriages:w.romance.marriages.filter(m=>m.ids.includes(c.id)),
             archivedNotebooks:Object.fromEntries(Object.entries(w.family.notebooks).filter(([observer,book])=>observer===c.id || book.knowledge[c.id]))},null,2);
     }

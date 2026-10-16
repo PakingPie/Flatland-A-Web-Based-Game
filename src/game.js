@@ -53,6 +53,11 @@ class Game {
         bind('drinkBtn', () => this.consume('water'));
         bind('restBtn', () => this.toggleRest());
         bind('cancelApproachBtn', () => this.socialUI.controller?.cancel());
+        bind('renewalToggleBtn',()=>{
+            if(this.state!=='paused' || !this.world.player.actual.life.alive) return;
+            this.world.renewal.setEnabled(!this.world.renewal.enabled);
+            this.saves.save('auto',true);this.refreshUI();
+        });
     }
     setScreen(state) {
         if(this.state==='inspect' && state!=='inspect') this.inspector.clear();
@@ -118,6 +123,7 @@ class Game {
         this.mapClock = 0;
         this.noticeUntil = 0;
         $('notice').hidden = true;
+        this.world.renewal.setEnabled(true);
         $('seedInput').value = seed;
         this.setScreen('running');
         this.renderer.snap();
@@ -273,19 +279,18 @@ class Game {
         if (this.state !== 'running' || this.socialUI?.isOpen)
             return;
         const w = this.world;
-        w.elapsed += dt;
         for (const c of [w.player, ...w.npcs]) {
             c.px = c.x;
             c.py = c.y;
             c.prevAngle = c.angle;
         }
         this.gatherCooldown = Math.max(0, this.gatherCooldown - dt);
-        w.updateResources(dt);
-        w.family.age(dt / C.DAY);
+        w.family.elapse(dt,{deferRenewal:true});
         if (!w.player.actual.life.alive) { this.die(); return; }
         this.updatePlayer(dt);
         if (this.state !== 'running')
             return;
+        w.family.flushRenewal();
         if (this.input.gather)
             this.gather();
         for (const c of w.npcs)
@@ -337,6 +342,11 @@ class Game {
         requestAnimationFrame(t => this.frame(t));
     }
     refreshUI() {
+        if(this.world) {
+            $('renewalToggleBtn').textContent=this.world.renewal.enabled?'Disable NPC families':'Enable NPC families';
+            $('renewalToggleBtn').disabled=!this.world.player.actual.life.alive;
+            $('renewalStatus').textContent=this.world.renewal.enabled?'NPC families are enabled. Changes begin at the next family year.':'The founding population ages without new NPC families.';
+        }
         const w = this.world;
         if (!w)
             return;

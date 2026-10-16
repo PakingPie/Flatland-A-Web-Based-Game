@@ -2,7 +2,7 @@
 
 **Design baseline:** v0.3 · 2026-10-15  
 **Project:** Browser-based, two-dimensional survival, society, and generational evolution game inspired by Edwin A. Abbott's *Flatland*.  
-**Status:** Phase 1.1, 2A, 2B and 3 are implemented in [the playable build](../the-flatland.html), v0.3.1. See [current QA](QA_REPORT.md), [implemented family rules](FAMILY_RULES.md) and [checkpoints](IMPLEMENTATION_STATUS.md). The usability follow-up adds anchored action bubbles, automatic approach, paused choices and concise tutorials. Later phases remain planned.
+**Status:** Phase 1.1, 2A, 2B, 3 and bounded Phase 3.5 NPC renewal are implemented in [the playable build](../the-flatland.html), v0.3.2 / save v5. See [current QA](QA_REPORT.md), [implemented family rules](FAMILY_RULES.md) and [checkpoints](IMPLEMENTATION_STATUS.md). The usability follow-up adds anchored action bubbles, automatic approach, paused choices and concise tutorials. Later phases remain planned.
 
 **Repository and license:** [PakingPie/Flatland-A-Web-Based-Game](https://github.com/PakingPie/Flatland-A-Web-Based-Game) is public and uses the [MIT license](../LICENSE), Copyright (c) 2026 PerkinPie. Public deployment is a separate decision.
 
@@ -17,7 +17,7 @@
 | **2A — Living Society** | **Implemented in [the-flatland.html](../the-flatland.html), v0.2.0; [QA evidence and limits](QA_REPORT.md)** | Citizen identities, conversation, trust, rumors and partial knowledge | Introduce yourself, discover limited information, and retain relationship progress |
 | 2B — Courtship & Marriage | **Implemented, v0.3.1** | Preferences, attraction, courtship, consent, same-sex marriage and household support | Marriage persists through save/load |
 | 3 — Family, Inheritance & Evolution | **Implemented, v0.3.1** | Multiple offspring, strict genetics, aging, genealogy and playable succession | Verified daughter control in Generation 2 and Generation 3 births |
-| 3.5 — Architecture hardening | **Core boundaries implemented; renewal/archive design first** | Stable registry, migrations, family/observer/household seams, incremental rows; bounded NPC renewal next | Adopt [renewal decisions](POPULATION_RENEWAL_DESIGN.md), verify lossless archive and population evidence before combat; see [handoff](PHASE35_HANDOFF.md) |
+| 3.5 — Architecture & renewal | **Implemented, v0.3.2; human playtest gate remains** | Registry, migrations, private NPC families, bounded scheduler and lossless archives | [Adopted renewal rules](POPULATION_RENEWAL_DESIGN.md) and census verified; natural playtest or explicit deferral before combat; see [handoff](PHASE35_HANDOFF.md) |
 | 4A — Combat foundations | **Proposed after 3.5; no combat implemented** | One voluntary nonlethal melee encounter, visible geometry, defense, retreat | [Bounded plan and entry gates](PHASE4A_PLAN.md); persistence, survival and generations preserved |
 | 4 later — Combat & Law | Planned separately | Lethal danger, lasting injuries, witnesses, guards, crimes | Combat and legal reactions follow geometry and social context |
 | 5 — Civilization | Planned | Trade, property, class mobility, politics, institutions and reform | Multiple viable long-term paths beyond becoming a circle |
@@ -88,7 +88,7 @@ The original self-contained HTML5 Canvas prototype is preserved in the [Phase 1 
 
 ## Phase 3 — Family, Inheritance & Evolution
 
-**Status:** Implemented in v0.3.1, including playable daughters, genealogy, aging and save migration. The founding population is finite: no autonomous NPC births or immigration yet.
+**Status:** Implemented in v0.3.1, including playable daughters, genealogy, aging and save migration. Bounded autonomous NPC births are now provided by Phase 3.5. The closed population remains finite; no immigration is implemented.
 
 ### Multiple offspring and succession
 
@@ -124,9 +124,10 @@ Square → Pentagon → Hexagon → ... → higher regular polygon
 
 ## Phase 4 — Combat & Law
 
-**2026-10-16 sequencing proposal:** the user selected resolving population and
-archive design first. Complete/adopt the Phase 3.5 work or record any explicit
-deferral against the [entry checklist](PHASE4A_PLAN.md) before combat begins.
+**2026-10-16 sequencing:** the user adopted bundle A–E and bounded renewal/lossless
+archives are now implemented and tested. The natural human playtest is still
+uncompleted and unwaived; obtain that report or explicit deferral against the
+[entry checklist](PHASE4A_PLAN.md) before combat begins.
 The proposed first milestone is **4A: voluntary nonlethal sparring**, with one
 opponent, geometry-based strikes, defense and retreat. It excludes law, guards,
 soldiers, civilization, lethal assaults and persistent injuries. Its completion

@@ -65,7 +65,7 @@ const output=path.resolve('output/playwright');fs.mkdirSync(output,{recursive:tr
         const touch=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true,deviceScaleFactor:2}),phone=await touch.newPage();listen(phone);
         await phone.goto(url);assert.equal(await phone.evaluate(()=>typeof window.FlatlandDebug),'undefined');
         await phone.evaluate(raw=>localStorage.setItem('flatland.manual.v1',raw),raw);await phone.reload();await phone.locator('#continueBtn').tap();
-        await phone.locator('#pauseScreen summary').tap();await phone.locator('#openInspectorBtn').tap();
+        await phone.getByText('Testing',{exact:true}).tap();await phone.locator('#openInspectorBtn').tap();
         assert.equal(await phone.locator('#inspectorScreen').isVisible(),true);assert.match(await phone.locator('#inspectorSummary').innerText(),/Hidden geometry/);
         await phone.locator('#closeInspectorBtn').tap();assert.equal(await phone.locator('#pauseScreen').isVisible(),true);assert.equal(await phone.locator('#inspectorRecord').textContent(),'');
         await phone.keyboard.press('F8');assert.equal(await phone.locator('#inspectorScreen').isVisible(),true);await phone.keyboard.press('Escape');

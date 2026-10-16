@@ -1,18 +1,18 @@
-# Autonomous NPC families — proposal for discussion
+# Autonomous NPC families — adopted rules and implementation
 
 **Adopted 2026-10-16:** the user approved decision bundle A–E below. It now governs
 the staged implementation. Earlier proposal text remains design history; where
-it is less specific, the adopted bundle takes precedence. Approval does not mean
-the scheduler or v5 format is already implemented. Compaction, immigration, larger
+it is less specific, the adopted bundle takes precedence. The scheduler and v5 lossless format are now implemented and validated;
+see the current QA and handoff for limits. Compaction, immigration, larger
 budgets and indefinite renewal remain deferred.
 
 **Decision recorded 2026-10-15:** the user selected **design autonomous NPC families
-first**. This chooses the direction, not the rules below. No renewal behavior is
-implemented or enabled by Phase 3.5 architecture commits.
+first**. This chooses the direction, not the rules below. At that checkpoint no renewal behavior was
+implemented or enabled by the architecture commits.
 
 **Sequence confirmed 2026-10-16:** resolve renewal and archive design before
 combat. The recommended decision bundle below makes the remaining choices
-concrete. It is still a proposal, not adopted gameplay. See the subsequent
+concrete. The user subsequently approved bundle A–E, which is now implemented. See the subsequent
 [Phase 4A plan](PHASE4A_PLAN.md) for the combat boundary and entry gates.
 
 ## Purpose and limits
@@ -28,7 +28,7 @@ eventually has overlapping ancestry; 256 total records and a 2 MB envelope impos
 additional limits. Never erase ancestors, reset kinship or force reproduction to
 manufacture a compatible partner. Extinction remains possible.
 
-## Proposed first rules — not adopted
+## Original proposal — historical context
 
 | Concern | Proposed starting point |
 |---|---|
@@ -99,16 +99,15 @@ tests proving the same genealogy, privacy and continuation behavior.
 - An unassisted human survival/courtship playthrough to assess travel, discovery
   and competing commitments. Existing controlled browser scenarios do not cover it.
 
-Approve pacing, background needs, inheritance anchor, existing-save activation and
-the finite-population promise before implementing this proposal. A separate later
+Bundle A–E below resolves pacing, background needs, inheritance anchors,
+activation and the finite-population promise with user approval. A separate later
 decision is required if indefinite renewal becomes a goal.
 
-## Recommended decision bundle — 2026-10-16, pending adoption
+## Adopted decision bundle — 2026-10-16
 
-The five choices below are intended to be adopted or amended together before
-renewal implementation. They refine the earlier proposal where more detail is
-needed. Current gameplay, including relationship-dependent playable parenthood,
-does not change during design work.
+The user adopted the five choices below together. They refine the earlier
+proposal. The staged implementation preserves existing playable willingness
+and inheritance while adding the specified private background behavior.
 
 ### A. Finite population, conservative pacing and activation
 
@@ -302,3 +301,24 @@ The full [Phase 4A entry checklist](PHASE4A_PLAN.md) also requires a natural
 survival/courtship/discovery playthrough. Automated controlled scenarios cannot
 fulfil the human balance check. A user playtest report or an explicit deferral is
 needed before reporting that item complete.
+
+
+## Implemented checkpoint and remaining gate
+
+Preparation and lossless v5 archives were committed separately as `f8f8b79` and
+`aa447b6`. The renewal implementation adds the shared year scheduler, Pause policy,
+private NPC relationships/events, explicit cohort validation and control-transfer
+adapter. Existing saves remain disabled until explicit opt-in. Normal discovery
+can share a consenting subject's household names; it does not reveal their private
+biological origin or female genome. F8 exposes private NPC pairs and anchors only
+inside its reversible testing view.
+
+Unknown adult descendants remain selectable through an anonymous succession
+button without disclosing their names, parents or private traits in the current
+observer's family register. Taking control restores their experienced household.
+This prevents hidden background branches from trapping a pending heir choice.
+
+The deterministic and browser evidence and the 20-seed / 100-year census are in
+[QA](QA_REPORT.md). No human balance playthrough has been completed or waived.
+Complete that report or obtain an explicit deferral before Phase 4A implementation.
+Compaction, larger budgets, immigration and indefinite renewal remain deferred.

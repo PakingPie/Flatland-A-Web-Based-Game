@@ -33,7 +33,7 @@ class RomanceSystem {
             lastAt: -999, day: -1, today: 0, topics: {}, lastOutcome: '', lastBirthYear: -999 };
     }
     spouse(c) { const m = this.marriages.find(m => m.endedAt === null && m.ids.includes(c.id)); return m ? this.character(m.ids.find(id => id !== c.id)) : null; }
-    compatibility(a, b) {
+    compatibility(a, b, reputation=this.world.social.reputation.score) {
         const pref = this.preferences(b), profile = b.actual.profile;
         if (!pref.sexes.includes(a.actual.identity.sex)) return { ok: false, reason: 'I value our friendship, but I do not feel that kind of attraction.' };
         const spark = new RNG(`${this.world.seed}:spark:${this.key(a, b)}`).next();
@@ -41,7 +41,7 @@ class RomanceSystem {
         const gap = Math.max(0, apparentStanding(b).tier - apparentStanding(a).tier);
         if (profile && pref.independence < .5 && profile.personality.prejudice * gap > 1.25)
             return { ok: false, reason: 'My family expects a different social match. That is their belief about status, not a truth about your worth.' };
-        if (pref.reputation > .75 && this.world.social.reputation.score < 2)
+        if (pref.reputation > .75 && reputation < 2)
             return { ok: false, reason: 'I want to know how you treat the wider community first.' };
         return { ok: true, reason: 'There may be something here, if we both choose it.' };
     }
@@ -112,7 +112,7 @@ class RomanceSystem {
         return finish(({ compliment: 'Your kindness is welcome. They return your interest.', outing: 'A quiet walk sounds lovely. Shared time brings you closer.', commitment: 'We talk about the life we might choose together.' })[topic], 'positive');
     }
     preferenceText(c) { const p = this.preferences(c); return `I am open to partners who are ${p.sexes.join(' or ')}. ${p.independence > .5 ? 'I choose affection over family expectations.' : 'Family expectations matter to me.'} ${p.reputation > .75 ? 'A considerate public reputation matters too.' : 'I want to build trust at our own pace.'}`; }
-    endMarriage(m, reason) { m.endedAt = this.world.elapsed; m.reason = reason; const a = this.character(m.ids[0]), b = this.character(m.ids[1]); if (a && b) this.pair(a, b).status = reason === 'death' ? 'widowed' : 'separated'; this.syncBonds(); }
+    endMarriage(m, reason) { if(reason==='separation') {const p=this.world.renewal?.pairs[[...m.ids].sort().join('|')];if(p) p.closed=true;} m.endedAt = this.world.elapsed; m.reason = reason; const a = this.character(m.ids[0]), b = this.character(m.ids[1]); if (a && b) this.pair(a, b).status = reason === 'death' ? 'widowed' : 'separated'; this.syncBonds(); }
     syncBonds() {
         for (const c of this.records()) c.actual.bonds = { partnerIds: [], marriageIds: [] };
         for (const m of this.marriages) for (const id of m.ids) {

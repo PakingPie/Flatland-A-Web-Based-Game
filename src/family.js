@@ -93,13 +93,40 @@ class FamilySystem {
         c.vitals.health=0; c.runtime.moving=c.runtime.sprinting=c.runtime.resting=false;
         if(c.ai) { c.ai.path=[]; c.ai.pathIndex=0; c.ai.targetId=null; c.ai.activity='idle'; }
         this.history.push({kind:'death',ids:[c.id],at:this.world.elapsed});
+        this.world.renewal?.onDeath(c);
+        if(c===this.world.player) {this.pendingYear=null;this.world.renewal.processedYear=Math.floor(this.world.elapsed/C.DAY);}
         for(const m of this.world.romance.marriages.filter(m=>m.endedAt===null && m.ids.includes(c.id))) this.world.romance.endMarriage(m,'death');
     }
     age(years) {
         for(const c of this.world.registry.living()) {
             c.actual.life.ageYears+=years;
-            if(c.actual.life.ageYears>=this.deathAge(c)) this.markDeath(c);
+            const integerAge=Math.round(c.actual.life.ageYears);
+            if(Math.abs(c.actual.life.ageYears-integerAge)<1e-9) c.actual.life.ageYears=integerAge;
+            if(c.actual.life.ageYears>=this.deathAge(c)-1e-9) {c.actual.life.ageYears=Math.max(c.actual.life.ageYears,this.deathAge(c));this.markDeath(c);}
         }
+    }
+    elapse(seconds,{deferRenewal=false}={}) {
+        const w=this.world,start=w.elapsed;let left=seconds;
+        insist(numberIn(seconds,0,1e7),'Invalid time interval.');
+        while(left>1e-8 && w.player.actual.life.alive) {
+            const boundary=(Math.floor((w.elapsed+1e-8)/C.DAY)+1)*C.DAY;
+            const untilDeath=Math.max(0,Math.min(...w.registry.living().map(c=>(this.deathAge(c)-c.actual.life.ageYears)*C.DAY)));
+            const step=Math.min(left,boundary-w.elapsed,untilDeath);
+            if(step<1e-8) {this.age(0);if(!w.player.actual.life.alive) break;continue;}
+            w.elapsed+=step;if(Math.abs(w.elapsed-boundary)<1e-7) w.elapsed=boundary;
+            w.updateResources(step);this.age(step/C.DAY);left-=step;
+            if(!w.player.actual.life.alive) {w.renewal.processedYear=Math.floor(w.elapsed/C.DAY);break;}
+            if(w.elapsed===boundary) {
+                const year=Math.floor(boundary/C.DAY);
+                if(deferRenewal) this.pendingYear=year;
+                else w.renewal.evaluateYear(year);
+            }
+        }
+        return w.elapsed-start;
+    }
+    flushRenewal() {
+        const year=this.pendingYear;this.pendingYear=null;
+        if(year!==undefined && year!==null && this.world.player.actual.life.alive) this.world.renewal.evaluateYear(year);
     }
     advance(years) {
         const w=this.world, p=w.player;
@@ -107,7 +134,7 @@ class FamilySystem {
             return {ok:false,text:'Time advance requires a living, supplied character at a refuge (health 35+, food and water 30+).'};
         let passed=0;
         for(;passed<years && p.actual.life.alive;passed++) {
-            w.elapsed+=C.DAY; w.updateResources(C.DAY); this.age(1);
+            this.elapse(C.DAY);
             // Community subsistence covers the abstract interval. Pack contents
             // are preserved; no ordinary survival frames or AI paths are replayed.
             for(const c of w.registry.living()) {
@@ -126,6 +153,7 @@ class FamilySystem {
     succeed(id) {
         const w=this.world, old=w.player, next=this.candidates().find(c=>c.id===id);
         if(!next || !this.canSucceed()) return {ok:false,text:'Choose a living adult descendant after age 40 retirement or upon death.'};
+        w.renewal.beforeControl(old);
         this.notebooks[old.id]=captureObserverNotebook(w);
         if(old.actual.life.alive) this.history.push({kind:'retirement',ids:[old.id],at:w.elapsed});
         const ai={intent:'wander',activity:'idle',path:[],pathIndex:0,targetId:null,wait:1,think:1,stuck:0,homeX:old.x,homeY:old.y};
@@ -135,16 +163,18 @@ class FamilySystem {
         next.isPlayer=true; next.ai=null; next.body.color='#f1a38b'; next.runtime.resting=false;
         w.registry.select(next.id); w.conversationId=null;
         restoreObserverNotebook(w,this.notebooks[next.id]);
+        w.renewal.onControl(next);
         // Birth and marriage records are shared household knowledge; unrelated
         // friendships and private claims are specific to the new observer.
         for(const c of this.knownFamily()) if(c.id!==next.id) w.social.learn(c,'name',this.name(c),'confirmed','player');
         w.romance.syncBonds(); this.playableIds.push(next.id); this.history.push({kind:'succession',ids:[old.id,next.id],at:w.elapsed});
         return {ok:true,text:`${this.name(next)} now carries the playable lineage, Generation ${next.actual.lineage.generation}. The same world continues.`};
     }
-    name(c) { return c.id==='founder-000' ? 'Founder' : c.playerKnowledge.discoveredFacts.name?.value || (this.births.some(b=>b.childIds.includes(c.id)) || this.world.romance.marriages.some(m=>m.ids.includes(c.id)) ? c.publicIdentity.displayName : 'Unknown citizen'); }
+    name(c) { return c.id==='founder-000' ? 'Founder' : c.playerKnowledge.discoveredFacts.name?.value || (this.births.some(b=>b.childIds.includes(c.id) && this.world.renewal.knowsBirth(b.id)) || this.world.romance.marriages.some(m=>m.ids.includes(c.id) && this.world.renewal.knowsMarriage(m.id)) ? c.publicIdentity.displayName : 'Unknown citizen'); }
     knownFamily() {
-        const founder=this.character(this.playableIds[0]), base=[founder,...this.descendants(founder)], ids=new Set(base.map(c=>c.id));
-        for(const m of this.world.romance.marriages) if(m.ids.some(id=>ids.has(id))) m.ids.forEach(id=>ids.add(id));
+        const ids=new Set([...this.playableIds,this.world.player.id]);let changed=true;
+        const events=[...this.births.filter(b=>this.world.renewal.knowsBirth(b.id)).map(b=>[b.motherId,b.fatherId,...b.childIds]),...this.world.romance.marriages.filter(m=>this.world.renewal.knowsMarriage(m.id)).map(m=>m.ids)];
+        while(changed) {changed=false;for(const members of events) if(members.some(id=>ids.has(id))) for(const id of members) if(!ids.has(id)) {ids.add(id);changed=true;}}
         return this.records().filter(c=>ids.has(c.id));
     }
     view() { return familyView(this); }

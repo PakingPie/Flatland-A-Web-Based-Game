@@ -1118,7 +1118,7 @@ button {
   <div class="seedrow"><label for="seedInput">World seed</label><input id="seedInput" value="abbott-1884" maxlength="48" spellcheck="false" autocomplete="off" aria-label="World seed"></div>
   <button class="primary" id="continueBtn" disabled>Continue →</button><p class="save-status" data-save-status role="status"></p><button class="small-btn" id="startBtn">New life →</button><button class="small-btn" id="startImportBtn">Import save file</button><p class="fine">Move, gather, meet your neighbors. Help is always available.</p>
 </div></section>
-<section class="overlay" id="pauseScreen" aria-label="Paused" hidden><div class="modal"><div class="eyebrow">The world can wait</div><h2>Expedition paused</h2><p id="pauseReason">Take a breath. Nothing advances while paused.</p><button class="primary" id="resumeBtn">Resume expedition</button><div class="secondary-row"><button class="small-btn" id="pauseFamilyBtn">Family &amp; succession</button><button class="small-btn" id="pauseHelpBtn">Controls & field guide</button><button class="small-btn" id="restartBtn">Restart same seed</button><button class="small-btn" id="newSeedBtn">New world seed</button></div><div class="secondary-row"><button class="small-btn" id="saveBtn">Save manually</button><button class="small-btn" id="loadBtn">Load manual save</button><button class="small-btn" id="exportSaveBtn">Export save file</button><button class="small-btn" id="importSaveBtn">Import save file</button></div><p class="save-status" data-save-status role="status"></p><p class="fine">Saves stay in this browser. Export a backup for safekeeping.</p><details><summary>Testing</summary><button class="small-btn" id="openInspectorBtn">All information · F8</button></details></div></section>
+<section class="overlay" id="pauseScreen" aria-label="Paused" hidden><div class="modal"><div class="eyebrow">The world can wait</div><h2>Expedition paused</h2><p id="pauseReason">Take a breath. Nothing advances while paused.</p><button class="primary" id="resumeBtn">Resume expedition</button><div class="secondary-row"><button class="small-btn" id="pauseFamilyBtn">Family &amp; succession</button><button class="small-btn" id="pauseHelpBtn">Controls & field guide</button><button class="small-btn" id="restartBtn">Restart same seed</button><button class="small-btn" id="newSeedBtn">New world seed</button></div><div class="secondary-row"><button class="small-btn" id="saveBtn">Save manually</button><button class="small-btn" id="loadBtn">Load manual save</button><button class="small-btn" id="exportSaveBtn">Export save file</button><button class="small-btn" id="importSaveBtn">Import save file</button></div><p class="save-status" data-save-status role="status"></p><p class="fine">Saves stay in this browser. Export a backup for safekeeping.</p><details><summary>Population &amp; families</summary><p id="renewalStatus"></p><p class="fine">Citizens may choose partners and children independently, including someone you are courting. The population remains finite. Turning this off keeps existing families and history. Export a backup using the button above before enabling it in an older expedition.</p><button class="small-btn" id="renewalToggleBtn">Enable NPC families</button></details><details><summary>Testing</summary><button class="small-btn" id="openInspectorBtn">All information · F8</button></details></div></section>
 <section class="overlay" id="helpScreen" aria-label="Controls and field guide" hidden><div class="modal"><div class="eyebrow">Field guide</div><h2>Your next move</h2>
 <dl class="instructions"><dt>WASD / arrows</dt><dd>Move. Shift to sprint. On touch, use the joystick.</dd><dt>E / Gather</dt><dd>Hold to collect nearby food or water.</dd><dt>F / R</dt><dd>Eat / drink from your pack.</dd><dt>Space / Rest</dt><dd>Rest. Refuges can heal you.</dd><dt>Click a citizen / T</dt><dd>Choose an action. You walk over automatically. Move or Cancel to stop.</dd><dt>P / Escape</dt><dd>Pause. Escape also closes a citizen menu.</dd></dl>
 <details><summary>Relationships &amp; family</summary><p>Vary your conversations. Friendship and attraction are separate. Marriage requires mutual interest. Same-sex spouses share household support; joint biological births currently require a male and female spouse.</p><p>At a refuge, advance family years. Children mature at 18. Retire at 40 or choose an adult descendant upon death. No adult heir means the playable lineage ends. Daughters can inherit too.</p></details>
@@ -1135,7 +1135,7 @@ button {
   <h3>Household life</h3><p id="familyBirthStatus"></p><button class="small-btn" id="familyBirthBtn">Have children</button>
   <p id="timeAdvanceStatus"></p><div class="secondary-row"><button class="small-btn" id="advance1Btn">Live 1 year</button><button class="small-btn" id="advance5Btn">Live 5 years</button></div>
   <h3>Your family</h3>
-  <div id="familyMembers"></div><details><summary>Marriage history</summary><p class="family-record" id="familyMarriages"></p></details><details><summary>Life history</summary><p class="family-record" id="familyHistory"></p></details>
+  <div id="familyMembers"></div><div id="undiscoveredHeirs" class="secondary-row"></div><details><summary>Marriage history</summary><p class="family-record" id="familyMarriages"></p></details><details><summary>Life history</summary><p class="family-record" id="familyHistory"></p></details>
 </div></section>
 <section class="overlay" id="inspectorScreen" role="dialog" aria-modal="true" aria-labelledby="inspectorTitle" hidden><div class="modal inspector-modal">
   <div class="eyebrow">Testing view · World paused</div><h2 id="inspectorTitle">All information</h2>
@@ -2025,6 +2025,13 @@ class SocialSystem {
                 if (p.personality.reserve > .82) return this.response(c, topic, '“I trust you in many things. My family history is still mine to keep.” Trust does not unlock every secret.', 0, 0, 0, 'refused');
                 this.learn(c, 'family', p.background.knowsFamily ? `I was raised near ${p.background.origin}. ${p.background.family}` : 'I do not know my ancestry. The surviving records tell me very little.');
                 this.learn(c, 'ambition', p.background.ambition);
+                const shared=[...this.world.romance.marriages.filter(m=>m.ids.includes(c.id)).flatMap(m=>m.ids),...c.actual.lineage.childrenIds].filter(id=>id!==c.id);
+                if(shared.length) {
+                    this.world.renewal.learnEvents(c);
+                    const members=[...new Set(shared)].map(id=>this.world.registry.get(id));
+                    this.learn(c,'publicRelationships',`Shared household names: ${members.slice(0,12).map(n=>n.publicIdentity.displayName).join(', ')}.`,'claim',c.id);
+                    for(const member of members) this.learn(member,'name',member.publicIdentity.displayName,'claim',c.id);
+                }
                 if (stage >= 4) {
                     this.learn(c, 'concern', p.background.concern);
                     if (p.background.discloseSensitive) this.learn(c, 'privateHistory', p.background.sensitive);
@@ -2116,7 +2123,7 @@ class RomanceSystem {
             lastAt: -999, day: -1, today: 0, topics: {}, lastOutcome: '', lastBirthYear: -999 };
     }
     spouse(c) { const m = this.marriages.find(m => m.endedAt === null && m.ids.includes(c.id)); return m ? this.character(m.ids.find(id => id !== c.id)) : null; }
-    compatibility(a, b) {
+    compatibility(a, b, reputation=this.world.social.reputation.score) {
         const pref = this.preferences(b), profile = b.actual.profile;
         if (!pref.sexes.includes(a.actual.identity.sex)) return { ok: false, reason: 'I value our friendship, but I do not feel that kind of attraction.' };
         const spark = new RNG(`${this.world.seed}:spark:${this.key(a, b)}`).next();
@@ -2124,7 +2131,7 @@ class RomanceSystem {
         const gap = Math.max(0, apparentStanding(b).tier - apparentStanding(a).tier);
         if (profile && pref.independence < .5 && profile.personality.prejudice * gap > 1.25)
             return { ok: false, reason: 'My family expects a different social match. That is their belief about status, not a truth about your worth.' };
-        if (pref.reputation > .75 && this.world.social.reputation.score < 2)
+        if (pref.reputation > .75 && reputation < 2)
             return { ok: false, reason: 'I want to know how you treat the wider community first.' };
         return { ok: true, reason: 'There may be something here, if we both choose it.' };
     }
@@ -2195,7 +2202,7 @@ class RomanceSystem {
         return finish(({ compliment: 'Your kindness is welcome. They return your interest.', outing: 'A quiet walk sounds lovely. Shared time brings you closer.', commitment: 'We talk about the life we might choose together.' })[topic], 'positive');
     }
     preferenceText(c) { const p = this.preferences(c); return `I am open to partners who are ${p.sexes.join(' or ')}. ${p.independence > .5 ? 'I choose affection over family expectations.' : 'Family expectations matter to me.'} ${p.reputation > .75 ? 'A considerate public reputation matters too.' : 'I want to build trust at our own pace.'}`; }
-    endMarriage(m, reason) { m.endedAt = this.world.elapsed; m.reason = reason; const a = this.character(m.ids[0]), b = this.character(m.ids[1]); if (a && b) this.pair(a, b).status = reason === 'death' ? 'widowed' : 'separated'; this.syncBonds(); }
+    endMarriage(m, reason) { if(reason==='separation') {const p=this.world.renewal?.pairs[[...m.ids].sort().join('|')];if(p) p.closed=true;} m.endedAt = this.world.elapsed; m.reason = reason; const a = this.character(m.ids[0]), b = this.character(m.ids[1]); if (a && b) this.pair(a, b).status = reason === 'death' ? 'widowed' : 'separated'; this.syncBonds(); }
     syncBonds() {
         for (const c of this.records()) c.actual.bonds = { partnerIds: [], marriageIds: [] };
         for (const m of this.marriages) for (const id of m.ids) {
@@ -2288,16 +2295,17 @@ function restoreObserverNotebook(world, book) {
 function familyView(family) {
     const known=family.knownFamily(), knownIds=new Set(known.map(c=>c.id)), candidates=new Set(family.candidates().map(c=>c.id));
     return { generation:family.world.player.actual.lineage.generation, canSucceed:family.canSucceed(),
+        undiscoveredHeirs:family.canSucceed() ? [...candidates].filter(id=>!knownIds.has(id)).map(id=>({id,label:'Continue as an adult descendant'})) : [],
         spouse:family.world.romance.spouse(family.world.player) ? family.name(family.world.romance.spouse(family.world.player)) : 'None',
         birthReason:family.birthEligibility(), members:known.map(c=>({id:c.id,name:family.name(c),age:Math.floor(c.actual.life.ageYears),sex:c.actual.identity.sex,
             form:c.body.visibleType,alive:c.actual.life.alive,generation:c.actual.lineage.generation,current:c.isPlayer,eligible:candidates.has(c.id),
             parents:[c.actual.lineage.motherId,c.actual.lineage.fatherId].filter(id=>knownIds.has(id)).map(id=>family.name(family.character(id))),
             children:c.actual.lineage.childrenIds.filter(id=>knownIds.has(id)).map(id=>family.name(family.character(id))),
             siblings:known.filter(other=>other.id!==c.id && c.actual.lineage.motherId && other.actual.lineage.motherId===c.actual.lineage.motherId && other.actual.lineage.fatherId===c.actual.lineage.fatherId).map(other=>family.name(other)),
-            traits:family.births.some(b=>b.childIds.includes(c.id)) ? `Observed in family life: ${c.body.radius>20?'large':'medium'} outline, ${c.actual.genome.mobility>1.03?'brisk':c.actual.genome.mobility<.97?'measured':'steady'} pace, ${c.actual.genome.metabolism>1.03?'hearty':c.actual.genome.metabolism<.97?'light':'moderate'} appetite. ${c.body.form==='line'?'Latent geometry remains undiscovered.':'Visible geometry: '+c.body.visibleType+'.'}` : 'Private hereditary ancestry remains undiscovered.',
+            traits:family.births.some(b=>b.childIds.includes(c.id) && family.world.renewal.knowsBirth(b.id)) ? `Observed in family life: ${c.body.radius>20?'large':'medium'} outline, ${c.actual.genome.mobility>1.03?'brisk':c.actual.genome.mobility<.97?'measured':'steady'} pace, ${c.actual.genome.metabolism>1.03?'hearty':c.actual.genome.metabolism<.97?'light':'moderate'} appetite. ${c.body.form==='line'?'Latent geometry remains undiscovered.':'Visible geometry: '+c.body.visibleType+'.'}` : 'Private hereditary ancestry remains undiscovered.',
             death:c.actual.life.alive ? '' : `${c.actual.life.deathCause || 'death'} · family year ${Math.floor((c.actual.life.deathAt||0)/C.DAY)}` })),
-        marriages:family.world.romance.marriages.filter(m=>m.ids.every(id=>knownIds.has(id))).map(m=>({names:m.ids.map(id=>family.name(family.character(id))),at:Math.floor(m.at/C.DAY),end:m.endedAt===null?'ongoing':`${m.reason} in year ${Math.floor(m.endedAt/C.DAY)}`})),
-        events:family.history.filter(e=>e.ids.every(id=>knownIds.has(id))).map(e=>({kind:e.kind,names:e.ids.map(id=>family.name(family.character(id))),year:Math.floor(e.at/C.DAY)})) };
+        marriages:family.world.romance.marriages.filter(m=>family.world.renewal.knowsMarriage(m.id) && m.ids.every(id=>knownIds.has(id))).map(m=>({names:m.ids.map(id=>family.name(family.character(id))),at:Math.floor(m.at/C.DAY),end:m.endedAt===null?'ongoing':`${m.reason} in year ${Math.floor(m.endedAt/C.DAY)}`})),
+        events:family.history.filter(e=>e.ids.every(id=>knownIds.has(id)) && (e.kind!=='birth' || family.births.some(b=>b.at===e.at && b.childIds.every(id=>e.ids.includes(id)) && family.world.renewal.knowsBirth(b.id)))).map(e=>({kind:e.kind,names:e.ids.map(id=>family.name(family.character(id))),year:Math.floor(e.at/C.DAY)})) };
 }
 
 // ---- family.js ----
@@ -2396,13 +2404,40 @@ class FamilySystem {
         c.vitals.health=0; c.runtime.moving=c.runtime.sprinting=c.runtime.resting=false;
         if(c.ai) { c.ai.path=[]; c.ai.pathIndex=0; c.ai.targetId=null; c.ai.activity='idle'; }
         this.history.push({kind:'death',ids:[c.id],at:this.world.elapsed});
+        this.world.renewal?.onDeath(c);
+        if(c===this.world.player) {this.pendingYear=null;this.world.renewal.processedYear=Math.floor(this.world.elapsed/C.DAY);}
         for(const m of this.world.romance.marriages.filter(m=>m.endedAt===null && m.ids.includes(c.id))) this.world.romance.endMarriage(m,'death');
     }
     age(years) {
         for(const c of this.world.registry.living()) {
             c.actual.life.ageYears+=years;
-            if(c.actual.life.ageYears>=this.deathAge(c)) this.markDeath(c);
+            const integerAge=Math.round(c.actual.life.ageYears);
+            if(Math.abs(c.actual.life.ageYears-integerAge)<1e-9) c.actual.life.ageYears=integerAge;
+            if(c.actual.life.ageYears>=this.deathAge(c)-1e-9) {c.actual.life.ageYears=Math.max(c.actual.life.ageYears,this.deathAge(c));this.markDeath(c);}
         }
+    }
+    elapse(seconds,{deferRenewal=false}={}) {
+        const w=this.world,start=w.elapsed;let left=seconds;
+        insist(numberIn(seconds,0,1e7),'Invalid time interval.');
+        while(left>1e-8 && w.player.actual.life.alive) {
+            const boundary=(Math.floor((w.elapsed+1e-8)/C.DAY)+1)*C.DAY;
+            const untilDeath=Math.max(0,Math.min(...w.registry.living().map(c=>(this.deathAge(c)-c.actual.life.ageYears)*C.DAY)));
+            const step=Math.min(left,boundary-w.elapsed,untilDeath);
+            if(step<1e-8) {this.age(0);if(!w.player.actual.life.alive) break;continue;}
+            w.elapsed+=step;if(Math.abs(w.elapsed-boundary)<1e-7) w.elapsed=boundary;
+            w.updateResources(step);this.age(step/C.DAY);left-=step;
+            if(!w.player.actual.life.alive) {w.renewal.processedYear=Math.floor(w.elapsed/C.DAY);break;}
+            if(w.elapsed===boundary) {
+                const year=Math.floor(boundary/C.DAY);
+                if(deferRenewal) this.pendingYear=year;
+                else w.renewal.evaluateYear(year);
+            }
+        }
+        return w.elapsed-start;
+    }
+    flushRenewal() {
+        const year=this.pendingYear;this.pendingYear=null;
+        if(year!==undefined && year!==null && this.world.player.actual.life.alive) this.world.renewal.evaluateYear(year);
     }
     advance(years) {
         const w=this.world, p=w.player;
@@ -2410,7 +2445,7 @@ class FamilySystem {
             return {ok:false,text:'Time advance requires a living, supplied character at a refuge (health 35+, food and water 30+).'};
         let passed=0;
         for(;passed<years && p.actual.life.alive;passed++) {
-            w.elapsed+=C.DAY; w.updateResources(C.DAY); this.age(1);
+            this.elapse(C.DAY);
             // Community subsistence covers the abstract interval. Pack contents
             // are preserved; no ordinary survival frames or AI paths are replayed.
             for(const c of w.registry.living()) {
@@ -2429,6 +2464,7 @@ class FamilySystem {
     succeed(id) {
         const w=this.world, old=w.player, next=this.candidates().find(c=>c.id===id);
         if(!next || !this.canSucceed()) return {ok:false,text:'Choose a living adult descendant after age 40 retirement or upon death.'};
+        w.renewal.beforeControl(old);
         this.notebooks[old.id]=captureObserverNotebook(w);
         if(old.actual.life.alive) this.history.push({kind:'retirement',ids:[old.id],at:w.elapsed});
         const ai={intent:'wander',activity:'idle',path:[],pathIndex:0,targetId:null,wait:1,think:1,stuck:0,homeX:old.x,homeY:old.y};
@@ -2438,16 +2474,18 @@ class FamilySystem {
         next.isPlayer=true; next.ai=null; next.body.color='#f1a38b'; next.runtime.resting=false;
         w.registry.select(next.id); w.conversationId=null;
         restoreObserverNotebook(w,this.notebooks[next.id]);
+        w.renewal.onControl(next);
         // Birth and marriage records are shared household knowledge; unrelated
         // friendships and private claims are specific to the new observer.
         for(const c of this.knownFamily()) if(c.id!==next.id) w.social.learn(c,'name',this.name(c),'confirmed','player');
         w.romance.syncBonds(); this.playableIds.push(next.id); this.history.push({kind:'succession',ids:[old.id,next.id],at:w.elapsed});
         return {ok:true,text:`${this.name(next)} now carries the playable lineage, Generation ${next.actual.lineage.generation}. The same world continues.`};
     }
-    name(c) { return c.id==='founder-000' ? 'Founder' : c.playerKnowledge.discoveredFacts.name?.value || (this.births.some(b=>b.childIds.includes(c.id)) || this.world.romance.marriages.some(m=>m.ids.includes(c.id)) ? c.publicIdentity.displayName : 'Unknown citizen'); }
+    name(c) { return c.id==='founder-000' ? 'Founder' : c.playerKnowledge.discoveredFacts.name?.value || (this.births.some(b=>b.childIds.includes(c.id) && this.world.renewal.knowsBirth(b.id)) || this.world.romance.marriages.some(m=>m.ids.includes(c.id) && this.world.renewal.knowsMarriage(m.id)) ? c.publicIdentity.displayName : 'Unknown citizen'); }
     knownFamily() {
-        const founder=this.character(this.playableIds[0]), base=[founder,...this.descendants(founder)], ids=new Set(base.map(c=>c.id));
-        for(const m of this.world.romance.marriages) if(m.ids.some(id=>ids.has(id))) m.ids.forEach(id=>ids.add(id));
+        const ids=new Set([...this.playableIds,this.world.player.id]);let changed=true;
+        const events=[...this.births.filter(b=>this.world.renewal.knowsBirth(b.id)).map(b=>[b.motherId,b.fatherId,...b.childIds]),...this.world.romance.marriages.filter(m=>this.world.renewal.knowsMarriage(m.id)).map(m=>m.ids)];
+        while(changed) {changed=false;for(const members of events) if(members.some(id=>ids.has(id))) for(const id of members) if(!ids.has(id)) {ids.add(id);changed=true;}}
         return this.records().filter(c=>ids.has(c.id));
     }
     view() { return familyView(this); }
@@ -2501,6 +2539,124 @@ class RenewalSystem {
         this.processedYear=Math.floor(this.world.elapsed/C.DAY);
         for(const m of this.world.romance.marriages) this.registerMarriage(m,'legacy');
     }
+    setEnabled(enabled) {
+        insist(typeof enabled==='boolean','Invalid population policy.');
+        if(this.enabled===enabled) return;
+        this.enabled=enabled;this.processedYear=Math.floor(this.world.elapsed/C.DAY);
+        if(enabled) this.activatedAt=this.world.elapsed;
+    }
+    mutual(a,b) {
+        const r=this.world.romance;
+        return a!==b && a.actual.life.alive && b.actual.life.alive && [a,b].every(c=>c.actual.life.ageYears>=18) && !r.isCloseKin(a,b)
+            && r.compatibility(a,b,a.publicIdentity.reputation).ok && r.compatibility(b,a,b.publicIdentity.reputation).ok;
+    }
+    freshPair(a,b,year) {
+        const ids=[a.id,b.id].sort();
+        return {ids,trust:Object.fromEntries(ids.map(id=>[id,0])),affection:Object.fromEntries(ids.map(id=>[id,0])),startedYear:year,progressYear:year,closed:false};
+    }
+    validateChange(change) {
+        const w=this.world,s=w.captureForValidation ? w.captureForValidation() : captureWorld(w);
+        change(s);
+        SaveCodec.decode(JSON.stringify({format:SaveFormat.name,version:5,worldVersion:1,savedAt:0,revision:0,payload:s,checksum:hash(JSON.stringify(s))}));
+    }
+    addPair(a,b,year,rngState=this.matchingRng.state) {
+        const key=this.world.romance.key(a,b),p=this.freshPair(a,b,year);
+        this.validateChange(s=>{s.renewal.pairs[key]=p;s.renewal.matchingRngState=rngState;});
+        this.pairs[key]=p;this.matchingRng.state=rngState;
+    }
+    marry(p,year) {
+        const w=this.world,r=w.romance,[a,b]=p.ids.map(id=>w.registry.get(id)),key=r.key(a,b);
+        const m={id:`marriage-${r.marriages.length+1}`,ids:[...p.ids],at:w.elapsed,endedAt:null,reason:null};
+        const pair={...(r.pairs[key] || {ids:[...p.ids],knownBy:[],lastAt:-999,day:-1,today:0,topics:{},lastOutcome:'',lastBirthYear:-999}),status:'married',affection:Math.min(...Object.values(p.affection))};
+        const h={anchorId:this.anchorFor(m.ids,m.id),cohorts:0,origin:'npc'};
+        const closeCompeting=pairs=>{for(const [other,q] of Object.entries(pairs)) if(other!==key && q.status==='courting' && q.ids.some(id=>p.ids.includes(id))) {q.status='declined';q.lastOutcome='I have chosen another commitment.';}};
+        this.validateChange(s=>{
+            s.romance.marriages.push(m);s.romance.pairs[key]=pair;s.renewal.households[m.id]=h;closeCompeting(s.romance.pairs);
+            for(const c of s.characters.filter(c=>p.ids.includes(c.id))) {c.actual.bonds.partnerIds=[p.ids.find(id=>id!==c.id)];c.actual.bonds.marriageIds.push(m.id);}
+        });
+        r.marriages.push(m);r.pairs[key]=pair;this.households[m.id]=h;closeCompeting(r.pairs);r.syncBonds();
+    }
+    birthReason(m) {
+        const w=this.world,r=w.romance,h=this.households[m.id],p=this.pairs[[...m.ids].sort().join('|')];
+        const parents=m.ids.map(id=>w.registry.get(id));
+        if(m.endedAt!==null || parents.some(c=>!c?.actual.life.alive || c.id===w.player.id || c.actual.life.ageYears<18 || c.actual.life.ageYears>60 || c.vitals.health<35)) return 'ineligible parents';
+        if(parents[0].actual.identity.sex===parents[1].actual.identity.sex) return 'biological eligibility';
+        if(!p || p.closed || !this.mutual(...parents) || parents.some(c=>!r.readinessFrom(r.preferences(c).familyLife,p.trust[c.id],p.affection[c.id]).ready)) return 'mutual readiness';
+        if(h.cohorts>=2 || Math.floor(m.at/C.DAY)>=this.processedYear || w.family.year-r.pairs[r.key(...parents)].lastBirthYear<2) return 'household pacing';
+        if(w.registry.living().length>92 || w.registry.all().length>244) return 'population capacity';
+        return '';
+    }
+    evaluateYear(year,{demographic=false}={}) {
+        insist(integerIn(year,0,Math.floor(this.world.elapsed/C.DAY)),'Invalid renewal year.');
+        if(year<=this.processedYear) return;
+        this.processedYear=year;
+        if(!this.enabled || (!demographic && !this.world.player.actual.life.alive)) return;
+        const w=this.world,r=w.romance;
+        this.lastFailure='';
+        // Married former observers start a private background relationship, never
+        // borrowing the currently playable observer's notebook or reputation.
+        for(const m of r.marriages.filter(m=>m.endedAt===null && !m.ids.includes(w.player.id))) {
+            const [a,b]=m.ids.map(id=>w.registry.get(id)),key=r.key(a,b);
+            if((!this.pairs[key] || this.pairs[key].closed) && this.mutual(a,b)) {try {this.addPair(a,b,year);}catch(e){this.lastFailure=e.message;}}
+        }
+        let married=0;
+        for(const key of Object.keys(this.pairs).sort()) {
+            const p=this.pairs[key],[a,b]=p.ids.map(id=>w.registry.get(id));
+            if(p.closed || p.ids.includes(w.player.id)) continue;
+            if(!this.mutual(a,b) || [a,b].some(c=>r.spouse(c) && !p.ids.includes(r.spouse(c).id))) {p.closed=true;continue;}
+            if(p.progressYear<year) {
+                for(const id of p.ids) {p.trust[id]=Math.min(100,p.trust[id]+10);p.affection[id]=Math.min(100,p.affection[id]+12);}
+                p.progressYear=year;
+            }
+            if(r.spouse(a)) continue;
+            if(!married && p.ids.every(id=>p.trust[id]>=18 && p.affection[id]>=42)) {
+                try {this.marry(p,year);married++;}catch(e){this.lastFailure=e.message;}
+            }
+        }
+        // Births draw only from their own stream, after pure eligibility/capacity
+        // checks. The first eligible stable household gets this year's cohort.
+        for(const m of [...r.marriages].sort((a,b)=>a.id.localeCompare(b.id))) {
+            const reason=this.birthReason(m);
+            if(reason) {if(reason==='population capacity') this.lastFailure=reason;continue;}
+            try {
+                const plan=w.family.planCohort(...m.ids,this.households[m.id].anchorId,this.birthRng.state);
+                w.family.preflightCohort(plan,true);w.family.commitCohort(plan,this.birthRng,false);break;
+            } catch(e) {this.lastFailure=e.message;}
+        }
+        if(w.registry.living().length>92 || w.registry.all().length>244 || Object.keys(this.pairs).length>=1000) return;
+        const busy=new Set(Object.values(this.pairs).filter(p=>!p.closed).flatMap(p=>p.ids));
+        const available=w.npcs.filter(c=>c.actual.life.ageYears>=18 && c.vitals.health>=35 && !r.spouse(c) && !busy.has(c.id)).sort((a,b)=>a.id.localeCompare(b.id));
+        const candidates=[];
+        for(let i=0;i<available.length;i++) for(let j=i+1;j<available.length;j++) if(this.mutual(available[i],available[j]) && !this.pairs[r.key(available[i],available[j])]) candidates.push([available[i],available[j]]);
+        if(candidates.length) {
+            const rng=new RNG(this.matchingRng.state),[a,b]=rng.pick(candidates);
+            try {this.addPair(a,b,year,rng.state);}catch(e){this.lastFailure=e.message;}
+        }
+    }
+    knowsBirth(id,observer=this.world.player.id) {return !this.backgroundBirthIds.includes(id) || !!this.knownEvents[observer]?.birthIds.includes(id);}
+    knowsMarriage(id,observer=this.world.player.id) {return this.households[id]?.origin!=='npc' || !!this.knownEvents[observer]?.marriageIds.includes(id);}
+    learnEvents(subject,observer=this.world.player.id,includeOrigin=false) {
+        const w=this.world,book=this.knownEvents[observer] ||= {birthIds:[],marriageIds:[]};
+        for(const b of w.family.births.filter(b=>[b.motherId,b.fatherId,...(includeOrigin?b.childIds:[])].includes(subject.id))) if(!book.birthIds.includes(b.id)) book.birthIds.push(b.id);
+        for(const m of w.romance.marriages.filter(m=>m.ids.includes(subject.id))) if(!book.marriageIds.includes(m.id)) book.marriageIds.push(m.id);
+    }
+    onControl(next) {
+        const w=this.world,spouse=w.romance.spouse(next),p=spouse && this.pairs[w.romance.key(next,spouse)];
+        this.learnEvents(next,next.id,true);
+        if(p) {
+            const rel=spouse.playerKnowledge.relationship;
+            rel.trust=p.trust[spouse.id];rel.familiarity=Math.max(rel.familiarity,50);
+            w.romance.pair(next,spouse).affection=p.affection[spouse.id];
+        }
+    }
+    beforeControl(old) {
+        const w=this.world,spouse=w.romance.spouse(old),p=spouse && this.pairs[w.romance.key(old,spouse)];
+        if(p && old.actual.life.alive) {
+            const trust=spouse.playerKnowledge.relationship.trust,affection=w.romance.pair(old,spouse).affection;
+            for(const id of p.ids) {p.trust[id]=trust;p.affection[id]=affection;}
+        }
+    }
+    onDeath(c) {for(const p of Object.values(this.pairs)) if(p.ids.includes(c.id)) p.closed=true;}
     exportState() {
         return copyJSON({version:1,enabled:this.enabled,activatedAt:this.activatedAt,processedYear:this.processedYear,
             matchingRngState:this.matchingRng.state,birthRngState:this.birthRng.state,pairs:this.pairs,
@@ -2516,8 +2672,12 @@ class RenewalSystem {
             const m=marriages.find(m=>m.id===id);
             insist(m && plain(h) && h.anchorId===this.anchorFor(m.ids,id) && integerIn(h.cohorts,0,256) && h.cohorts===this.cohortsFor(m) && ['legacy','player','npc'].includes(h.origin),'Invalid household anchor or cohort count.');
         }
+        const occupied=new Set();
         for(const [key,p] of Object.entries(s.pairs)) {
             insist(plain(p) && Array.isArray(p.ids) && p.ids.length===2 && p.ids[0]!==p.ids[1] && p.ids.every(exists) && key===[...p.ids].sort().join('|') && plain(p.trust) && plain(p.affection) && p.ids.every(id=>numberIn(p.trust[id],-30,100) && numberIn(p.affection[id],0,100)) && Object.keys(p.trust).length===2 && Object.keys(p.affection).length===2 && integerIn(p.startedYear,0,year) && integerIn(p.progressYear,p.startedYear,year) && typeof p.closed==='boolean','Invalid NPC relationship.');
+            if(!p.closed) for(const id of p.ids) {
+                insist(!occupied.has(id) && w.registry.get(id).actual.life.alive && w.registry.get(id).actual.life.ageYears>=18,'Conflicting NPC relationship.');occupied.add(id);
+            }
         }
         const ids=(list,records)=>Array.isArray(list) && new Set(list).size===list.length && list.every(id=>records.some(r=>r.id===id));
         insist(ids(s.backgroundBirthIds,births),'Invalid background birth provenance.');
@@ -3526,6 +3686,11 @@ class Game {
         bind('drinkBtn', () => this.consume('water'));
         bind('restBtn', () => this.toggleRest());
         bind('cancelApproachBtn', () => this.socialUI.controller?.cancel());
+        bind('renewalToggleBtn',()=>{
+            if(this.state!=='paused' || !this.world.player.actual.life.alive) return;
+            this.world.renewal.setEnabled(!this.world.renewal.enabled);
+            this.saves.save('auto',true);this.refreshUI();
+        });
     }
     setScreen(state) {
         if(this.state==='inspect' && state!=='inspect') this.inspector.clear();
@@ -3591,6 +3756,7 @@ class Game {
         this.mapClock = 0;
         this.noticeUntil = 0;
         $('notice').hidden = true;
+        this.world.renewal.setEnabled(true);
         $('seedInput').value = seed;
         this.setScreen('running');
         this.renderer.snap();
@@ -3746,19 +3912,18 @@ class Game {
         if (this.state !== 'running' || this.socialUI?.isOpen)
             return;
         const w = this.world;
-        w.elapsed += dt;
         for (const c of [w.player, ...w.npcs]) {
             c.px = c.x;
             c.py = c.y;
             c.prevAngle = c.angle;
         }
         this.gatherCooldown = Math.max(0, this.gatherCooldown - dt);
-        w.updateResources(dt);
-        w.family.age(dt / C.DAY);
+        w.family.elapse(dt,{deferRenewal:true});
         if (!w.player.actual.life.alive) { this.die(); return; }
         this.updatePlayer(dt);
         if (this.state !== 'running')
             return;
+        w.family.flushRenewal();
         if (this.input.gather)
             this.gather();
         for (const c of w.npcs)
@@ -3810,6 +3975,11 @@ class Game {
         requestAnimationFrame(t => this.frame(t));
     }
     refreshUI() {
+        if(this.world) {
+            $('renewalToggleBtn').textContent=this.world.renewal.enabled?'Disable NPC families':'Enable NPC families';
+            $('renewalToggleBtn').disabled=!this.world.player.actual.life.alive;
+            $('renewalStatus').textContent=this.world.renewal.enabled?'NPC families are enabled. Changes begin at the next family year.':'The founding population ages without new NPC families.';
+        }
         const w = this.world;
         if (!w)
             return;
@@ -4110,6 +4280,11 @@ class FamilyUI {
             const row=this.memberRow(m,v.canSucceed);
             if(list.children[index]!==row.card) list.insertBefore(row.card,list.children[index] || null);
         });
+        const unseen=$('undiscoveredHeirs');unseen.replaceChildren();
+        for(const heir of v.undiscoveredHeirs) {
+            const button=document.createElement('button');button.className='small-btn';button.textContent=heir.label;
+            button.dataset.successor=heir.id;button.addEventListener('click',()=>this.choose(heir.id));unseen.appendChild(button);
+        }
         $('familyMarriages').textContent=v.marriages.map(m=>`${m.names.join(' + ')} · married year ${m.at} · ${m.end}`).join('\n') || 'No recorded marriages.';
         $('familyHistory').textContent=v.events.map(e=>`Year ${e.year} · ${e.kind} · ${e.names.join(', ')}`).join('\n') || 'Your family history begins here.';
     }
@@ -4189,6 +4364,8 @@ class InformationInspector {
             compatibilityWithPlayer:c.id===w.player.id?null:w.romance.compatibility(w.player,c),
             closeKinToPlayer:w.romance.isCloseKin(w.player,c),
             pairs:Object.values(w.romance.pairs).filter(p=>p.ids.includes(c.id)),
+            npcRelationships:Object.values(w.renewal.pairs).filter(p=>p.ids.includes(c.id)),
+            households:Object.fromEntries(w.romance.marriages.filter(m=>m.ids.includes(c.id)).map(m=>[m.id,w.renewal.households[m.id]])),
             marriages:w.romance.marriages.filter(m=>m.ids.includes(c.id)),
             archivedNotebooks:Object.fromEntries(Object.entries(w.family.notebooks).filter(([observer,book])=>observer===c.id || book.knowledge[c.id]))},null,2);
     }
@@ -4259,6 +4436,7 @@ if (new URLSearchParams(location.search).get('debug') === '1') {
         parenthoodReadiness(id) { const w=game.world,c=w.registry.get(id); if(!c || c===w.player) throw new Error('Choose another character'); return clone(w.romance.parenthoodReadiness(w.player,c)); },
         courtshipCandidate(sex='female',familyPreference='ready') { const w=game.world; return w.npcs.find(c=>c.actual.life.alive && c.actual.identity.sex===sex && c.actual.life.ageYears>=18 && c.actual.life.ageYears<=55 && c.actual.profile?.personality.warmth>.5 && !w.romance.isCloseKin(w.player,c) && w.romance.compatibility(w.player,c).ok && (familyPreference==='hesitant'?w.romance.preferences(c).familyLife<.3:w.romance.preferences(c).familyLife>=.3))?.id || null; },
         familyBirth() { return game.world.family.birth(); },
+        renewal(enabled) { if(enabled!==undefined) game.world.renewal.setEnabled(enabled);return game.world.renewal.exportState(); },
         advanceYears(years) { const r=game.world.family.advance(years); if(!game.world.player.actual.life.alive) game.die(); game.refreshUI(); return r; },
         successor(id) { game.familyUI.choose(id); return this.snapshot(); },
         importSave(raw) { try { const restored=game.saves.decode(raw); game.installSave(restored); return true; } catch { return false; } },
