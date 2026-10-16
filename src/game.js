@@ -22,6 +22,7 @@ class Game {
         this.socialUI = new SocialUI(this);
         this.familyUI = new FamilyUI(this);
         this.inspector = new InformationInspector(this);
+        this.spar = new Sparring(this);
         this.setScreen('menu');
         this.saves.refreshMenu();
         requestAnimationFrame(t => this.frame(t));
@@ -53,6 +54,8 @@ class Game {
         bind('drinkBtn', () => this.consume('water'));
         bind('restBtn', () => this.toggleRest());
         bind('cancelApproachBtn', () => this.socialUI.controller?.cancel());
+        bind('strikeBtn', () => this.spar.requestStrike());
+        bind('endSparBtn', () => this.spar.end());
         bind('renewalToggleBtn',()=>{
             if(this.state!=='paused' || !this.world.player.actual.life.alive) return;
             this.world.renewal.setEnabled(!this.world.renewal.enabled);
@@ -88,6 +91,7 @@ class Game {
         this.saves.load(slot);
     }
     installSave({ world, saved }) {
+        this.spar?.end('');
         this.socialUI?.reset();
         this.input.clear();
         this.world = world; this.runId = saved.runId;
@@ -105,6 +109,7 @@ class Game {
         this.refreshUI(); this.renderer.snap(); this.renderer.map();
     }
     start(seed) {
+        this.spar?.end('');
         seed = String(seed || 'abbott-1884').trim().slice(0, 48) || 'abbott-1884';
         this.socialUI?.reset();
         this.input.clear();
@@ -172,6 +177,7 @@ class Game {
         const r = this.nearestResource();
         if (!r)
             return;
+        this.spar.end();
         if (this.pack[r.kind] >= C.PACK) {
             this.gatherCooldown = .8;
             this.log(`${r.kind === 'food' ? 'Food' : 'Water'} pack full (${C.PACK}/${C.PACK}). Use some before gathering more.`);
@@ -188,6 +194,7 @@ class Game {
     consume(kind) {
         if (this.state !== 'running')
             return;
+        this.spar.end();
         if (this.pack[kind] <= 0) {
             this.log(`No ${kind} in your pack. Find ${kind === 'food' ? 'a green berry patch' : 'a blue spring'}.`, true);
             return;
@@ -206,6 +213,7 @@ class Game {
     toggleRest() {
         if (this.state !== 'running')
             return;
+        this.spar.end();
         const p = this.world.player;
         p.runtime.resting = !p.runtime.resting;
         if (p.runtime.resting) {
@@ -230,6 +238,10 @@ class Game {
             run.sprintRecovery = .65;
             if (v.stamina <= 0)
                 run.exhausted = true;
+        }
+        else if (this.spar.active) {
+            const swing=this.spar.active.swings[p.id];
+            if(swing?.phase==='ready' && !input.defend) v.stamina=Math.min(100,v.stamina+3*dt);
         }
         else if (run.sprintRecovery === 0) {
             v.stamina = Math.min(100, v.stamina + dt * (run.resting ? 27 : moving ? 9 : 15));
@@ -293,8 +305,9 @@ class Game {
         w.family.flushRenewal();
         if (this.input.gather)
             this.gather();
+        this.spar.step();
         for (const c of w.npcs)
-            w.updateNPC(c, dt);
+            if(!this.spar.has(c.id)) w.updateNPC(c, dt);
         w.separateCitizens();
         for (const f of this.effects)
             f.age += dt;
@@ -342,6 +355,7 @@ class Game {
         requestAnimationFrame(t => this.frame(t));
     }
     refreshUI() {
+        this.spar?.refresh();
         if(this.world) {
             $('renewalToggleBtn').textContent=this.world.renewal.enabled?'Disable NPC families':'Enable NPC families';
             $('renewalToggleBtn').disabled=!this.world.player.actual.life.alive;

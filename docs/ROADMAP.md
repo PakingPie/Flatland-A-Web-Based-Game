@@ -2,7 +2,7 @@
 
 **Design baseline:** v0.3 · 2026-10-15  
 **Project:** Browser-based, two-dimensional survival, society, and generational evolution game inspired by Edwin A. Abbott's *Flatland*.  
-**Status:** Phase 1.1, 2A, 2B, 3 and bounded Phase 3.5 NPC renewal are implemented in [the playable build](../the-flatland.html), v0.3.5 / save v5. See [current QA](QA_REPORT.md), [implemented family rules](FAMILY_RULES.md) and [checkpoints](IMPLEMENTATION_STATUS.md). The usability follow-up adds anchored action bubbles, automatic approach, paused choices and concise tutorials. Later phases remain planned.
+**Status:** Phase 1.1, 2A, 2B, 3, bounded Phase 3.5 NPC renewal and voluntary Phase 4A sparring are implemented in [the playable build](../the-flatland.html), v0.4.0 / save v5. See [current QA](QA_REPORT.md), [implemented family rules](FAMILY_RULES.md) and [checkpoints](IMPLEMENTATION_STATUS.md). The usability follow-up adds anchored action bubbles, automatic approach, paused choices and concise tutorials. Later phases remain planned.
 
 **Repository and license:** [PakingPie/Flatland-A-Web-Based-Game](https://github.com/PakingPie/Flatland-A-Web-Based-Game) is public and uses the [MIT license](../LICENSE), Copyright (c) 2026 PerkinPie. Public deployment is a separate decision.
 
@@ -17,8 +17,8 @@
 | **2A — Living Society** | **Implemented in [the-flatland.html](../the-flatland.html), v0.2.0; [QA evidence and limits](QA_REPORT.md)** | Citizen identities, conversation, trust, rumors and partial knowledge | Introduce yourself, discover limited information, and retain relationship progress |
 | 2B — Courtship & Marriage | **Implemented, v0.3.1** | Preferences, attraction, courtship, consent, same-sex marriage and household support | Marriage persists through save/load |
 | 3 — Family, Inheritance & Evolution | **Implemented, v0.3.1** | Multiple offspring, strict genetics, aging, genealogy and playable succession | Verified daughter control in Generation 2 and Generation 3 births |
-| 3.5 — Architecture & renewal | **Implemented, v0.3.2; human playtest gate remains** | Registry, migrations, private NPC families, bounded scheduler and lossless archives | [Adopted renewal rules](POPULATION_RENEWAL_DESIGN.md) and census verified; natural playtest or explicit deferral before combat; see [handoff](PHASE35_HANDOFF.md) |
-| 4A — Combat foundations | **Proposed after 3.5; no combat implemented** | One voluntary nonlethal melee encounter, visible geometry, defense, retreat | [Bounded plan and entry gates](PHASE4A_PLAN.md); persistence, survival and generations preserved |
+| 3.5 — Architecture & renewal | **Implemented, v0.3.2; human playtest explicitly deferred** | Registry, migrations, private NPC families, bounded scheduler and lossless archives | [Adopted renewal rules](POPULATION_RENEWAL_DESIGN.md) and census verified; natural play remains unverified |
+| 4A — Combat foundations | **Implemented, v0.4.0** | One voluntary nonlethal melee encounter, visible geometry, defense, retreat | [Current handoff and limits](PHASE4A_HANDOFF.md); native persistence, survival and generations preserved |
 | 4 later — Combat & Law | Planned separately | Lethal danger, lasting injuries, witnesses, guards, crimes | Combat and legal reactions follow geometry and social context |
 | 5 — Civilization | Planned | Trade, property, class mobility, politics, institutions and reform | Multiple viable long-term paths beyond becoming a circle |
 

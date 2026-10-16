@@ -1,4 +1,25 @@
-# Implementation checkpoints — Phase 2B / 3 / 3.5
+# Implementation checkpoints — Phase 2B / 3 / 3.5 / 4A
+
+## Phase 4A continuation verification — 2026-10-16
+
+Resumed clean at `6585a8b` on `codex/phase-4a-sparring`. Rebuilding produces no
+HTML diff; all 96 rule cases, twelve Chromium scripts, build agreement and 116
+local document references pass again. Corrected visible-bound sparring wording
+and a stale v4 migration success label/report to v5; no gameplay or save changes.
+Raw evidence stays local/ignored. Human balance remains explicitly deferred and
+unverified. See [QA](QA_REPORT.md) and [the handoff](PHASE4A_HANDOFF.md).
+
+## Bounded Phase 4A — 2026-10-16
+
+V0.4.0 adds voluntary nonlethal sparring on `codex/phase-4a-sparring`, starting
+from merged main `b8caef8`. PRs #1 and #2 are merged; do not resume their branches.
+The user explicitly deferred the human balance playtest; it remains unverified.
+`c8aceb2` establishes pure visible melee rules; `b013f60` connects approach,
+opponent AI, strike/guard/retreat, touch controls and pause/death/succession paths.
+The final persistence checkpoint adds native encounter save/restart/import and
+daughter/death regressions. See [the current handoff](PHASE4A_HANDOFF.md) and
+[QA](QA_REPORT.md). Saves remain v5 with generator v1 and full legacy readers.
+No law, guards, civilization, lethal assaults or lasting injuries are included.
 
 ## Approved visual growth stages — 2026-10-16
 

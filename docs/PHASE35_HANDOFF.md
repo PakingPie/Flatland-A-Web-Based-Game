@@ -1,5 +1,22 @@
 # Phase 3.5 renewal handoff
 
+**Phase 4A follow-through:** voluntary sparring is now implemented on
+`codex/phase-4a-sparring` as v0.4.0. Use [the current handoff](PHASE4A_HANDOFF.md)
+for continuation. Older “no combat” and gate statements below describe their
+historical checkpoints; the user explicitly deferred the human playtest.
+
+## Merged handoff superseding older branch prompts — 2026-10-16
+
+PRs #1 and #2 are merged. Phase 4A starts from clean `main` at `b8caef8`, on
+`codex/phase-4a-sparring`; do not resume their old branches. Build/docs, 82 rule
+tests and all ten isolated Chromium suites pass on that merged baseline.
+The user explicitly deferred the human balance playtest for bounded Phase 4A.
+It remains unverified, including unassisted survival/travel/partner discovery,
+courtship and competing NPC commitments. This decision supersedes all older
+“unwaived” statements below. See the current entry decision in
+[the Phase 4A plan](PHASE4A_PLAN.md). Preserve the existing finite-population and
+browser/device limits. No law, guards or civilization belongs in this scope.
+
 **Growth follow-up, v0.3.5:** the user approved and the implementation now provides
 four visible stages: 0–5 days 45% adult outline, 6–17 70%, 18–64 100%, 65+ 85%.
 Both polygon and line-form children grow; elders shrink subtly. Readable strokes,

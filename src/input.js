@@ -22,6 +22,7 @@ class Input {
             document.body.classList.add('touch');
         this.bindHold('gatherBtn', 'gather', () => game.gather());
         this.bindHold('sprintBtn', 'sprint');
+        this.bindHold('defendBtn', 'defend');
         const joy = $('joystick');
         joy.addEventListener('pointerdown', e => { if (this.joyPointer !== null || game.state !== 'running')
             return; this.joyPointer = e.pointerId; joy.setPointerCapture(e.pointerId); this.updateStick(e); e.preventDefault(); });
@@ -56,7 +57,7 @@ class Input {
             this.touch = { x: 0, y: 0 };
         $('stick').style.transform = `translate(${x}px,${y}px)`;
     }
-    clear() { this.keys.clear(); this.hold.gather = this.hold.sprint = false; this.touch = { x: 0, y: 0 }; this.joyPointer = null; this.mouse.inside = false; $('stick').style.transform = ''; }
+    clear() { this.keys.clear(); this.attack=false; this.hold.gather = this.hold.sprint = this.hold.defend = false; this.touch = { x: 0, y: 0 }; this.joyPointer = null; this.mouse.inside = false; $('stick').style.transform = ''; }
     keyDown(e) {
         if (e.code === 'Tab' && (this.game.state !== 'running' || this.game.socialUI?.isOpen)) {
             const dialog = this.game.socialUI?.isOpen ? $('citizenPanel') : document.querySelector('.overlay:not([hidden])');
@@ -86,6 +87,7 @@ class Input {
         if (e.target instanceof HTMLButtonElement && (e.code === 'Space' || e.code === 'Enter'))
             return;
         const relevant = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'ShiftLeft', 'ShiftRight', 'KeyE', 'KeyF', 'KeyR', 'Space', 'Escape', 'KeyP', 'KeyH', 'KeyT', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Enter'];
+        relevant.push('KeyJ','KeyK');
         if (!relevant.includes(e.code))
             return;
         e.preventDefault();
@@ -125,6 +127,7 @@ class Input {
         if (this.game.state !== 'running')
             return;
         this.keys.add(e.code);
+        if(e.code==='KeyJ') this.game.spar.requestStrike();
         if (e.code === 'KeyF')
             this.game.consume('food');
         if (e.code === 'KeyR')
@@ -146,6 +149,7 @@ class Input {
     }
     get sprint() { return this.hold.sprint || this.keys.has('ShiftLeft') || this.keys.has('ShiftRight'); }
     get gather() { return this.hold.gather || this.keys.has('KeyE'); }
+    get defend() { return this.hold.defend || this.keys.has('KeyK'); }
 }
 // ─────────────────────────────────────────────────────────────────────────────
 // 05. Rendering. Static geometry is culled; no full-world high-DPI texture is held.

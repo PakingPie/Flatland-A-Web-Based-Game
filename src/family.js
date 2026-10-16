@@ -89,6 +89,7 @@ class FamilySystem {
     deathAge(c) { return 78 + hash(`${this.world.seed}:lifespan:${c.id}`) % 15; }
     markDeath(c, cause='old age') {
         if (c.actual.life.deathAt !== undefined) return;
+        if(this.world.sparring?.has(c.id)) this.world.sparring.end('Practice ended.');
         c.actual.life.alive=false; c.actual.life.deathAt=this.world.elapsed; c.actual.life.deathCause=cause;
         c.vitals.health=0; c.runtime.moving=c.runtime.sprinting=c.runtime.resting=false;
         if(c.ai) { c.ai.path=[]; c.ai.pathIndex=0; c.ai.targetId=null; c.ai.activity='idle'; }
@@ -130,6 +131,7 @@ class FamilySystem {
     }
     advance(years) {
         const w=this.world, p=w.player;
+        if(w.sparring) return {ok:false,text:'End sparring before advancing days.'};
         if(![1,5].includes(years) || !p.actual.life.alive || !w.refugeAt(p.x,p.y) || p.vitals.health<35 || p.vitals.hunger<30 || p.vitals.thirst<30)
             return {ok:false,text:'Time advance requires a living, supplied character at a refuge (health 35+, food and water 30+).'};
         let passed=0;
@@ -153,6 +155,7 @@ class FamilySystem {
     succeed(id) {
         const w=this.world, old=w.player, next=this.candidates().find(c=>c.id===id);
         if(!next || !this.canSucceed()) return {ok:false,text:'Choose a living adult descendant after age 40 days retirement or upon death.'};
+        w.sparring?.end('');
         w.renewal.beforeControl(old);
         this.notebooks[old.id]=captureObserverNotebook(w);
         if(old.actual.life.alive) this.history.push({kind:'retirement',ids:[old.id],at:w.elapsed});

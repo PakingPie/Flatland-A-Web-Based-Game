@@ -21,7 +21,7 @@ class FamilyUI {
         if(!g.world.player.actual.life.alive) { if(g.world.family.candidates().length) return; g.setScreen('dead'); return; }
         g.setScreen(this.returnState==='paused'?'paused':'running');
     }
-    birth() { const r=this.game.world.family.birth(); $('familyOutcome').textContent=briefReply(r,'birth'); this.refresh(); this.game.saves.save('auto',true); }
+    birth() { this.game.spar.end(); const r=this.game.world.family.birth(); $('familyOutcome').textContent=briefReply(r,'birth'); this.refresh(); this.game.saves.save('auto',true); }
     advance(years) {
         const g=this.game,r=g.world.family.advance(years); $('familyOutcome').textContent=r.ok?(years===1?'1 day passes.':`${years} days pass.`):briefReply(r,'advance');
         if(!g.world.player.actual.life.alive) g.die();
@@ -67,8 +67,8 @@ class FamilyUI {
         $('closeFamilyBtn').disabled=!p.actual.life.alive && f.candidates().length>0;
         $('successionStatus').textContent=!p.actual.life.alive ? (f.candidates().length ? 'Choose an adult heir to continue.' : 'No adult heir. This lineage has ended.') : `${f.candidates().length} adult heirs · Children mature at 18 days · ${v.canSucceed?'You may retire now.':'Retire at 40 days.'}`;
         const refuge=!!g.world.refugeAt(p.x,p.y);
-        for(const n of [1,5]) $(`advance${n}Btn`).disabled=!p.actual.life.alive || !refuge;
-        $('timeAdvanceStatus').textContent=refuge ? 'Refuge days provide subsistence. Your pack is kept.' : 'Return to a refuge to advance days.';
+        for(const n of [1,5]) $(`advance${n}Btn`).disabled=!p.actual.life.alive || !refuge || !!g.spar.active;
+        $('timeAdvanceStatus').textContent=g.spar.active?'End sparring before advancing days.':refuge ? 'Refuge days provide subsistence. Your pack is kept.' : 'Return to a refuge to advance days.';
         const list=$('familyMembers'), ids=new Set(v.members.map(m=>m.id));
         for(const [id,row] of this.memberRows) if(!ids.has(id)) { row.card.remove(); this.memberRows.delete(id); }
         v.members.forEach((m,index)=>{

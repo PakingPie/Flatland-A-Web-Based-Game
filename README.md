@@ -14,7 +14,7 @@ citizens, raise a family and continue as an adult son or daughter in the same wo
 · [Play locally](#play-locally) · [See the game](#a-life-in-flatland)
 · [Roadmap](docs/ROADMAP.md) · [Development & validation](#source-and-validation)
 
-**Playable prototype · v0.3.5.** [Current limits](#current-limits).
+**Playable prototype · v0.4.0.** [Current limits](#current-limits).
 
 ## A life in Flatland
 
@@ -52,7 +52,7 @@ and positions staged for clarity. Click a screenshot to view it at full size.*
 ## Play locally
 
 Survival, conversation, marriage, inheritance, succession and autonomous NPC
-families are implemented. Combat and civilization remain future work. Society's
+families and voluntary nonlethal sparring are implemented. Society's
 prestige is fictional, not a measure of moral worth.
 
 1. [Download the project ZIP](https://github.com/PakingPie/Flatland-A-Web-Based-Game/archive/refs/heads/main.zip)
@@ -122,6 +122,8 @@ require a male and female spouse. Marriage and biological parentage are separate
 | Close citizen / family panel | Escape or close button | Close button |
 | Pause / help | P / H | Pause / Help |
 | Save, load, export, import | Pause menu | Pause menu |
+| Invite to spar | Introduced adult → Talk → Invite to spar | Same bubble choice |
+| Strike / frontal guard / end practice | J / hold K / End spar | Strike / hold guard / End spar |
 
 Citizen menus and Family **pause the world while choosing**. Selecting an action
 resumes time and walks over automatically; brief replies fade on their own.
@@ -138,6 +140,27 @@ more topics one level deeper. Greet, Talk, Romance and Family use existing rules
 Details holds discovered facts and unconfirmed rumors. Short speech bubbles
 replace mechanical explanations after actions. Family traits and histories expand
 on demand. Help retains optional rule explanations.
+
+## Friendly sparring
+
+Greet a living adult, then choose **Talk → Invite to spar**. Both participants
+need health 35+, food/water 30+ and stamina 30+. Distrusting citizens can decline.
+You walk over normally; practice begins only on a clear path within talking range.
+Use **J** to strike once, hold **K** to guard the front, and move to face the other
+citizen. Amber sectors signal wind-up; blue arcs show guarding. Triangle tips
+trade a narrow arc for reach; blunt polygons have broader arcs; visible lines
+share one fixed profile. Hidden heredity and prestige give no combat bonuses.
+
+Use **End spar** or sprint beyond engagement range for two seconds to stop.
+Practice also ends at health 1 or stamina exhaustion. Health never falls below 1
+from sparring; spent health/stamina remain. Recover at a supplied refuge. Ordinary
+social, supply and rest actions end practice. Menus, Help, Family and F8 freeze it;
+end practice before advancing days. Saves keep the world and vitals; loading ends
+practice and clears queued strikes. Save v5 and existing browser keys stay the same.
+
+This is bounded Phase 4A. The human survival/courtship balance playtest was
+explicitly deferred and remains unverified. Lethal combat, lasting injuries, law,
+guards and civilization remain future work. See [the handoff](docs/PHASE4A_HANDOFF.md).
 
 ## Family relationships
 
@@ -289,6 +312,8 @@ node tools/browser-parenthood.cjs
 node tools/browser-renewal.cjs
 node tools/browser-family-presentation.cjs
 node tools/browser-growth.cjs
+node tools/browser-sparring.cjs
+node tools/browser-sparring-persistence.cjs
 ```
 
 The dependency-free `node tools/population-study.cjs` runs a separate 20-seed,
@@ -322,7 +347,7 @@ the fixture observed a median 159 ms and maximum 590 ms under concurrent QA load
 These timings are not frame-rate or device guarantees. See the detailed [QA report](docs/QA_REPORT.md).
 
 Firefox, Safari, physical phones, long human play sessions and abrupt process-kill
-durability remain unverified. QA documents all scenario controls. Combat, law,
+durability remain unverified. QA documents all scenario controls. Lethal combat, law,
 economy, politics and multiplayer are outside this milestone.
 
 ## Repository

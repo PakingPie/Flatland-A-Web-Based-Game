@@ -1,4 +1,93 @@
-# QA report — Phase 3.5 renewal (v0.3.5 / save v5)
+# QA report — bounded Phase 4A (v0.4.0 / save v5)
+
+## Continuation verification at `6585a8b` — 2026-10-16
+
+Started clean on `codex/phase-4a-sparring`. Rebuilt standalone HTML with no
+generated diff; build agreement, all 116 local documentation path references,
+**96/96 rule cases and all twelve browser scripts pass again**. The browser
+scripts report no page exceptions. Node 24.12.0, Python 3.14.2 and Chromium
+149.0.7827.55 were used. The sandbox blocked Chromium launch; the passing runs
+used isolated test-owned profiles and localhost servers outside it.
+
+Desktop, portrait and short-landscape sparring captures were inspected locally.
+Raw logs, results, screenshots, exports and profiles remain under ignored
+`output/playwright`; normal player saves were untouched. Corrected stale wording
+about visible-bound sparring reach and the migration success label/report from
+v4 to v5; the existing save assertion already required v5. The migration browser
+suite passed again after that label correction. No gameplay or save rules changed.
+Human balance remains explicitly deferred and unverified; this rerun provides
+controlled automated evidence only, with the existing browser/device limits.
+
+## Final Phase 4A persistence and generations — 2026-10-16
+
+**96/96 rule cases, all twelve Chromium suites, build agreement and documentation
+checks pass.** The original 82 rules and ten browser suites remain included.
+The two new scripts are [sparring](../tools/browser-sparring.cjs) and
+[sparring persistence](../tools/browser-sparring-persistence.cjs).
+
+Native Save during wind-up leaves the live encounter intact. Full Chromium
+shutdown/Continue preserves the exact complete payload and vitals, loads paused
+and restores no encounter or queued strike. Native exported files round-trip;
+malformed import preserves the active encounter and slots, while valid import
+ends practice paused without changing slots. Renewal on/off and frozen v4 recovery
+pass. The original migration suites still cover v1/v2/v3 and both frozen v4 saves.
+
+A rule-created family fixture uses real marriage, birth and aging commands, with
+staged positions/needs. Actual UI daughter succession ends an active encounter;
+the line-form heir strikes, guards, exhausts, retreats, heals and survives a native
+save/restart with identity/family intact. An old-age fixture leaves 0.24 seconds of
+life: invitation accepts, then death precedes the queued strike. Death records
+once; no spar damage occurs after death. Native pending-heir restart and daughter
+choice preserve the full stable-ID set. Four corner fixtures find clear positions
+within 200 units of their corner anchors, check real contact and insert a thin
+solid building into a wind-up to prove contact rechecks terrain.
+
+Screenshots of desktop, portrait, short landscape, wind-up and daughter sparring
+were inspected locally. All executed browser scenarios report no page exceptions.
+Chromium uses isolated test-owned profiles and localhost servers outside the
+sandbox; normal player profiles/saves are untouched. Raw captures, JSON and
+exports stay local/ignored. This is controlled integration evidence, not a human
+balance session. Human play remains explicitly deferred; existing device/browser,
+abrupt-termination and finite-population limits remain. No law/guards/civilization
+or lethal/persistent-injury systems are added. See [handoff](PHASE4A_HANDOFF.md).
+
+## Playable sparring checkpoint — 2026-10-16
+
+**95/95 rule tests and eleven Chromium suites pass**, including the new
+[sparring scenario](../tools/browser-sparring.cjs). Build and document checks pass.
+The scenario uses staged valid positions/needs, a real introduction and actual
+walking invitation. It covers cancellation without damage, J strike/recovery,
+K frontal blocking, all paused menus/F8, blur, disabled Family day advance, native
+touch strike/held guard/end, sustained retreat, exhaustion and supplied refuge
+healing. Desktop, portrait and short landscape captures were inspected locally.
+Seven additional world/controller cases cover refusals, terrain/facing, one
+opponent, nonlethal floor, transient save state, natural death and daughter control.
+The ten original browser suites and all original rule cases still pass.
+
+This checkpoint connects the bounded encounter. Native saving during a live
+encounter and full generational browser combat are the next checkpoint; existing
+save/legacy/generation regression coverage already passes. Human play remains
+explicitly deferred and unverified. Raw output stays ignored and local.
+
+## Merged Phase 4A baseline — 2026-10-16
+
+The first Phase 4A checkpoint adds six pure melee cases: **88/88 rule tests**,
+all ten existing Chromium suites, build agreement and documentation checks pass.
+Profiles, contact, fixed-step single-hit/recovery timing, defense/nonlethal damage
+and hidden-genome independence are covered. Gameplay is not connected at this
+checkpoint. The original 82 cases remain included, not replaced.
+
+Clean `main` at `b8caef8` passes build agreement, all documentation references,
+**82/82 rule tests and all ten browser suites**. Native save/restart, generations,
+bubbles, survival/touch regressions, architecture, F8, parenthood, renewal,
+family presentation and growth all pass. The installed Chromium was selected
+explicitly; the sandbox blocked its launch, so isolated test-owned profiles and
+localhost servers ran outside the sandbox. Normal player saves were not opened.
+
+The user explicitly deferred the human balance playtest for bounded Phase 4A.
+This supersedes older “unwaived” gate statements in this historical report.
+Unassisted survival, travel, partner discovery, courtship and competing NPC
+commitments remain unverified. Controlled browser checks do not satisfy them.
 
 ## Approved visual growth stages — 2026-10-16
 
@@ -252,7 +341,7 @@ because no original v1 save was recoverable.
 
 The browser preservation suite additionally installs the original v2 fixture in
 **native localStorage**, reopens the page and uses Continue. Inventory, resources
-and trust match. The original slot remains v2 until explicit Save, which writes v4.
+and trust match. The original slot remains v2 until explicit Save, which writes v5.
 Failed loads/imports are validated against a separate candidate and preserve active
 progress and browser slots. The generated HTML and source remain deterministic.
 

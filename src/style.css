@@ -1035,6 +1035,12 @@ button {
 @media (max-height:500px) { .action-bubble { width:278px; padding:11px; } }
 
 /* Family register is a paused, scrollable modal on desktop and touch. */
+#sparPanel { pointer-events:auto; background:#14262bf2; border:1px solid var(--gold); border-radius:12px; padding:10px; margin-bottom:6px; max-width:100%; font-size:11px; }
+#sparPanel strong,#sparPanel small { display:block; line-height:1.5; }
+#sparFeedback { color:var(--gold); }
+.spar-actions { display:flex; justify-content:center; gap:6px; margin:6px 0; }
+.spar-actions button { min-height:44px; padding:7px 10px; font-size:11px; touch-action:none; }
+@media (max-height:500px) { #sparPanel { padding:5px 8px; } #sparPanel > small:last-child { display:none; } .spar-actions { margin:3px 0; } }
 .family-modal { max-width:780px; text-align:left; }
 .family-modal h3 { color:var(--gold); margin:20px 0 8px; font-size:14px; }
 .family-member { border:1px solid #70867b55; border-radius:8px; padding:12px; margin:10px 0; overflow-wrap:anywhere; }
