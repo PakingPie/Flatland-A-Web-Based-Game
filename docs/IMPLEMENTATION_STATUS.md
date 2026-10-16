@@ -1,5 +1,30 @@
 # Implementation checkpoints — Phase 2B / 3 / 3.5
 
+## Known family bonds — 2026-10-16
+
+V0.3.4 implements the approved initial parent/child/sibling bond and role labels.
+Effective familiarity/trust adds 48/20 for known parents/children and 36/12 for
+known siblings to their personal scores. Trust can still deteriorate; this is not
+a permanent floor or an automatic disclosure. Existing raw save fields stay exact,
+so existing families and newly selected heirs benefit without migration. Spousal
+readiness remains unchanged. Known direct relatives have no romance choices.
+Family rows retain both roles and the adulthood countdown. F8 remains read-only
+and explains raw versus supported relationship values.
+
+All 80 deterministic cases and nine browser suites pass. New cases cover pure
+bond reads, deterioration, parent/sibling roles after succession, hidden birth
+provenance and exact save recovery. The real-browser family presentation scenario
+opens a daughter's mother, checks Familiar / trust 20 / familiarity 48 and verifies
+that romance choices are absent. Normal profiles are untouched; evidence remains
+local under ignored output.
+
+Growth/elder shrinkage is a separate proposal, not implemented or adopted here:
+0–5 days at 45% adult outline, 6–17 at 70%, 18–64 at 100%, 65+ at 85%. Recommend
+visual scaling first, preserving inherited geometry, female privacy and existing
+collision/movement. Wait for user feedback before treating those thresholds and
+scales as selected rules. The human playtest gate before combat is unchanged.
+
+
 ## Family highlights and day vocabulary — 2026-10-16
 
 V0.3.3 adds gold dashed halos and gold minimap dots for the current observer's

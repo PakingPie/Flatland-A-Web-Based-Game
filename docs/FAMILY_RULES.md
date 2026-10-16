@@ -1,4 +1,4 @@
-# Implemented family and inheritance rules (v0.3.3)
+# Implemented family and inheritance rules (v0.3.4)
 
 These adjustable gameplay defaults resolve Phase 2B/3 implementation questions.
 They are not statements about real genetics or moral worth.
@@ -201,3 +201,23 @@ known family, including spouses. The current player is excluded and retains the
 coral marker. Deceased records are never drawn; undiscovered biological relatives
 receive no marker. Selected-citizen rings stay green. These derived visual marks
 are never saved and cannot teach facts or advance RNG.
+
+
+## Known parent/child/sibling bonds
+
+Known parent–child relationships receive +48 familiarity / +20 trust support;
+known siblings receive +36 / +12. Add support to saved personal scores, capped at
+100 and the usual lower limits. This is computed on read, never repeatedly awarded
+or saved as a new flag. Personal trust can still fall enough to become negative;
+a role is not permanent friendliness or consent. Spouses keep their established
+romance/readiness rules, without this biological-family bonus.
+
+Roles derive exclusively from the observer's known birth events. Hidden biological
+parents or siblings receive neither a label nor support. Parent/child/sibling names
+appear in bubbles and family rows, alongside existing adulthood countdowns. Known
+direct relatives have no romance choices. Social stages and ordinary social checks
+use the effective scores. F8 shows both the support and effective relationship,
+while retaining the raw saved record. No discovery is taught by reading a bond.
+Succession restores personal notebooks as before, then derives the new observer's
+own known family roles; it does not copy a parent's private claims. Existing v1–v5
+save readers, frozen payloads and RNG streams are unchanged.

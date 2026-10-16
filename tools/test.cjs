@@ -24,6 +24,25 @@ function npcPair(w,sameSex=false) {
     assert.fail('No mutual NPC fixture');
 }
 function renewing(seed='renewal-test') {const w=new World(seed);w.renewal.setEnabled(true);return w;}
+
+test('known children have an innate family bond without modifying saved relationships or revealing secrets',()=>{
+    const {w}=familyWorld(),ids=w.family.birth().ids,child=w.registry.get(ids[0]);
+    const before=json(saveFor(w).capture()),bond=w.social.familyBond(child),r=w.social.relationship(child);
+    assert.equal(bond.role,child.actual.identity.sex==='female'?'Daughter':'Son');assert.equal(r.familiarity,48);assert.equal(r.trust,20);assert.equal(w.social.stage(child),2);
+    assert.equal(child.playerKnowledge.relationship.trust,0);assert.equal(child.playerKnowledge.discoveredFacts.privateHistory,undefined);
+    assert.deepEqual(json(saveFor(w).capture()),before);
+});
+
+test('family roles survive child succession, can become estranged and never use concealed parentage',()=>{
+    const {w,c}=familyWorld(),ids=w.family.birth().ids;mature(w);const founder=w.player;
+    assert.equal(w.family.succeed(ids[0]).ok,true);
+    assert.equal(w.social.familyBond(founder).role,'Father');assert.equal(w.social.familyBond(c).role,'Mother');assert.equal(w.social.relationship(founder).trust,20);
+    const sibling=w.registry.get(ids[1]);assert.equal(w.social.familyBond(sibling).trust,12);assert.equal(w.social.relationship(sibling).familiarity,36);
+    founder.playerKnowledge.relationship.trust=-30;assert.equal(w.social.relationship(founder).trust,-10);
+    w.renewal.backgroundBirthIds=[w.family.births[0].id];w.renewal.knownEvents={};
+    assert.equal(w.social.familyBond(founder).role,'');assert.equal(w.social.familyBond(sibling).role,'');
+    saveFor(w).decode(saveFor(w).encode());
+});
 function demographics(w) {return json({family:w.family.exportState(),romance:w.romance.exportState(),renewal:w.renewal.exportState(),people:w.registry.all().map(c=>({id:c.id,actual:{...c.actual,life:{...c.actual.life,ageYears:+c.actual.life.ageYears.toFixed(7)}}}))});}
 
 test('renewal builds mutual NPC commitment over four years, births privately and preserves playable RNG',()=>{

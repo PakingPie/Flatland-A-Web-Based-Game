@@ -75,6 +75,7 @@ class SocialUI {
         if(this.group==='commitment') return [love('Preferences','preferences','◇'),love('Discuss children','children'),love('Propose','propose'),...(romance.status==='married'?[love('Separate','separate','↗')]:[])];
         if(this.group==='details') return [];
         if(!v.introduced) return [social('Greet','introduce','◌'),details];
+        if(v.relationship.familyRole) return [group('Talk','talk','◌'),{label:'Family',icon:'⌂',action:{kind:'family'}},details];
         if(romance.status==='married') return [group('Talk','talk','◌'),group('Affection','romance','♡'),{label:'Family',icon:'⌂',action:{kind:'family'}},details];
         return [group('Talk','talk','◌'),...(v.adult && this.game.world.player.actual.life.ageYears>=18?[love('Spend time','outing'),group('Romance','romance','♡')]:[]),details];
     }
@@ -83,10 +84,10 @@ class SocialUI {
         const w=this.game.world,c=w.social.citizen(this.selectedId); if(!c?.actual.life.alive) {this.close();return;}
         const v=w.social.view(c),romance=w.romance.view(c);
         $('citizenName').textContent=v.name; $('citizenForm').textContent=v.observed.form;
-        $('bubbleSummary').textContent=`${romance.status==='none'?v.relationship.label:romance.status} · World paused`;
+        $('bubbleSummary').textContent=`${v.relationship.familyRole?`${v.relationship.familyRole} · ${v.relationship.label}`:romance.status==='none'?v.relationship.label:romance.status} · World paused`;
         $('bubbleBackBtn').hidden=this.group==='root'; $('bubbleDetails').hidden=this.group!=='details';
         $('bubbleHint').textContent=this.group==='details'?'Private ancestry stays unknown.':v.remaining===0?'They need a break. Return tomorrow.':v.inRange?'Choose an action.':'Choose an action to walk over.';
-        const signature=JSON.stringify([this.group,v.introduced,v.adult,romance.status]);
+        const signature=JSON.stringify([this.group,v.introduced,v.adult,romance.status,v.relationship.familyRole]);
         if(signature!==this.signature) {
             this.signature=signature;const options=$('bubbleOptions'); options.replaceChildren();
             for(const choice of this.choices(v,romance)) {

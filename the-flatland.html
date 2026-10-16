@@ -1932,12 +1932,28 @@ class SocialSystem {
         return result;
     }
     stage(c) {
-        const k = c.playerKnowledge, r = k.relationship;
+        const k = c.playerKnowledge, r = this.relationship(c);
         if (!k.discoveredFacts.name) return 0;
         if (r.familiarity >= 76 && r.trust >= 60) return 4;
         if (r.familiarity >= 48 && r.trust >= 30) return 3;
         if (r.familiarity >= 24 && r.trust >= 12) return 2;
         return 1;
+    }
+    familyBond(c) {
+        const w=this.world,p=w.player,none={role:'',familiarity:0,trust:0};
+        if(c===p) return none;
+        // Ordinary roles derive only from known household events, never hidden ancestry.
+        const births=w.family.births.filter(b=>w.renewal.knowsBirth(b.id));
+        const parents=id=>new Set(births.filter(b=>b.childIds.includes(id)).flatMap(b=>[b.motherId,b.fatherId]));
+        const ownParents=parents(p.id),theirParents=parents(c.id),female=c.actual.identity.sex==='female';
+        if(ownParents.has(c.id)) return {role:female?'Mother':'Father',familiarity:48,trust:20};
+        if(theirParents.has(p.id)) return {role:female?'Daughter':'Son',familiarity:48,trust:20};
+        if([...ownParents].some(id=>theirParents.has(id))) return {role:female?'Sister':'Brother',familiarity:36,trust:12};
+        return none;
+    }
+    relationship(c) {
+        const r=c.playerKnowledge.relationship,b=this.familyBond(c);
+        return {...r,familiarity:clamp(r.familiarity+b.familiarity,0,100),trust:clamp(r.trust+b.trust,-30,100)};
     }
     learn(c, key, value, kind = 'claim', sourceId = c.id) {
         c.playerKnowledge.discoveredFacts[key] = { value, kind, sourceId, at: this.world.elapsed };
@@ -1949,7 +1965,7 @@ class SocialSystem {
     }
     reputationLabel() { return this.reputation.score >= 8 ? 'Considerate locally' : this.reputation.score <= -5 ? 'A difficult reputation' : 'Little known locally'; }
     attitude(c) {
-        const p = c.actual.profile, r = c.playerKnowledge.relationship, rank = c.publicIdentity.standing.tier;
+        const p = c.actual.profile, r = this.relationship(c), rank = c.publicIdentity.standing.tier;
         const outsider = apparentStanding(this.world.player).tier === 0;
         const bias = outsider ? p.personality.prejudice * (4 + rank * 2.1) : 0;
         return p.personality.warmth * 14 + p.disposition + r.trust * .24 + this.reputation.score * .12 - bias;
@@ -2016,7 +2032,7 @@ class SocialSystem {
                 return this.response(c, topic, `Here in ${district}: ${opinion}`, 5 * factor, 3 * trustGain, .25, 'positive');
             }
             case 'interests':
-                if (r.familiarity < 13 || (p.personality.reserve > .78 && stage < 2)) return this.response(c, topic, '“We barely know one another. Let us keep to ordinary conversation for now.”', 1, -1, 0, 'refused');
+                if (this.relationship(c).familiarity < 13 || (p.personality.reserve > .78 && stage < 2)) return this.response(c, topic, '“We barely know one another. Let us keep to ordinary conversation for now.”', 1, -1, 0, 'refused');
                 this.learn(c, 'interests', p.preferences.likes);
                 if (stage >= 2) this.learn(c, 'dislikes', p.preferences.dislikes);
                 return this.response(c, topic, `“I enjoy ${p.preferences.likes}.${stage >= 2 ? ` I could do without ${p.preferences.dislikes}.` : ''}”`, 5 * factor, 3 * trustGain, .1, 'positive');
@@ -2056,7 +2072,7 @@ class SocialSystem {
         const observed = observeCitizen(c), k = c.playerKnowledge, stage = this.stage(c);
         const facts = Object.entries(SOCIAL.factLabels).map(([key, label]) => ({ key, label, ...(k.discoveredFacts[key] ? copyJSON(k.discoveredFacts[key]) : { locked: true }) }));
         return { adult: c.actual.life.ageYears >= 18, id: c.id, name: k.discoveredFacts.name?.value || 'Unknown citizen', observed, facts,
-            relationship: { familiarity: k.relationship.familiarity, trust: k.relationship.trust, stage, label: SOCIAL.stages[stage] },
+            relationship: { familiarity: this.relationship(c).familiarity, trust: this.relationship(c).trust, stage, label: SOCIAL.stages[stage],familyRole:this.familyBond(c).role },
             rumors: copyJSON(k.rumors), inRange: this.nearby(c), cooldown: Math.max(0, SOCIAL.cooldown - (this.world.elapsed - k.relationship.lastAt)),
             remaining: k.relationship.day === Math.floor(this.world.elapsed / C.DAY) ? Math.max(0, SOCIAL.dailyLimit - k.relationship.today) : SOCIAL.dailyLimit,
             introduced: !!k.discoveredFacts.name };
@@ -2297,7 +2313,7 @@ function familyView(family) {
     return { generation:family.world.player.actual.lineage.generation, canSucceed:family.canSucceed(),
         undiscoveredHeirs:family.canSucceed() ? [...candidates].filter(id=>!knownIds.has(id)).map(id=>({id,label:'Continue as an adult descendant'})) : [],
         spouse:family.world.romance.spouse(family.world.player) ? family.name(family.world.romance.spouse(family.world.player)) : 'None',
-        birthReason:family.birthEligibility(), members:known.map(c=>({id:c.id,name:family.name(c),age:Math.floor(c.actual.life.ageYears),sex:c.actual.identity.sex,
+        birthReason:family.birthEligibility(), members:known.map(c=>({id:c.id,name:family.name(c),age:Math.floor(c.actual.life.ageYears),sex:c.actual.identity.sex,role:family.world.social.familyBond(c).role,
             form:c.body.visibleType,alive:c.actual.life.alive,generation:c.actual.lineage.generation,current:c.isPlayer,eligible:candidates.has(c.id),
             parents:[c.actual.lineage.motherId,c.actual.lineage.fatherId].filter(id=>knownIds.has(id)).map(id=>family.name(family.character(id))),
             children:c.actual.lineage.childrenIds.filter(id=>knownIds.has(id)).map(id=>family.name(family.character(id))),
@@ -4160,6 +4176,7 @@ class SocialUI {
         if(this.group==='commitment') return [love('Preferences','preferences','◇'),love('Discuss children','children'),love('Propose','propose'),...(romance.status==='married'?[love('Separate','separate','↗')]:[])];
         if(this.group==='details') return [];
         if(!v.introduced) return [social('Greet','introduce','◌'),details];
+        if(v.relationship.familyRole) return [group('Talk','talk','◌'),{label:'Family',icon:'⌂',action:{kind:'family'}},details];
         if(romance.status==='married') return [group('Talk','talk','◌'),group('Affection','romance','♡'),{label:'Family',icon:'⌂',action:{kind:'family'}},details];
         return [group('Talk','talk','◌'),...(v.adult && this.game.world.player.actual.life.ageYears>=18?[love('Spend time','outing'),group('Romance','romance','♡')]:[]),details];
     }
@@ -4168,10 +4185,10 @@ class SocialUI {
         const w=this.game.world,c=w.social.citizen(this.selectedId); if(!c?.actual.life.alive) {this.close();return;}
         const v=w.social.view(c),romance=w.romance.view(c);
         $('citizenName').textContent=v.name; $('citizenForm').textContent=v.observed.form;
-        $('bubbleSummary').textContent=`${romance.status==='none'?v.relationship.label:romance.status} · World paused`;
+        $('bubbleSummary').textContent=`${v.relationship.familyRole?`${v.relationship.familyRole} · ${v.relationship.label}`:romance.status==='none'?v.relationship.label:romance.status} · World paused`;
         $('bubbleBackBtn').hidden=this.group==='root'; $('bubbleDetails').hidden=this.group!=='details';
         $('bubbleHint').textContent=this.group==='details'?'Private ancestry stays unknown.':v.remaining===0?'They need a break. Return tomorrow.':v.inRange?'Choose an action.':'Choose an action to walk over.';
-        const signature=JSON.stringify([this.group,v.introduced,v.adult,romance.status]);
+        const signature=JSON.stringify([this.group,v.introduced,v.adult,romance.status,v.relationship.familyRole]);
         if(signature!==this.signature) {
             this.signature=signature;const options=$('bubbleOptions'); options.replaceChildren();
             for(const choice of this.choices(v,romance)) {
@@ -4264,7 +4281,8 @@ class FamilyUI {
         const text=(el,value)=>{if(el.textContent!==value) el.textContent=value;};
         text(row.title,`${m.name}${m.current?' · You':''} · Generation ${m.generation}`);
         text(row.details,`Age ${m.age} days · ${m.sex} · ${m.form} · ${m.alive ? (m.age<18?'Child':'Adult') : m.death}`);
-        text(row.eligibility,m.current?'Current playable character':m.eligible?'Adult heir':!m.alive?'Deceased':m.age<18?`Adult in ${18-m.age} days`:'Family member');
+        const status=m.current?'Current playable character':m.eligible?'Adult heir':!m.alive?'Deceased':m.age<18?`Adult in ${18-m.age} days`:'Family member';
+        text(row.eligibility,`${m.role?m.role+' · ':''}${status}`);
         text(row.traits,m.traits);
         text(row.links,`Parents: ${m.parents.join(', ') || 'Not recorded'} · Children: ${m.children.join(', ') || 'None'} · Siblings: ${m.siblings.join(', ') || 'None recorded'}`);
         if(m.eligible) {
@@ -4358,6 +4376,7 @@ class InformationInspector {
         const a=c.actual,genome=a.genome,spouse=w.romance.spouse(c),name=id=>w.registry.get(id)?.actual.identity.name || id || 'None';
         const preferences=w.romance.preferences(c),pair=c.id===w.player.id?null:w.romance.pairs[w.romance.key(w.player,c)] || null;
         const readiness=c.id===w.player.id?null:w.romance.parenthoodReadiness(w.player,c);
+        const relationship=w.social.relationship(c),familyBond=w.social.familyBond(c);
         const summary=[
             `${a.identity.name} · ${c.id} · ${a.identity.sex} · age ${a.life.ageYears.toFixed(2)} days · ${a.life.alive?'Living':a.life.deathCause || 'Deceased'}`,
             `Visible form: ${c.body.visibleType} · Generation ${a.lineage.generation}`,
@@ -4369,10 +4388,10 @@ class InformationInspector {
             `Health ${c.vitals.health.toFixed(1)} · Food ${c.vitals.hunger.toFixed(1)} · Water ${c.vitals.thirst.toFixed(1)} · Stamina ${c.vitals.stamina.toFixed(1)}`,
             `Partner preferences: ${preferences.sexes.join(', ')} · Baseline family preference: ${preferences.familyLife.toFixed(3)}`,
             ...(readiness?[`Current willingness: ${readiness.willingness.toFixed(3)} · Trust support +${readiness.trustSupport.toFixed(3)} · Affection support +${readiness.affectionSupport.toFixed(3)}`]:[]),
-            `Trust ${c.playerKnowledge.relationship.trust.toFixed(1)} · Familiarity ${c.playerKnowledge.relationship.familiarity.toFixed(1)} · Affection ${pair?.affection.toFixed(1) || '0.0'}`
+            `Trust ${relationship.trust.toFixed(1)} · Familiarity ${relationship.familiarity.toFixed(1)} · Affection ${pair?.affection.toFixed(1) || '0.0'}`
         ];
         $('inspectorSummary').textContent=summary.join('\n');
-        $('inspectorRecord').textContent=JSON.stringify({character:c,romanticPreferences:preferences,parenthoodReadiness:readiness,
+        $('inspectorRecord').textContent=JSON.stringify({character:c,romanticPreferences:preferences,parenthoodReadiness:readiness,familyBond,effectiveRelationship:relationship,
             compatibilityWithPlayer:c.id===w.player.id?null:w.romance.compatibility(w.player,c),
             closeKinToPlayer:w.romance.isCloseKin(w.player,c),
             pairs:Object.values(w.romance.pairs).filter(p=>p.ids.includes(c.id)),

@@ -4,7 +4,7 @@ function familyView(family) {
     return { generation:family.world.player.actual.lineage.generation, canSucceed:family.canSucceed(),
         undiscoveredHeirs:family.canSucceed() ? [...candidates].filter(id=>!knownIds.has(id)).map(id=>({id,label:'Continue as an adult descendant'})) : [],
         spouse:family.world.romance.spouse(family.world.player) ? family.name(family.world.romance.spouse(family.world.player)) : 'None',
-        birthReason:family.birthEligibility(), members:known.map(c=>({id:c.id,name:family.name(c),age:Math.floor(c.actual.life.ageYears),sex:c.actual.identity.sex,
+        birthReason:family.birthEligibility(), members:known.map(c=>({id:c.id,name:family.name(c),age:Math.floor(c.actual.life.ageYears),sex:c.actual.identity.sex,role:family.world.social.familyBond(c).role,
             form:c.body.visibleType,alive:c.actual.life.alive,generation:c.actual.lineage.generation,current:c.isPlayer,eligible:candidates.has(c.id),
             parents:[c.actual.lineage.motherId,c.actual.lineage.fatherId].filter(id=>knownIds.has(id)).map(id=>family.name(family.character(id))),
             children:c.actual.lineage.childrenIds.filter(id=>knownIds.has(id)).map(id=>family.name(family.character(id))),

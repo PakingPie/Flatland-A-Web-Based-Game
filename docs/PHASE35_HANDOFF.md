@@ -1,5 +1,15 @@
 # Phase 3.5 renewal handoff
 
+**Family-bond follow-up, v0.3.4:** approved initial bonds and parent/child/sibling
+labels now use known birth events and derived support over saved personal scores.
+Parents/children start at 48 familiarity / 20 trust support, siblings at 36/12;
+negative personal experience can still overcome support. No secrets are inherited,
+no raw save fields are changed, and direct relatives have no romance choices.
+Current validation is 80 deterministic cases and nine Chromium scripts. Growth
+stages are only a proposal (0–5 days 45%, 6–17 70%, 18–64 100%, 65+ 85%, visual
+first); the user requested a recommendation and has not adopted those details.
+
+
 **Presentation follow-up, v0.3.3:** known living family now have gold dashed halos
 and minimap dots. Hidden biological connections remain unmarked. All user-facing
 ages and time labels use days: one day remains 120 simulated seconds and adds one

@@ -46,7 +46,8 @@ class FamilyUI {
         const text=(el,value)=>{if(el.textContent!==value) el.textContent=value;};
         text(row.title,`${m.name}${m.current?' · You':''} · Generation ${m.generation}`);
         text(row.details,`Age ${m.age} days · ${m.sex} · ${m.form} · ${m.alive ? (m.age<18?'Child':'Adult') : m.death}`);
-        text(row.eligibility,m.current?'Current playable character':m.eligible?'Adult heir':!m.alive?'Deceased':m.age<18?`Adult in ${18-m.age} days`:'Family member');
+        const status=m.current?'Current playable character':m.eligible?'Adult heir':!m.alive?'Deceased':m.age<18?`Adult in ${18-m.age} days`:'Family member';
+        text(row.eligibility,`${m.role?m.role+' · ':''}${status}`);
         text(row.traits,m.traits);
         text(row.links,`Parents: ${m.parents.join(', ') || 'Not recorded'} · Children: ${m.children.join(', ') || 'None'} · Siblings: ${m.siblings.join(', ') || 'None recorded'}`);
         if(m.eligible) {

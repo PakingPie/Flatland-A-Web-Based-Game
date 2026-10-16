@@ -53,6 +53,7 @@ class InformationInspector {
         const a=c.actual,genome=a.genome,spouse=w.romance.spouse(c),name=id=>w.registry.get(id)?.actual.identity.name || id || 'None';
         const preferences=w.romance.preferences(c),pair=c.id===w.player.id?null:w.romance.pairs[w.romance.key(w.player,c)] || null;
         const readiness=c.id===w.player.id?null:w.romance.parenthoodReadiness(w.player,c);
+        const relationship=w.social.relationship(c),familyBond=w.social.familyBond(c);
         const summary=[
             `${a.identity.name} · ${c.id} · ${a.identity.sex} · age ${a.life.ageYears.toFixed(2)} days · ${a.life.alive?'Living':a.life.deathCause || 'Deceased'}`,
             `Visible form: ${c.body.visibleType} · Generation ${a.lineage.generation}`,
@@ -64,10 +65,10 @@ class InformationInspector {
             `Health ${c.vitals.health.toFixed(1)} · Food ${c.vitals.hunger.toFixed(1)} · Water ${c.vitals.thirst.toFixed(1)} · Stamina ${c.vitals.stamina.toFixed(1)}`,
             `Partner preferences: ${preferences.sexes.join(', ')} · Baseline family preference: ${preferences.familyLife.toFixed(3)}`,
             ...(readiness?[`Current willingness: ${readiness.willingness.toFixed(3)} · Trust support +${readiness.trustSupport.toFixed(3)} · Affection support +${readiness.affectionSupport.toFixed(3)}`]:[]),
-            `Trust ${c.playerKnowledge.relationship.trust.toFixed(1)} · Familiarity ${c.playerKnowledge.relationship.familiarity.toFixed(1)} · Affection ${pair?.affection.toFixed(1) || '0.0'}`
+            `Trust ${relationship.trust.toFixed(1)} · Familiarity ${relationship.familiarity.toFixed(1)} · Affection ${pair?.affection.toFixed(1) || '0.0'}`
         ];
         $('inspectorSummary').textContent=summary.join('\n');
-        $('inspectorRecord').textContent=JSON.stringify({character:c,romanticPreferences:preferences,parenthoodReadiness:readiness,
+        $('inspectorRecord').textContent=JSON.stringify({character:c,romanticPreferences:preferences,parenthoodReadiness:readiness,familyBond,effectiveRelationship:relationship,
             compatibilityWithPlayer:c.id===w.player.id?null:w.romance.compatibility(w.player,c),
             closeKinToPlayer:w.romance.isCloseKin(w.player,c),
             pairs:Object.values(w.romance.pairs).filter(p=>p.ids.includes(c.id)),

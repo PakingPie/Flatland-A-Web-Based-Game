@@ -1,5 +1,5 @@
 # The Flatland
-## Version 0.3.3 — Family highlights and one day clock
+## Version 0.3.4 — Familiar family and one day clock
 
 Phase 3.5 now includes bounded [autonomous NPC families](docs/POPULATION_RENEWAL_DESIGN.md),
 with mutual private relationships, daily marriages/births and stable household
@@ -87,6 +87,15 @@ more topics one level deeper. Greet, Talk, Romance and Family use existing rules
 Details holds discovered facts and unconfirmed rumors. Short speech bubbles
 replace mechanical explanations after actions. Family traits and histories expand
 on demand. Help retains optional rule explanations.
+
+## Family relationships
+
+Known parents and children begin with familiarity and trust; siblings have a
+smaller family bond. Bubbles and the register identify Mother, Father, Daughter,
+Son, Sister and Brother. Known direct relatives have no romance choices. Personal
+experiences still strengthen or damage trust, and family membership reveals no
+private secrets. Bonds follow the current observer after succession and work in
+existing saves without migration.
 
 ## Known family and time
 
