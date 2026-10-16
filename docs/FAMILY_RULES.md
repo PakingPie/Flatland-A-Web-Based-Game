@@ -1,4 +1,37 @@
-# Implemented family and inheritance rules (v0.3.5)
+# Implemented family and inheritance rules (v0.4.0)
+
+## Bounded sparring integration
+
+Voluntary nonlethal practice pauses with citizen bubbles, Family, Pause, Help and
+F8. Family day advancement is refused until practice ends; End spar is available
+in Family and Pause. Birth, ordinary social actions, supplies and rest end it.
+Natural/survival death follows the existing shared pathway once and cancels every
+swing. Succession retains the same registry, family support and privacy rules,
+ending practice before transferring control. Sons and line-form daughters can spar.
+
+Practice needs two introduced living adults with health 35+, food/water 30+ and
+stamina 30+. Negative effective personal trust declines the invitation. It grants
+no trust, affection, ancestry discoveries or relationship rewards. A strike costs
+12 stamina, winds up for 21 fixed 60 Hz ticks and recovers for 39; base damage is 8.
+Guard covers the front half-plane, drains 6 stamina/second, and spends 8 stamina
+per blocked hit to reduce damage by 60%. Insufficient stamina cannot block.
+Ready, unguarded participants recover 3 stamina/second during practice; ordinary
+stamina behavior returns afterward. Movement/sprinting keeps its existing rules.
+
+Triangle/polygon/line half-arcs are 0.5/1.0/0.75 radians; extensions 22/14/18 world
+units. Contact range adds both visible bounding radii to the capped extension.
+Age-stage scale affects only this new visible attack profile; existing collision,
+navigation, growth and genetics are unchanged. Line radius uses fixed 17 times
+visual scale, with no hidden genome input. Facing locks at wind-up; contact
+rechecks positions, arc, distance and terrain. Each swing can hit once. Damage
+stops at health 1; health 1, exhausted stamina, explicit End spar, or two seconds
+beyond 220 units end practice. NPCs remain ordinary citizens outside the encounter.
+
+Only existing health/stamina and ordinary world state are persisted. Encounter,
+opponent, swings and held inputs are transient. Saving preserves an active
+practice; loading ends it and pauses without restoring a strike. Schema v5,
+generator v1, original browser keys, v1–v4 readers and full deceased archives remain.
+See [Phase 4A handoff](PHASE4A_HANDOFF.md) for evidence and remaining limits.
 
 These adjustable gameplay defaults resolve Phase 2B/3 implementation questions.
 They are not statements about real genetics or moral worth.

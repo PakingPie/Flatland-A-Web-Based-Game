@@ -74,6 +74,7 @@ const out=path.resolve('output/playwright');fs.mkdirSync(out,{recursive:true});
         await page.locator('#endSparBtn').tap();assert.equal(await spar(),null);
         await page.setViewportSize({width:1280,height:800});await restore(ready);await start();
         await page.locator('#strikeBtn').tap();await advance(.1);assert.equal((await spar()).swings[p.id].phase,'windup');
+        await page.screenshot({path:path.join(out,'sparring-windup.png')});
         const guard=await page.locator('#defendBtn').boundingBox();await page.touchscreen.tap(guard.x+guard.width/2,guard.y+guard.height/2);
         // Keyboard activation toggles hold for switch/keyboard access; native touch holds release.
         assert.equal((await snap()).holds.defend,false);
@@ -86,7 +87,17 @@ const out=path.resolve('output/playwright');fs.mkdirSync(out,{recursive:true});
         await restore(ready);await start();await page.evaluate(()=>FlatlandDebug.vitals({stamina:.05}));await page.keyboard.down('KeyK');await advance(.1);await page.keyboard.up('KeyK');assert.equal(await spar(),null);
         await page.evaluate(()=>{FlatlandDebug.teleport(1728,1280);FlatlandDebug.vitals({health:40,hunger:80,thirst:80});});await page.keyboard.press('Space');await advance(2);assert.ok((await snap()).player.vitals.health>43);
         await restore(ready);await page.evaluate(id=>FlatlandDebug.npcVitals(id,{health:34}),target);await invite();await advance(3);assert.equal(await spar(),null);assert.match(await page.locator('#dialogueText').innerText(),/health/);
-        results.push('PASS stamina exhaustion ends practice, supplied refuge heals retained health, low-health invitation refuses');
+        await restore(ready);await start();await advance(1.1);await page.evaluate(id=>FlatlandDebug.npcVitals(id,{health:2}),target);await page.keyboard.press('KeyJ');await advance(.35);assert.equal(await spar(),null);const floored=(await snap()).npcs.find(c=>c.id===target);assert.equal(floored.vitals.health,1);assert.equal(floored.actual.life.alive,true);
+        results.push('PASS stamina exhaustion and nonlethal health floor end practice, supplied refuge heals retained health, low-health invitation refuses');
+        for(const action of ['Space','KeyF','KeyR','KeyE','social']) {
+            await restore(ready);await start();
+            if(action==='KeyE')await page.evaluate(()=>{const r=FlatlandDebug.snapshot().resources.find(r=>r.quantity>0);FlatlandDebug.teleport(r.x,r.y);});
+            if(action==='social') {await page.evaluate(id=>FlatlandDebug.openCitizen(id),target);await page.locator('[data-group="talk"]').click();await page.locator('[data-topic="chat"]').click();}
+            else await page.keyboard.press(action);
+            assert.equal(await spar(),null);
+        }
+        await restore(ready);await start();await page.locator('#familyBtn').click();await page.locator('#familyScreen [data-end-spar]').click();assert.equal(await spar(),null);await page.locator('#closeFamilyBtn').click();
+        results.push('PASS ordinary rest/eat/drink/gather/social commands end practice before acting; Family offers End spar');
         assert.deepEqual(errors,[]);fs.writeFileSync(path.join(out,'sparring-results.json'),JSON.stringify({results,errors,browser:browser.version()},null,2));console.log(results.join('\n'));
     } finally {if(browser)await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

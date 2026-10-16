@@ -1,5 +1,10 @@
 # Phase 3.5 renewal handoff
 
+**Phase 4A follow-through:** voluntary sparring is now implemented on
+`codex/phase-4a-sparring` as v0.4.0. Use [the current handoff](PHASE4A_HANDOFF.md)
+for continuation. Older “no combat” and gate statements below describe their
+historical checkpoints; the user explicitly deferred the human playtest.
+
 ## Merged handoff superseding older branch prompts — 2026-10-16
 
 PRs #1 and #2 are merged. Phase 4A starts from clean `main` at `b8caef8`, on

@@ -1,5 +1,11 @@
 # Phase 3.5 completion and bounded Phase 4A combat proposal
 
+**Implementation update:** bounded sparring is implemented in v0.4.0, on
+`codex/phase-4a-sparring`. The three checkpoints and current evidence are in
+[the Phase 4A handoff](PHASE4A_HANDOFF.md). The proposal and older prompts below
+are historical. Continue from the new branch and preserve all tested milestones;
+do not resume the merged PR branches. Later lethal/legal systems remain deferred.
+
 ## Current entry decision — 2026-10-16
 
 Continue from merged `main` at `b8caef8` on new branch

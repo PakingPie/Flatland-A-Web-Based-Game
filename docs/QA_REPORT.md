@@ -1,4 +1,37 @@
-# QA report — Phase 3.5 renewal (v0.3.5 / save v5)
+# QA report — bounded Phase 4A (v0.4.0 / save v5)
+
+## Final Phase 4A persistence and generations — 2026-10-16
+
+**96/96 rule cases, all twelve Chromium suites, build agreement and documentation
+checks pass.** The original 82 rules and ten browser suites remain included.
+The two new scripts are [sparring](../tools/browser-sparring.cjs) and
+[sparring persistence](../tools/browser-sparring-persistence.cjs).
+
+Native Save during wind-up leaves the live encounter intact. Full Chromium
+shutdown/Continue preserves the exact complete payload and vitals, loads paused
+and restores no encounter or queued strike. Native exported files round-trip;
+malformed import preserves the active encounter and slots, while valid import
+ends practice paused without changing slots. Renewal on/off and frozen v4 recovery
+pass. The original migration suites still cover v1/v2/v3 and both frozen v4 saves.
+
+A rule-created family fixture uses real marriage, birth and aging commands, with
+staged positions/needs. Actual UI daughter succession ends an active encounter;
+the line-form heir strikes, guards, exhausts, retreats, heals and survives a native
+save/restart with identity/family intact. An old-age fixture leaves 0.24 seconds of
+life: invitation accepts, then death precedes the queued strike. Death records
+once; no spar damage occurs after death. Native pending-heir restart and daughter
+choice preserve the full stable-ID set. Four corner fixtures find clear positions
+within 200 units of their corner anchors, check real contact and insert a thin
+solid building into a wind-up to prove contact rechecks terrain.
+
+Screenshots of desktop, portrait, short landscape, wind-up and daughter sparring
+were inspected locally. All executed browser scenarios report no page exceptions.
+Chromium uses isolated test-owned profiles and localhost servers outside the
+sandbox; normal player profiles/saves are untouched. Raw captures, JSON and
+exports stay local/ignored. This is controlled integration evidence, not a human
+balance session. Human play remains explicitly deferred; existing device/browser,
+abrupt-termination and finite-population limits remain. No law/guards/civilization
+or lethal/persistent-injury systems are added. See [handoff](PHASE4A_HANDOFF.md).
 
 ## Playable sparring checkpoint — 2026-10-16
 

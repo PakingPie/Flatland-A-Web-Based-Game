@@ -27,6 +27,25 @@ module.exports=({test,assert,context,World,prepare,saveFor,json,familyWorld,matu
         g.input.attack=true;for(let i=0;i<21;i++)spar.step();assert.equal(c.vitals.health,health);
         spar.active.swings[w.player.id].phase='ready';w.segmentClear=()=>true;w.player.angle=Math.PI;g.input.attack=true;for(let i=0;i<21;i++)spar.step();assert.equal(c.vitals.health,health);
     });
+    test('actual world corners retain contact bounds and solid terrain blocks a pending strike',()=>{
+        for(const [cornerX,cornerY] of [[80,80],[3336,80],[80,2224],[3336,2224]]) {
+            const {w,c,p,g,spar}=fixture();let spot=null;
+            for(let dx=0;dx<=200 && !spot;dx+=20) for(let dy=0;dy<=200 && !spot;dy+=20) {
+                const x=cornerX+Math.sign(1728-cornerX)*dx,y=cornerY+Math.sign(1152-cornerY)*dy;
+                if(w.circleClear(x,y,p.body.radius) && w.circleClear(x+40,y,c.body.radius) && w.segmentClear(x,y,x+40,y,3)) spot={x,y};
+            }
+            assert.ok(spot);const {x,y}=spot;p.x=p.px=x;p.y=p.py=y;c.x=c.px=x+40;c.y=c.py=y;
+            assert.equal(w.circleClear(p.x,p.y,p.body.radius),true);assert.equal(w.circleClear(c.x,c.y,c.body.radius),true);
+            assert.equal(spar.invite(c.id).ok,true);const health=c.vitals.health;g.input.attack=true;
+            for(let i=0;i<21;i++)spar.step();assert.equal(c.vitals.health,health-8);spar.end('');
+            assert.equal(spar.invite(c.id).ok,true);g.input.attack=true;spar.step();
+            w.addObstacle({kind:'building',x:x+21,y:y-25,w:1,h:50});
+            assert.equal(w.circleClear(p.x,p.y,p.body.radius),true);assert.equal(w.circleClear(c.x,c.y,c.body.radius),true);
+            // A strike that was already telegraphed also rechecks terrain on contact.
+            const before=c.vitals.health;for(let i=1;i<21;i++)spar.step();assert.equal(c.vitals.health,before);
+            spar.end('');assert.equal(spar.invite(c.id).ok,false);
+        }
+    });
     test('nonlethal floor, guard exhaustion and sustained escape terminate safely with retained vitals',()=>{
         let f=fixture();f.spar.invite(f.c.id);f.c.vitals.health=2;f.g.input.attack=true;for(let i=0;i<21;i++)f.spar.step();assert.equal(f.c.vitals.health,1);assert.equal(f.c.actual.life.alive,true);assert.equal(f.spar.active,null);
         f=fixture();f.spar.invite(f.c.id);f.p.vitals.stamina=.05;f.g.input.defend=true;f.spar.step();assert.equal(f.spar.active,null);assert.equal(f.p.vitals.stamina,0);
