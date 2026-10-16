@@ -2,7 +2,7 @@
 
 **Design baseline:** v0.3 · 2026-10-15  
 **Project:** Browser-based, two-dimensional survival, society, and generational evolution game inspired by Edwin A. Abbott's *Flatland*.  
-**Status:** Phase 1.1 + 2A are implemented in [the-flatland.html](../the-flatland.html) (v0.2.0), with recorded evidence and validation limits in the [QA report](QA_REPORT.md). Phase 2B onward is planned and is *not* implemented by virtue of being listed here.
+**Status:** Phase 1.1, 2A, 2B, 3 and bounded Phase 3.5 NPC renewal are implemented in [the playable build](../the-flatland.html), v0.3.5 / save v5. See [current QA](QA_REPORT.md), [implemented family rules](FAMILY_RULES.md) and [checkpoints](IMPLEMENTATION_STATUS.md). The usability follow-up adds anchored action bubbles, automatic approach, paused choices and concise tutorials. Later phases remain planned.
 
 **Repository and license:** [PakingPie/Flatland-A-Web-Based-Game](https://github.com/PakingPie/Flatland-A-Web-Based-Game) is public and uses the [MIT license](../LICENSE), Copyright (c) 2026 PerkinPie. Public deployment is a separate decision.
 
@@ -15,12 +15,23 @@
 | 1 — Living World | **Implemented; original [baseline preserved](../baseline/the-flatland-phase1.html)** | Canvas world, movement, resources, survival, wandering NPCs, minimap | Explore and complete a three-day survival expedition |
 | **1.1 — Polish & Persistence** | **Implemented in [the-flatland.html](../the-flatland.html), v0.2.0; [QA evidence and limits](QA_REPORT.md)** | HUD/camera fixes, clearer rest feedback, saves | Resume the same game reliably, including NPC/resource state |
 | **2A — Living Society** | **Implemented in [the-flatland.html](../the-flatland.html), v0.2.0; [QA evidence and limits](QA_REPORT.md)** | Citizen identities, conversation, trust, rumors and partial knowledge | Introduce yourself, discover limited information, and retain relationship progress |
-| 2B — Courtship & Marriage | Planned | Partner preferences, proposals, consent/rejection, marriage, household relationships | Form or decline a marriage with meaningful consequences |
-| 3 — Family, Inheritance & Evolution | Planned | Multiple offspring, genealogy, strict geometric mutations, successor selection | Play as a chosen child from the next generation |
-| 4 — Combat & Law | Planned | Shape-specific attacks, danger, guards, injuries, crimes | Combat and legal reactions follow geometry and social context |
+| 2B — Courtship & Marriage | **Implemented, v0.3.1** | Preferences, attraction, courtship, consent, same-sex marriage and household support | Marriage persists through save/load |
+| 3 — Family, Inheritance & Evolution | **Implemented, v0.3.1** | Multiple offspring, strict genetics, aging, genealogy and playable succession | Verified daughter control in Generation 2 and Generation 3 births |
+| 3.5 — Architecture & renewal | **Implemented, v0.3.2; human playtest gate remains** | Registry, migrations, private NPC families, bounded scheduler and lossless archives | [Adopted renewal rules](POPULATION_RENEWAL_DESIGN.md) and census verified; natural playtest or explicit deferral before combat; see [handoff](PHASE35_HANDOFF.md) |
+| 4A — Combat foundations | **Proposed after 3.5; no combat implemented** | One voluntary nonlethal melee encounter, visible geometry, defense, retreat | [Bounded plan and entry gates](PHASE4A_PLAN.md); persistence, survival and generations preserved |
+| 4 later — Combat & Law | Planned separately | Lethal danger, lasting injuries, witnesses, guards, crimes | Combat and legal reactions follow geometry and social context |
 | 5 — Civilization | Planned | Trade, property, class mobility, politics, institutions and reform | Multiple viable long-term paths beyond becoming a circle |
 
-**Milestone strategy:** Phase 1.1 + 2A are implemented together in v0.2.0. Their recorded QA does not establish full native-persistence acceptance; see the [QA report](QA_REPORT.md), including the limited independent playtest. Complete target-browser persistence validation and playtesting before 2B; implement Phase 3 only after relationships and saving are stable. Combat comes after generational succession, not before.
+**Visual growth:** v0.3.5 renders four age stages (45% / 70% / 100% / 85% adult
+outline at 0 / 6 / 18 / 65 days) for polygons and lines. This has no physical,
+genetic or persistence rule changes.
+
+**Time vocabulary:** v0.3.3 presents the same 120-second aging interval as a day
+throughout the UI. Earlier family-year terminology below is historical; numeric
+rules and legacy save fields are unchanged. Known family now have gold halos and
+minimap dots, without revealing undiscovered biological relationships.
+
+**Milestone strategy:** Courtship/marriage was tested and committed before genetics; births/genetics and then aging/succession received separate commits. Native Chromium persistence passed before family implementation and after generational transitions. Finish architecture hardening and sustainable population design before combat.
 
 ## Phase 1 — Preserved baseline
 
@@ -37,7 +48,7 @@ The original self-contained HTML5 Canvas prototype is preserved in the [Phase 1 
 
 ## Phase 1.1 — Polish & Persistence
 
-**Status:** Implemented in [the-flatland.html](../the-flatland.html) (v0.2.0). See [QA evidence and limits](QA_REPORT.md); native persistence has only the limited independent observation recorded there, not full acceptance across target environments.
+**Status:** Originally implemented in v0.2.0 and preserved in the current [v0.3.1 build](../the-flatland.html). Native Chromium saving, shutdown and reopen now pass in [current QA](QA_REPORT.md); other browser environments remain unverified.
 
 **Scope**
 
@@ -71,7 +82,7 @@ The original self-contained HTML5 Canvas prototype is preserved in the [Phase 1 
 
 ## Phase 2B — Courtship & Marriage
 
-**Status:** Planned.
+**Status:** Implemented in v0.3.1. Deterministic and real-browser evidence is recorded in [QA](QA_REPORT.md).
 
 - Romantic compatibility, preferences, affection, agency, consent, rejection, and marriage/partnership status.
 - Marriage eligibility is **separate** from biological reproduction eligibility.
@@ -80,11 +91,13 @@ The original self-contained HTML5 Canvas prototype is preserved in the [Phase 1 
 - Cultural rules and social prejudice may influence NPC attitudes, but a society's discriminatory hierarchy must not be confused with a moral judgment by the game itself.
 - Family history becomes a meaningful, partly hidden consideration during courtship.
 
-**OPEN DESIGN QUESTION:** Under the current planned rules, a player who marries a same-sex partner before having a child reaches a lineage dead end. Should a later phase add adoption or household-heir mechanics? This question is unresolved; it adds no rule or implementation.
+**OPEN DESIGN QUESTION:** Adoption or household-heir rules remain unresolved and unimplemented. Under the current rules, an existing biological descendant remains eligible after same-sex remarriage; without a living adult descendant, death ends the playable lineage.
 
 **Accept when:** Different NPCs can accept/reject proposals for believable reasons and the relationship/marriage state survives save/load; birth is reserved for Phase 3.
 
 ## Phase 3 — Family, Inheritance & Evolution
+
+**Status:** Implemented in v0.3.1, including playable daughters, genealogy, aging and save migration. Bounded autonomous NPC births are now provided by Phase 3.5. The closed population remains finite; no immigration is implemented.
 
 ### Multiple offspring and succession
 
@@ -110,15 +123,26 @@ Square → Pentagon → Hexagon → ... → higher regular polygon
 2. Pre-regular mutations progress toward a less sharp, more symmetrical triangle, reaching an isosceles form before an equilateral form.
 3. Reaching a regular triangle unlocks a **chance**, not a guarantee, of gaining one additional side in future offspring.
 4. Once a lineage has reached a regular polygon, ordinary offspring remain regular, even when side counts do not increase.
-5. **Exception:** Mating with a daughter who carries **irregular ancestry** can probabilistically reintroduce irregular geometry in descendants, despite the regular parent's status.
+5. **Exception:** A female partner carrying **irregular ancestry** can probabilistically reintroduce irregular geometry despite a regular lineage anchor. Close biological relatives cannot court.
 6. Female line-form citizens' true heredity is not visible from their line appearance; ancestry is discovered socially, not by hovering.
 7. Geometry/fitness and society's class rank are different systems. Mutations and partner choices may carry trade-offs, not universal upgrades.
 
-**Design to resolve during Phase 3:** The exact way reintroduced irregularity changes offspring with four or more sides; birth frequency; aging/lifespan progression; offspring eligibility timing; heir selection timing. Avoid making up permanent canon for these until decided.
+**Resolved implementation defaults:** Reintroduced irregular polygons retain sides until regularity is repaired. Births have 2–4 offspring and a two-year cooldown. Adulthood is 18, retirement 40, reproduction 18–60 and natural lifespan 78–92. One survival day ages characters one year; refuge advancement covers subsistence. Only living adult descendants inherit, with no guardianship for minors. See [full rules](FAMILY_RULES.md).
 
 **Accept when:** Two suitable parents can produce multiple individually simulated children, rules are enforced in deterministic tests, and the player successfully continues as a chosen successor with persistent genealogy.
 
 ## Phase 4 — Combat & Law
+
+**2026-10-16 sequencing:** the user adopted bundle A–E and bounded renewal/lossless
+archives are now implemented and tested. The natural human playtest is still
+uncompleted and unwaived; obtain that report or explicit deferral against the
+[entry checklist](PHASE4A_PLAN.md) before combat begins.
+The proposed first milestone is **4A: voluntary nonlethal sparring**, with one
+opponent, geometry-based strikes, defense and retreat. It excludes law, guards,
+soldiers, civilization, lethal assaults and persistent injuries. Its completion
+does not satisfy the full phase's legal-aftermath criterion below.
+
+The following remains the broader **later-phase** scope:
 
 - Shape-driven attacks/defense: narrow triangle tips have piercing reach but other costs; blunt/regular bodies play differently.
 - Soldiers, threats, retreat, injuries, recovery and optional permadeath risk.

@@ -20,6 +20,8 @@ class Game {
         this.saves = new SaveStore(this);
         this.bindUI();
         this.socialUI = new SocialUI(this);
+        this.familyUI = new FamilyUI(this);
+        this.inspector = new InformationInspector(this);
         this.setScreen('menu');
         this.saves.refreshMenu();
         requestAnimationFrame(t => this.frame(t));
@@ -31,6 +33,13 @@ class Game {
         bind('continueBtn', () => this.requestLoad('latest'));
         bind('saveBtn', () => this.saves.save('manual'));
         bind('loadBtn', () => this.requestLoad('manual'));
+        bind('exportSaveBtn', () => this.saves.download());
+        for(const id of ['importSaveBtn','startImportBtn']) bind(id, () => $('saveFileInput').click());
+        $('saveFileInput').addEventListener('change', async e => {
+            const file=e.target.files[0]; e.target.value=''; if(!file) return;
+            if(file.size>SaveFormat.maxBytes) { this.saves.report('Import rejected: save file is too large.',true); return; }
+            try { this.saves.importRaw(await file.text()); } catch(error) { this.saves.report(`Import failed: ${error.message}`,true); }
+        });
         bind('newSeedBtn', () => { this.setScreen('menu'); this.saves.refreshMenu(); });
         bind('pauseBtn', () => this.pause());
         bind('helpBtn', () => this.showHelp());
@@ -43,12 +52,19 @@ class Game {
         bind('eatBtn', () => this.consume('food'));
         bind('drinkBtn', () => this.consume('water'));
         bind('restBtn', () => this.toggleRest());
+        bind('cancelApproachBtn', () => this.socialUI.controller?.cancel());
+        bind('renewalToggleBtn',()=>{
+            if(this.state!=='paused' || !this.world.player.actual.life.alive) return;
+            this.world.renewal.setEnabled(!this.world.renewal.enabled);
+            this.saves.save('auto',true);this.refreshUI();
+        });
     }
     setScreen(state) {
-        if (state !== 'running') this.socialUI?.close(false);
+        if(this.state==='inspect' && state!=='inspect') this.inspector.clear();
+        if (state !== 'running') this.socialUI?.reset();
         this.state = state;
-        const mapping = { menu: 'startScreen', paused: 'pauseScreen', help: 'helpScreen', dead: 'deathScreen' };
-        for (const id of ['startScreen', 'pauseScreen', 'helpScreen', 'deathScreen'])
+        const mapping = { menu: 'startScreen', paused: 'pauseScreen', help: 'helpScreen', dead: 'deathScreen', family: 'familyScreen', inspect:'inspectorScreen' };
+        for (const id of Object.values(mapping))
             $(id).hidden = mapping[state] !== id;
         $('hud').hidden = state === 'menu';
         $('tooltip').hidden = true;
@@ -57,7 +73,7 @@ class Game {
         if (state !== 'running') {
             this.input?.clear();
             this.accumulator = 0;
-            const first = state === 'menu' ? $('startBtn') : state === 'paused' ? $('resumeBtn') : state === 'help' ? $('closeHelpBtn') : $('retryBtn');
+            const first = state === 'menu' ? $('startBtn') : state === 'paused' ? $('resumeBtn') : state === 'help' ? $('closeHelpBtn') : state === 'family' ? $('familySaveBtn') : state==='inspect' ? $('closeInspectorBtn') : $('retryBtn');
             first?.focus({ preventScroll: true });
         }
     }
@@ -72,9 +88,10 @@ class Game {
         this.saves.load(slot);
     }
     installSave({ world, saved }) {
-        this.socialUI?.close(false);
+        this.socialUI?.reset();
         this.input.clear();
         this.world = world; this.runId = saved.runId;
+        world.captureForValidation=()=>this.saves.capture();
         this.pack = copyJSON(saved.pack);
         this.progress = { ...saved.progress, visited: new Set(saved.progress.visited) };
         this.gatherCooldown = saved.gatherCooldown; this.warningLatch = copyJSON(saved.warningLatch);
@@ -89,9 +106,10 @@ class Game {
     }
     start(seed) {
         seed = String(seed || 'abbott-1884').trim().slice(0, 48) || 'abbott-1884';
-        this.socialUI?.close(false);
+        this.socialUI?.reset();
         this.input.clear();
         this.world = new World(seed);
+        this.world.captureForValidation=()=>this.saves.capture();
         this.runId = `${Date.now().toString(36)}-${globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)}`;
         this.saves.newRun();
         this.pack = { food: 1, water: 1 };
@@ -105,12 +123,12 @@ class Game {
         this.mapClock = 0;
         this.noticeUntil = 0;
         $('notice').hidden = true;
+        this.world.renewal.setEnabled(true);
         $('seedInput').value = seed;
         this.setScreen('running');
         this.renderer.snap();
         this.canvas.focus({ preventScroll: true });
-        this.log('Your pack holds 1 food and 1 water. Find more nearby.');
-        this.log('Green patches feed you. Blue springs fill your pack.');
+        this.log('Green: food · Blue: water');
         this.refreshUI();
         this.renderer.snap();
         this.renderer.map();
@@ -192,12 +210,12 @@ class Game {
         p.runtime.resting = !p.runtime.resting;
         if (p.runtime.resting) {
             const f = this.world.refugeAt(p.x, p.y);
-            this.log(f ? 'Refuge rest: fast stamina and lower food/water use. Both meters must exceed 30 to heal.' : 'Field rest: fast stamina and lower food/water use. No health regeneration.');
+            this.log(f ? 'Resting at refuge.' : 'Resting in the field.');
         }
         this.refreshUI();
     }
     updatePlayer(dt) {
-        const p = this.world.player, v = p.vitals, run = p.runtime, input = this.input, move = input.movement();
+        const p = this.world.player, v = p.vitals, run = p.runtime, input = this.input, manual = input.movement(), move = this.socialUI.movement(dt,manual);
         const moving = move.magnitude > .04;
         if (moving)
             run.resting = false;
@@ -222,7 +240,7 @@ class Game {
             this.world.move(p, move.x * speed * dt, move.y * speed * dt);
             p.angle = moveAngle(p.angle, Math.atan2(move.y, move.x), dt * 15);
         }
-        const metabolism = p.actual.genome.metabolism;
+        const metabolism = p.actual.genome.metabolism * this.world.romance.household(p);
         v.hunger = Math.max(0, v.hunger - .30 * metabolism * dt * (sprint ? 1.65 : run.resting ? .65 : 1));
         v.thirst = Math.max(0, v.thirst - .46 * metabolism * dt * (sprint ? 1.8 : run.resting ? .72 : 1));
         if (v.hunger <= 0)
@@ -230,7 +248,7 @@ class Game {
         if (v.thirst <= 0)
             v.health -= 5 * dt;
         if (run.resting && this.world.refugeAt(p.x, p.y) && v.hunger > 30 && v.thirst > 30)
-            v.health = Math.min(100, v.health + 1.8 * dt);
+            v.health = Math.min(100, v.health + householdSupport(this.world,p).refugeHealing * dt);
         v.health = clamp(v.health, 0, 100);
         for (const [key, label] of [['hunger', 'Food'], ['thirst', 'Water']]) {
             if (v[key] < 23 && !this.warningLatch[key]) {
@@ -249,30 +267,30 @@ class Game {
             this.die();
     }
     die(persist = true) {
-        const v = this.world.player.vitals;
-        this.world.player.actual.life.alive = false;
-        this.world.player.runtime.sprinting = false;
-        this.world.player.runtime.resting = false;
-        $('deathCause').textContent = v.thirst <= 0 ? 'Without water, your expedition came to an end.' : 'Without food, your expedition came to an end.';
-        $('deathStats').textContent = `Survived ${Math.floor(this.world.elapsed / 60)}m ${Math.floor(this.world.elapsed % 60)}s · ${this.progress.gathered} provisions gathered · ${this.progress.visited.size} refuges found. Your seed was “${this.world.seed}”.`;
-        this.setScreen('dead');
-        if (persist) this.saves.save('auto', true);
+        const w=this.world,p=w.player,v=p.vitals;
+        w.family.markDeath(p,p.actual.life.deathCause || (v.thirst<=0?'thirst':v.hunger<=0?'hunger':'poor health'));
+        $('deathCause').textContent=`${w.family.name(p)} died from ${p.actual.life.deathCause}. No living adult descendant can continue the playable lineage.`;
+        $('deathStats').textContent=`Dynasty: ${w.family.playableIds.length} playable lives · Generation ${p.actual.lineage.generation} · ${w.family.births.reduce((n,b)=>n+b.childIds.length,0)} children born · ${this.progress.gathered} provisions gathered. Seed “${w.seed}”.`;
+        if(w.family.candidates().length) this.familyUI.open(false);
+        else this.setScreen('dead');
+        if(persist) this.saves.save('auto',true);
     }
     step(dt) {
-        if (this.state !== 'running')
+        if (this.state !== 'running' || this.socialUI?.isOpen)
             return;
         const w = this.world;
-        w.elapsed += dt;
         for (const c of [w.player, ...w.npcs]) {
             c.px = c.x;
             c.py = c.y;
             c.prevAngle = c.angle;
         }
         this.gatherCooldown = Math.max(0, this.gatherCooldown - dt);
-        w.updateResources(dt);
+        w.family.elapse(dt,{deferRenewal:true});
+        if (!w.player.actual.life.alive) { this.die(); return; }
         this.updatePlayer(dt);
         if (this.state !== 'running')
             return;
+        w.family.flushRenewal();
         if (this.input.gather)
             this.gather();
         for (const c of w.npcs)
@@ -283,14 +301,14 @@ class Game {
         this.effects = this.effects.filter(f => f.age < 1.5);
         if (!this.progress.complete && w.elapsed >= C.DAY * 3 && this.progress.gathered >= 12 && this.progress.visited.size >= 2) {
             this.progress.complete = true;
-            this.notify('Three days alive. Expedition complete. There is no next generation yet—but this life can continue.');
+            this.notify('Three days alive. Expedition complete. Continue building your family and future generations.');
             this.log('Expedition complete. Keep exploring for as long as you can.');
         }
     }
     frame(timestamp) {
         const dt = this.lastTime === null ? 0 : Math.min(.10, Math.max(0, (timestamp - this.lastTime) / 1000));
         this.lastTime = timestamp;
-        if (this.state === 'running' && !this.debugManual) {
+        if (this.state === 'running' && !this.debugManual && !this.socialUI.isOpen) {
             this.accumulator += dt;
             let steps = 0;
             while (this.accumulator >= C.DT && steps < 6) {
@@ -303,8 +321,9 @@ class Game {
                 }
             }
         }
-        const alpha = this.state === 'running' && !this.debugManual ? clamp(this.accumulator / C.DT, 0, 1) : 1;
+        const alpha = this.state === 'running' && !this.debugManual && !this.socialUI.isOpen ? clamp(this.accumulator / C.DT, 0, 1) : 1;
         this.renderer.render(alpha, dt);
+        this.socialUI?.frame();
         this.saves.tick();
         this.uiClock += dt;
         this.mapClock += dt;
@@ -323,10 +342,17 @@ class Game {
         requestAnimationFrame(t => this.frame(t));
     }
     refreshUI() {
+        if(this.world) {
+            $('renewalToggleBtn').textContent=this.world.renewal.enabled?'Disable NPC families':'Enable NPC families';
+            $('renewalToggleBtn').disabled=!this.world.player.actual.life.alive;
+            $('renewalStatus').textContent=this.world.renewal.enabled?'NPC families are enabled. Changes begin at the next day.':'The founding population ages without new NPC families.';
+        }
         const w = this.world;
         if (!w)
             return;
         const p = w.player;
+        $('generationTag').textContent = `Generation ${p.actual.lineage.generation}`;
+        $('playerIdentity').textContent = `${p.body.visibleType} · age ${Math.floor(p.actual.life.ageYears)} days`;
         for (const key of ['health', 'hunger', 'thirst', 'stamina']) {
             const value = clamp(p.vitals[key], 0, 100), num = Math.ceil(value);
             $(key + 'Text').textContent = num;
@@ -349,19 +375,26 @@ class Game {
         $('gatherBtn').disabled = !r || this.pack[r.kind] >= C.PACK;
         let context = 'Explore · collect food and water · keep your meters filled';
         if (p.runtime.resting)
-            context = f ? (p.vitals.hunger > 30 && p.vitals.thirst > 30 ? 'Refuge rest · fast stamina · lower consumption · healing' : 'Refuge rest · fast stamina · lower consumption · food/water must exceed 30 to heal') : 'Field rest · fast stamina · lower consumption · no healing';
+            context = f ? (p.vitals.hunger > 30 && p.vitals.thirst > 30 ? 'Refuge rest · healing' : 'Refuge rest · eat and drink to heal') : 'Field rest · no healing';
         else if (r)
             context = this.pack[r.kind] >= C.PACK ? `${r.kind === 'food' ? 'Food' : 'Water'} pack full · use supplies first` : `Hold E to gather ${r.kind} · ${r.quantity} remaining`;
         else if (f)
             context = 'Safe refuge · Space to rest and recover health';
+        if(w.elapsed<8 && !this.progress.gathered && !r && !p.runtime.resting) context=document.body.classList.contains('touch')?'Drag the joystick to move.':'WASD / arrows · Move';
+        if(r && !p.runtime.resting) context=`${document.body.classList.contains('touch')?'Hold Gather':'Hold E'} · ${r.kind} (${r.quantity})`;
+        if(p.vitals.hunger<45 && this.pack.food) context=document.body.classList.contains('touch')?'Tap Eat · Use packed food':'F · Eat packed food';
+        else if(p.vitals.thirst<45 && this.pack.water) context=document.body.classList.contains('touch')?'Tap Drink · Use packed water':'R · Drink packed water';
+        const pending=this.socialUI?.controller?.pending;
+        if(pending) context=w.social.nearby(w.social.citizen(pending.id))?'Waiting for a reply…':'Walking over…';
+        $('cancelApproachBtn').hidden=!pending;
         $('context').textContent = context;
-        $('restDetails').hidden = !p.runtime.resting;
+        $('restDetails').hidden = true;
         $('restDetails').textContent = `Stamina +27/s · food use −35% · water use −28%${f ? ' · eligible healing +1.8/s' : ''}`;
         $('location').textContent = w.districtAt(p.x, p.y);
         const nearby = w.social.nearest();
         $('talkBtn').disabled = !nearby;
         $('reputationSummary').textContent = w.social.reputationLabel();
-        if (!p.runtime.resting && !r && nearby) $('context').textContent = 'A citizen is nearby · T or Talk to introduce yourself';
+        if (!pending && !p.runtime.resting && !r && nearby) $('context').textContent = 'Click a citizen · Choose an action';
         this.socialUI?.refresh();
         const days = Math.min(3, Math.floor(w.elapsed / C.DAY));
         $('daysCount').textContent = days + ' / 3';
@@ -381,6 +414,7 @@ class Game {
         const point = this.renderer.screenToWorld(x, y);
         let target = null, best = Infinity;
         for (const c of this.world.npcs) {
+            if (!c.actual.life.alive) continue;
             const d = dist2(c.x, c.y, point.x, point.y);
             if (d < (c.body.radius + 9) ** 2 && d < best) { best = d; target = c; }
         }
@@ -395,7 +429,7 @@ class Game {
         tooltip.replaceChildren();
         const title = document.createElement('strong'); title.textContent = v.introduced ? `${v.name} · ${v.observed.form}` : v.observed.form;
         const body = document.createElement('p'); body.textContent = `${v.observed.apparentClass} · ${v.observed.size} · ${v.observed.activity}.`;
-        const note = document.createElement('small'); note.textContent = `${v.introduced ? v.relationship.label + '. ' : 'Name unknown. '}Family history and hereditary traits are not revealed by an outline. ${v.inRange ? 'T to talk · ' : ''}Click to inspect.`;
+        const note = document.createElement('small'); note.textContent = `${v.introduced ? v.relationship.label+' · ' : ''}Click for actions`;
         tooltip.append(title, body, note); tooltip.hidden = false;
         const left = clamp(mouse.x + 17, 8, Math.max(8, this.renderer.w - tooltip.offsetWidth - 10));
         const top = clamp(mouse.y + 18, 8, Math.max(8, this.renderer.h - tooltip.offsetHeight - 10));

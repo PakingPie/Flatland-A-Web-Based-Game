@@ -1,0 +1,76 @@
+// Reversible truth inspection, with isolated native saves and no player profile.
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {createRequire}=require('node:module');
+const {chromium}=process.env.FLATLAND_NODE_MODULES?createRequire(path.join(process.env.FLATLAND_NODE_MODULES,'_resolve.cjs'))('playwright'):require('playwright');
+const output=path.resolve('output/playwright');fs.mkdirSync(output,{recursive:true});
+(async()=>{
+    const server=require('node:http').createServer((req,res)=>{res.setHeader('Content-Type','text/html');res.end(fs.readFileSync('the-flatland.html'));});
+    await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+    const url=`http://127.0.0.1:${server.address().port}/the-flatland.html`,raw=fs.readFileSync('tools/fixtures/released-v4.json','utf8'),fixture=JSON.parse(raw);
+    let browser;const results=[],errors=[];
+    const listen=page=>page.on('pageerror',e=>errors.push(e.message));
+    try {
+        browser=await chromium.launch({headless:true,executablePath:process.env.FLATLAND_CHROMIUM||undefined});
+        const context=await browser.newContext({viewport:{width:1280,height:800}}),page=await context.newPage();listen(page);
+        await page.goto(url+'?debug=1');await page.keyboard.press('F8');assert.equal(await page.locator('#inspectorScreen').isVisible(),false);
+        await page.evaluate(raw=>localStorage.setItem('flatland.manual.v1',raw),raw);await page.reload();await page.locator('#continueBtn').click();await page.evaluate(()=>FlatlandDebug.manual());
+        const payload=()=>page.evaluate(()=>JSON.parse(FlatlandDebug.exportSave()).payload);
+        const slots=()=>page.evaluate(()=>['flatland.manual.v1','flatland.auto.v1'].map(k=>localStorage.getItem(k)));
+        const before=await payload(),stored=await slots();
+        await page.keyboard.down('F8');await page.keyboard.down('F8');await page.keyboard.up('F8');
+        assert.equal(await page.locator('#inspectorScreen').isVisible(),true);
+        assert.equal(await page.evaluate(()=>FlatlandDebug.snapshot().state),'inspect');
+        assert.equal(await page.locator('#inspectorCharacter option').count(),fixture.payload.characters.length+1);
+        assert.match(await page.locator('#inspectorSummary').innerText(),/Hidden geometry:.*sides/);
+        assert.match(await page.locator('#inspectorSummary').innerText(),/Irregular-ancestry carrier:/);
+        await page.locator('#inspectorRaw summary').click();
+        assert.deepEqual(JSON.parse(await page.locator('#inspectorRecord').textContent()).character.actual,before.characters[0].actual);
+        await page.evaluate(()=>FlatlandDebug.advance(10));
+        for(const key of ['KeyW','KeyF','KeyR','KeyE','Space','KeyP','KeyH','KeyT']) await page.keyboard.press(key);
+        assert.deepEqual(await payload(),before);assert.deepEqual(await slots(),stored);
+        results.push('PASS F8 toggle ignores repeats, reveals hidden truth and pauses gameplay without mutating payload/RNG/slots');
+        await page.locator('#inspectorSearch').fill('founder-000');
+        assert.equal(await page.locator('#inspectorCharacter option').count(),1);
+        assert.match(await page.locator('#inspectorCharacter').innerText(),/Deceased/);
+        const dead=JSON.parse(await page.locator('#inspectorRecord').textContent());assert.equal(dead.character.actual.life.alive,false);assert.ok(dead.archivedNotebooks['founder-000']);
+        await page.locator('#inspectorSearch').fill('no-such-person');assert.equal(await page.locator('#inspectorRecord').textContent(),'');
+        await page.locator('#inspectorSearch').fill('');await page.locator('#inspectorCharacter').selectOption('world');
+        const world=JSON.parse(await page.locator('#inspectorRecord').textContent());assert.deepEqual(world.save,before);assert.ok(world.terrain.obstacles.length);assert.ok(world.resources.every(r=>Number.isFinite(r.x) && Number.isFinite(r.y)));
+        assert.deepEqual(await payload(),before);
+        results.push('PASS searchable living/deceased records, archived notebooks and complete world/dynasty snapshot remain read-only');
+        await page.locator('#inspectorSearch').focus();await page.keyboard.press('F8');
+        assert.equal(await page.evaluate(()=>FlatlandDebug.snapshot().state),'paused');
+        assert.equal(await page.locator('#inspectorRecord').textContent(),'');assert.equal(await page.locator('#inspectorCharacter option').count(),0);
+        assert.deepEqual(await payload(),before);assert.deepEqual(await slots(),stored);
+        assert.equal(await page.evaluate(()=>FlatlandDebug.inspect()),true);assert.equal(await page.evaluate(()=>FlatlandDebug.inspect()),false);
+        assert.ok(!JSON.stringify(await page.evaluate(()=>FlatlandDebug.familyView())).includes('latentIrregularAncestry'));
+        results.push('PASS F8 while editing and repeated console toggle restore prior state, clear private DOM and preserve normal DTO privacy');
+        await page.keyboard.press('F8');await page.reload();await page.locator('#continueBtn').click();await page.evaluate(()=>FlatlandDebug.manual());
+        assert.equal(await page.locator('#inspectorScreen').isVisible(),false);assert.equal(await page.locator('#inspectorRecord').textContent(),'');
+        assert.deepEqual(await payload(),before);
+        await page.locator('#resumeBtn').click();
+        const citizen=before.characters.find(c=>c.id!==before.currentPlayerId && c.actual.life.alive && c.actual.identity.sex==='female');
+        await page.evaluate(id=>FlatlandDebug.openCitizen(id),citizen.id);const withCitizen=await payload();
+        await page.keyboard.press('F8');assert.equal(await page.locator('#inspectorCharacter').inputValue(),citizen.id);
+        await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>FlatlandDebug.snapshot().state),'running');assert.deepEqual(await payload(),withCitizen);
+        results.push('PASS inspection is not persisted on reload and a selected citizen opens directly without teaching discoveries');
+        await page.keyboard.press('F8');await page.locator('#inspectorRaw').evaluate(el=>el.open=false);
+        for(const [width,height] of [[1280,800],[390,844],[844,390]]) {
+            await page.setViewportSize({width,height});
+            assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth && document.querySelector('#inspectorScreen .modal').scrollWidth<=document.querySelector('#inspectorScreen .modal').clientWidth),true);
+            await page.locator('#closeInspectorBtn').scrollIntoViewIfNeeded();
+            await page.screenshot({path:path.join(output,`inspector-${width}x${height}.png`)});
+        }
+        results.push('PASS inspector layout fits desktop, portrait and short landscape');
+        const touch=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true,deviceScaleFactor:2}),phone=await touch.newPage();listen(phone);
+        await phone.goto(url);assert.equal(await phone.evaluate(()=>typeof window.FlatlandDebug),'undefined');
+        await phone.evaluate(raw=>localStorage.setItem('flatland.manual.v1',raw),raw);await phone.reload();await phone.locator('#continueBtn').tap();
+        await phone.getByText('Testing',{exact:true}).tap();await phone.locator('#openInspectorBtn').tap();
+        assert.equal(await phone.locator('#inspectorScreen').isVisible(),true);assert.match(await phone.locator('#inspectorSummary').innerText(),/Hidden geometry/);
+        await phone.locator('#closeInspectorBtn').tap();assert.equal(await phone.locator('#pauseScreen').isVisible(),true);assert.equal(await phone.locator('#inspectorRecord').textContent(),'');
+        await phone.keyboard.press('F8');assert.equal(await phone.locator('#inspectorScreen').isVisible(),true);await phone.keyboard.press('Escape');
+        results.push('PASS production build supports touch Pause → Testing and F8/Escape without exposing the debug API');
+        assert.deepEqual(errors,[]);console.log(results.join('\n'));
+        fs.writeFileSync(path.join(output,'inspector-results.json'),JSON.stringify({results,errors,browser:browser.version()},null,2));
+    }finally{if(browser)await browser.close();server.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

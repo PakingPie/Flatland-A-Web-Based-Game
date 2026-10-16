@@ -58,9 +58,9 @@ class Input {
     }
     clear() { this.keys.clear(); this.hold.gather = this.hold.sprint = false; this.touch = { x: 0, y: 0 }; this.joyPointer = null; this.mouse.inside = false; $('stick').style.transform = ''; }
     keyDown(e) {
-        if (e.code === 'Tab' && this.game.state !== 'running') {
-            const dialog = document.querySelector('.overlay:not([hidden])');
-            const controls = dialog ? [...dialog.querySelectorAll('button:not(:disabled),input')].filter(el => !el.hidden) : [];
+        if (e.code === 'Tab' && (this.game.state !== 'running' || this.game.socialUI?.isOpen)) {
+            const dialog = this.game.socialUI?.isOpen ? $('citizenPanel') : document.querySelector('.overlay:not([hidden])');
+            const controls = dialog ? [...dialog.querySelectorAll('button:not(:disabled),input,select:not(:disabled),summary')].filter(el => !el.hidden && el.getClientRects().length) : [];
             if (controls.length) {
                 const first = controls[0], last = controls[controls.length - 1];
                 if (e.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
@@ -70,6 +70,11 @@ class Input {
         }
         if (e.ctrlKey || e.metaKey || e.altKey)
             return;
+        if(e.code==='F8') { e.preventDefault(); if(!e.repeat) this.game.inspector.toggle(); return; }
+        if(this.game.inspector?.isOpen) {
+            if(e.code==='Escape') { e.preventDefault(); this.game.inspector.close(); }
+            return;
+        }
         const editing = e.target instanceof HTMLElement && (e.target.matches('input,textarea,select') || e.target.isContentEditable);
         if (editing) {
             if (e.code === 'Enter' && this.game.state === 'menu') {
@@ -88,10 +93,12 @@ class Input {
             return;
         if (this.game.state === 'running' && this.game.socialUI?.isOpen) {
             if (e.code === 'Escape' || e.code === 'KeyT') { this.game.socialUI.close(); return; }
-            if (/^Digit[1-7]$/.test(e.code)) { this.game.socialUI.talk(Object.keys(SOCIAL.topics)[Number(e.code.slice(-1))-1]); return; }
+            if (/^Digit[1-7]$/.test(e.code)) { $('bubbleOptions').querySelectorAll('button')[Number(e.code.slice(-1))-1]?.click(); return; }
             if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowLeft','ArrowDown','ArrowRight'].includes(e.code)) this.game.socialUI.close(false);
         }
+        if (e.code === 'Escape' && this.game.socialUI?.controller?.pending) { this.game.socialUI.controller.cancel(); return; }
         if (e.code === 'KeyT' && this.game.state === 'running') { this.game.socialUI.openNearest(); return; }
+        if (e.code === 'Escape' && this.game.state === 'family') { this.game.familyUI.close(); return; }
         if (e.code === 'KeyP' || e.code === 'Escape') {
             if (this.game.state === 'running')
                 this.game.pause();

@@ -15,7 +15,7 @@ class Renderer {
         window.addEventListener('resize', () => this.resize());
         if (typeof ResizeObserver !== 'undefined') {
             this.layoutObserver = new ResizeObserver(() => { this.layoutDirty = true; });
-            for (const el of document.querySelectorAll('.topbar,.vitals,.objectives,.map-panel,.bottom-center,#joystick,#citizenPanel')) this.layoutObserver.observe(el);
+            for (const el of document.querySelectorAll('.topbar,.vitals,.objectives,.map-panel,.bottom-center,#joystick')) this.layoutObserver.observe(el);
         }
     }
     resize() { const r = this.game.canvas.getBoundingClientRect(); this.w = Math.max(1, r.width); this.h = Math.max(1, r.height); this.dpr = Math.min(devicePixelRatio || 1, 2); this.game.canvas.width = Math.round(this.w * this.dpr); this.game.canvas.height = Math.round(this.h * this.dpr); this.clampCamera(); }
@@ -23,7 +23,7 @@ class Renderer {
     // Select a stable clear screen anchor on layout changes, not every simulation step.
     measureLayout() {
         const blockers = [];
-        if (!$('hud').hidden) for (const el of document.querySelectorAll('.topbar,.vitals,.objectives,.map-panel,.bottom-center,#joystick,#citizenPanel')) {
+        if (!$('hud').hidden) for (const el of document.querySelectorAll('.topbar,.vitals,.objectives,.map-panel,.bottom-center,#joystick')) {
             const r = el.getBoundingClientRect();
             if (r.width && r.height && getComputedStyle(el).display !== 'none' && getComputedStyle(el).visibility !== 'hidden') blockers.push({ x: r.left, y: r.top, w: r.width, h: r.height });
         }
@@ -159,9 +159,10 @@ class Renderer {
         for (const r of world.resources)
             if (visible(r.x, r.y, 30))
                 this.resource(ctx, r, world.elapsed, r === nearest);
+        const relatives=this.familyHighlights();
         for (const c of world.npcs)
             if (visible(c.x, c.y, 40))
-                this.citizen(ctx, c, alpha, world.elapsed, false);
+                this.citizen(ctx, c, alpha, world.elapsed, false,relatives.has(c.id));
         this.citizen(ctx, p, alpha, world.elapsed, true);
         // Day/night is atmospheric only in this phase; it never conceals vital UI.
         const phase = (world.elapsed % C.DAY) / C.DAY, night = Math.max(0, Math.sin((phase - .50) * TAU)) * .13;
@@ -276,24 +277,41 @@ class Renderer {
         }
         ctx.restore();
     }
-    citizen(ctx, c, alpha, time, isPlayer) {
+    familyHighlights() {
+        // Use the observer's known family, never private ancestry traversal.
+        const w=this.game.world;
+        return new Set(w.family.knownFamily().filter(c=>c.actual.life.alive && c.id!==w.player.id).map(c=>c.id));
+    }
+    citizen(ctx, c, alpha, time, isPlayer, isRelative=false) {
+        if (!c.actual.life.alive) return;
         const x = lerp(c.px, c.x, alpha), y = lerp(c.py, c.y, alpha), a = moveAngle(c.prevAngle, c.angle, alpha);
+        const scale=lifeStage(c.actual.life.ageYears).scale,radius=c.body.radius*scale;
+        const points=scale===1?c.body.points:c.body.points.map(([x,y])=>[x*scale,y*scale]);
         ctx.save();
         ctx.translate(x, y);
+        if(isRelative) {
+            ctx.save();ctx.beginPath();ctx.arc(0,0,radius+13,0,TAU);
+            ctx.fillStyle='#f1cd8810';ctx.fill();ctx.strokeStyle='#f1cd88';ctx.lineWidth=2;
+            ctx.shadowColor='#f1cd88';ctx.shadowBlur=9;ctx.setLineDash([5,4]);ctx.stroke();ctx.restore();
+        }
+        const ui=this.game.socialUI;
+        if(!isPlayer && (ui?.selectedId===c.id || ui?.controller?.pending?.id===c.id)) {
+            ctx.beginPath();ctx.arc(0,0,radius+8,0,TAU);ctx.strokeStyle='#a6cfaa';ctx.lineWidth=2;ctx.stroke();
+        }
         if (isPlayer) {
             ctx.beginPath();
-            ctx.arc(0, 0, c.body.radius + 8, 0, TAU);
+            ctx.arc(0, 0, radius + 8, 0, TAU);
             ctx.strokeStyle = c.runtime.resting ? '#a6cfaa80' : '#f1a38b35';
             ctx.lineWidth = 1;
             ctx.stroke();
             ctx.font = '9px ui-sans-serif, system-ui';
             ctx.textAlign = 'center';
             ctx.fillStyle = '#eac1ad';
-            ctx.fillText(c.runtime.resting ? 'RESTING' : 'YOU', 0, -c.body.radius - 16);
+            ctx.fillText(c.runtime.resting ? 'RESTING' : 'YOU', 0, -radius - 16);
         }
         ctx.save();
         ctx.rotate(a);
-        polygon(ctx, c.body.points);
+        polygon(ctx, points);
         ctx.fillStyle = isPlayer ? '#c57960' : c.body.form === 'line' ? '#bb929a' : '#293d3c';
         ctx.fill();
         ctx.strokeStyle = c.body.color;
@@ -301,7 +319,7 @@ class Renderer {
         ctx.lineJoin = 'round';
         ctx.stroke();
         if (c.body.form === 'polygon' && c.body.points.length >= 4) {
-            polygon(ctx, c.body.points.map(p => [p[0] * .68, p[1] * .68]));
+            polygon(ctx, points.map(p => [p[0] * .68, p[1] * .68]));
             ctx.strokeStyle = c.body.color + '40';
             ctx.lineWidth = .8;
             ctx.stroke();
@@ -309,14 +327,14 @@ class Renderer {
         ctx.restore();
         if (!isPlayer && c.playerKnowledge.discoveredFacts.name && dist2(c.x, c.y, this.game.world.player.x, this.game.world.player.y) < 340 ** 2) {
             ctx.textAlign = 'center'; ctx.font = '9px ui-sans-serif, system-ui'; ctx.fillStyle = '#c8d4c3';
-            ctx.fillText(c.playerKnowledge.discoveredFacts.name.value, 0, -c.body.radius - 10);
+            ctx.fillText(c.playerKnowledge.discoveredFacts.name.value, 0, -radius - (isRelative?25:10));
         }
         if (c.ai?.activity === 'gathering') {
             ctx.fillStyle = '#afcaaf';
             for (let i = 0; i < 3; i++) {
                 ctx.globalAlpha = .4 + .6 * ((Math.sin(time * 5 + i) + 1) / 2);
                 ctx.beginPath();
-                ctx.arc(-5 + i * 5, -c.body.radius - 7, 1.4, 0, TAU);
+                ctx.arc(-5 + i * 5, -radius - 7, 1.4, 0, TAU);
                 ctx.fill();
             }
             ctx.globalAlpha = 1;
@@ -364,10 +382,12 @@ class Renderer {
             ctx.fill();
             ctx.restore();
         }
-        ctx.fillStyle = '#b7c9b46a';
+        const relatives=this.familyHighlights();
         for (const c of world.npcs) {
+            if (!c.actual.life.alive) continue;
+            const relative=relatives.has(c.id);ctx.fillStyle=relative?'#f1cd88':'#b7c9b46a';
             ctx.beginPath();
-            ctx.arc(c.x, c.y, 9, 0, TAU);
+            ctx.arc(c.x, c.y, relative?19:9, 0, TAU);
             ctx.fill();
         }
         const p = world.player;

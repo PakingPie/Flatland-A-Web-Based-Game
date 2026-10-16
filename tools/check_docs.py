@@ -16,6 +16,7 @@ DEFINITION = re.compile(r"^\s{0,3}\[[^\]\n]+\]:\s*(<[^>]+>|\S+)", re.MULTILINE)
 HTML = re.compile(r"\b(?:href|src)\s*=\s*['\"]([^'\"]+)['\"]", re.IGNORECASE)
 URL = re.compile(r"\b[A-Za-z][A-Za-z0-9+.-]*://[^\s<>`]*")
 PYTHON_MODULE = re.compile(r"\bpython\s+-m\s+([\w.]+)")
+METHOD_CALL = re.compile(r"\b[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+\s*\(")
 PATH = re.compile(
     r"(?<![\w:/.+-])(?:"
     r"(?:\.{1,2}/)?(?:[\w.-]+/)*[\w-]+(?:\.[\w-]+)*\.[A-Za-z][\w-]*"
@@ -37,6 +38,9 @@ def references(text):
     for match in PYTHON_MODULE.finditer(text):
         start, end = match.span(1)
         masked[start:end] = " " * (end - start)
+    # Dotted JavaScript calls are API examples, not file references.
+    for match in METHOD_CALL.finditer(text):
+        masked[match.start():match.end()] = " " * (match.end() - match.start())
     remainder = "".join(masked)
     for match in PATH.finditer(remainder):
         yield match.start(), match.group()

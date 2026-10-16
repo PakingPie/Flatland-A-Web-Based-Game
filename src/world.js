@@ -5,7 +5,7 @@ class World {
         this.elapsed = 0;
         this.obstacles = [];
         this.resources = [];
-        this.npcs = [];
+        this.registry = new CharacterRegistry();
         this.patches = [];
         this.index = new SpatialHash();
         this.refuges = [{ id: 'refuge-common', x: 1728, y: 1280, r: 96, name: 'Common refuge' }, { id: 'refuge-west', x: 576, y: 1600, r: 96, name: 'West hollow' }, { id: 'refuge-court', x: 2784, y: 576, r: 96, name: 'Quiet court' }];
@@ -17,13 +17,19 @@ class World {
         this.generateTerrain();
         this.nav = new Navigation(this);
         this.generateResources();
-        this.player = createCharacter('founder-000', { sideCount: 3, regularity: .44, sharpness: .61, size: 1.15, mobility: 1, metabolism: 1 }, 'polygon', 1728, 1308, this.rng, true);
+        this.registry.add(createCharacter('founder-000', { sideCount: 3, regularity: .44, sharpness: .61, size: 1.15, mobility: 1, metabolism: 1 }, 'polygon', 1728, 1308, this.rng, true));
+        this.registry.select('founder-000');
         this.player.angle = -.8;
         this.player.prevAngle = -.8;
         this.generateCitizens();
         this.social = new SocialSystem(this);
+        this.romance = new RomanceSystem(this);
+        this.family = new FamilySystem(this);
+        this.renewal = new RenewalSystem(this);
         this.conversationId = null;
     }
+    get player() { return this.registry.get(this.registry.currentId); }
+    get npcs() { return this.registry.npcs(); }
     addObstacle(o) { o.id = 'obstacle-' + this.obstacles.length; this.obstacles.push(o); this.index.insert(o); }
     circleClear(x, y, r) {
         if (x < r + 16 || y < r + 16 || x > C.W - r - 16 || y > C.H - r - 16)
@@ -116,7 +122,7 @@ class World {
             if (!spot)
                 continue;
             const g = { sideCount: t.n, regularity: t.r, sharpness: t.s, size: rng.range(.86, 1.23), mobility: rng.range(.82, 1.18), metabolism: rng.range(.86, 1.15), mutationTendency: rng.range(.015, .065) };
-            this.npcs.push(createCharacter('citizen-' + String(i + 1).padStart(3, '0'), g, form, spot.x, spot.y, rng));
+            this.registry.add(createCharacter('citizen-' + String(i + 1).padStart(3, '0'), g, form, spot.x, spot.y, rng));
         }
         // A visible neighbor near the start makes the living-world premise immediate.
         const p = this.npcs[0];
@@ -204,9 +210,10 @@ class World {
         }
     }
     updateNPC(c, dt) {
-        const ai = c.ai, v = c.vitals, m = c.actual.genome.metabolism;
+        if (!c.actual.life.alive) return;
+        const ai = c.ai, v = c.vitals, m = c.actual.genome.metabolism * this.romance.household(c);
         c.runtime.moving = false;
-        // Phase 1 needs drive NPC behavior; NPC mortality/aging is deliberately deferred.
+        // Needs still drive NPC navigation. FamilySystem handles aging and mortality.
         v.hunger = clamp(v.hunger - .15 * m * dt, 0, 100);
         v.thirst = clamp(v.thirst - .23 * m * dt, 0, 100);
         // A nearby speaker briefly stays with you, but still needs supplies. Other NPCs remain autonomous.
@@ -285,7 +292,7 @@ class World {
         }
     }
     separateCitizens() {
-        const chars = this.npcs;
+        const chars = this.npcs.filter(c=>c.actual.life.alive);
         for (let i = 0; i < chars.length; i++) {
             const a = chars[i];
             for (let j = i + 1; j < chars.length; j++) {

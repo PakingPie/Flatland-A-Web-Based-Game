@@ -1,125 +1,278 @@
 # The Flatland
-## Phase 1.1 + Phase 2A — Living Society (0.2.0)
+## Version 0.3.5 — Growing children and smaller elders
 
-A lightweight, offline-capable Canvas survival and social simulation inspired by Edwin Abbott's *Flatland*. You begin as an irregular triangle. Find food and water, manage your strength, meet persistent citizens, and learn the difference between a visible outline, a public claim, and a person you actually know.
+Phase 3.5 now includes bounded [autonomous NPC families](docs/POPULATION_RENEWAL_DESIGN.md),
+with mutual private relationships, daily marriages/births and stable household
+inheritance. New expeditions enable renewal; existing saves keep their founding-only
+policy until you choose **Pause → Population & families → Enable NPC families**.
+Export a backup first. Disabling stops future events and keeps existing families.
+The population remains finite. The subsequent [Phase 4A sparring plan](docs/PHASE4A_PLAN.md)
+remains a proposal; combat, law, guards and civilization are not implemented.
 
-**Current scope:** survival, persistence, identities, conversations, trust, reputation, and progressive discovery. There is no courtship, marriage, reproduction, aging, succession, evolution, combat, or advanced economy yet. Social prestige is a fictional institution, not a measure of intelligence, morality, or biological fitness.
+A lightweight offline Canvas survival and society simulation inspired by Edwin
+Abbott's *Flatland*. Survive as an irregular triangle, meet citizens, court a
+consenting partner, marry, raise children and continue as a chosen adult son or
+daughter. Social prestige is fictional; it does not measure morality or fitness.
 
-> **Planning:** [v0.3 Development Roadmap](docs/ROADMAP.md). Phase 1.1 + 2A are implemented in the included v0.2.0 build; Phase 2B onward is planned. See the [QA report](docs/QA_REPORT.md) for recorded evidence and its limits.
-
-## Play
-
-Open **`the-flatland.html`** in a browser. All game code, styling, and graphics are embedded. The game has no external assets, CDNs, game libraries, account, backend, or build-time dependency to play the included distributable.
-
-For a stable storage origin, serving the folder locally is recommended:
+Open **[the-flatland.html](the-flatland.html)** in a browser. All code, styling and
+graphics are embedded, without network assets, accounts, backend or frameworks.
+For a stable browser storage origin, serve this folder locally:
 
 ```sh
 python -m http.server 8000 --bind 127.0.0.1
 ```
 
-Open `http://127.0.0.1:8000/the-flatland.html`. Keep the same browser profile, hostname, port, and protocol when returning to your saves. Python only provides static files; it is not a gameplay backend. Opening a local file is also possible, but native `file:` storage behavior needs checking in the browser being used.
+Open [the local game](http://127.0.0.1:8000/the-flatland.html). Return with the same
+browser profile, hostname, port and protocol to find your saves. Python only
+serves static files. Direct file opening works in tested Chromium; file-origin
+storage durability has not been established.
 
-Choose **Begin new expedition** or **Continue saved expedition**. The default seed is `abbott-1884`. A day lasts 120 seconds of unpaused simulation. Your expedition goals remain: survive three full days, gather 12 provisions, and visit two refuges. Completion does not stop the simulation.
+## Playing a generation
 
-### Controls
+1. Gather food and water, eat/drink from your pack, and rest at refuges to heal.
+2. Click or tap a citizen and choose Greet. You walk over automatically.
+3. Discuss partnership preferences and try different courtship activities in the Romance bubble. Trust
+   and attraction are separate; an excellent friend can decline romance.
+4. Propose once affection, trust and mutual interest are established. Marriage
+   lowers food/water use by 12% and improves playable refuge healing.
+   Under Affection → Commitment, **Discuss children** explains current readiness.
+   A hesitant spouse can reconsider as trust and affection grow; asking repeatedly
+   does not increase willingness.
+5. Open **Family & succession** from your condition panel or Pause. Eligible,
+   consenting spouses can have two to four individually inherited children.
+6. At a refuge use **Live 1 / 5 days**. Community subsistence covers needs
+   and preserves packed supplies; aging, adulthood and natural deaths still occur.
+7. Children become adults at 18 days old. At 40 days old you may retire and choose a living adult
+   biological descendant. Adult descendants can also continue upon your death.
+8. The selected heir becomes playable in the **same world**. Siblings and retired
+   founders remain NPCs. Save and Continue to resume that generation.
 
-| Action | Keyboard / mouse | Touch |
+Death with no living adult descendant ends the playable lineage, including when
+all surviving children are minors. There is no automatic guardianship/adoption.
+The dynasty summary and family history remain available. An older manual save is
+an explicit recovery option.
+
+Same-sex couples can court, marry, receive the same household benefits and retain
+existing biological children as potential heirs. Joint biological births currently
+require a male and female spouse. Marriage and biological parentage are separate.
+
+## Controls
+
+| Action | Desktop | Touch |
 |---|---|---|
-| Move | WASD / arrows | Left joystick |
-| Sprint | Hold Shift | Hold Sprint |
-| Gather nearest accessible resource | Hold E | Hold Gather |
-| Eat / drink from pack | F / R | Eat / Drink |
+| Move / sprint | WASD or arrows / hold Shift | Joystick / hold Sprint |
+| Gather | Hold E | Hold Gather |
+| Eat / drink | F / R | Eat / Drink |
 | Rest / stand | Space | Rest |
-| Talk to nearest citizen | T | Talk |
-| Inspect a specific citizen | Hover / click | Tap the citizen |
-| Choose conversation topic | 1–7, or click | Tap an option; scroll for more |
-| Close citizen panel | T / Escape / close button | Close button |
-| Pause / resume | P; Escape when panel is closed | Pause / Resume |
-| Field guide | H | Help |
-| Save / load | Pause menu | Pause menu |
+| Talk / inspect | T / click citizen | Talk / tap citizen |
+| Conversation | Action bubble; 1–4 select visible choices | Tap an action |
+| Courtship / proposal | Romance → actions / Commitment | Same bubble choices |
+| Family, days, heir selection | Condition panel or Pause → Family | Same buttons |
+| Close citizen / family panel | Escape or close button | Close button |
+| Pause / help | P / H | Pause / Help |
+| Save, load, export, import | Pause menu | Pause menu |
 
-Gathering puts resources in your pack; it does **not** automatically feed or hydrate you. Food restores up to 38 and water up to 45, capped at 100. You can carry eight of each. Walking away with movement keys closes the citizen panel. The panel is not a pause screen: needs continue to fall and other citizens continue moving. Pause when you need time to read without survival pressure.
+Citizen menus and Family **pause the world while choosing**. Selecting an action
+resumes time and walks over automatically; brief replies fade on their own.
+Manual movement, Escape or Cancel stops a queued approach. Details opens the
+optional notebook. Gathering fills your pack without automatically eating/drinking. Each pack
+holds eight. Food restores up to 38, water 45, capped at 100. Field rest restores
+stamina and reduces consumption; refuge rest heals when food/water both exceed 30.
 
-### Rest
+## A small menu, a brief reply
 
-Field rest restores stamina quickly and reduces food use by 35% and water use by 28%, but does not heal. Refuge rest has the same benefits and heals only while food and water are both above 30. The context bar explicitly shows which rest mode is active. Movement interrupts resting.
+New lives start without an instruction wall. Context prompts teach movement,
+gathering and using supplies. Citizen bubbles show at most four choices, with
+more topics one level deeper. Greet, Talk, Romance and Family use existing rules;
+Details holds discovered facts and unconfirmed rumors. Short speech bubbles
+replace mechanical explanations after actions. Family traits and histories expand
+on demand. Help retains optional rule explanations.
 
-### Meeting citizens
+## Family relationships
 
-An unknown citizen reveals only visible form, apparent institutional class, activity, and approximate outline size. Introduce yourself, ask about work or interests, and return over multiple days. Seven compact conversation topics offer context-dependent positive responses, refusals, and negative reactions.
+Known parents and children begin with familiarity and trust; siblings have a
+smaller family bond. Bubbles and the register identify Mother, Father, Daughter,
+Son, Sister and Brother. Known direct relatives have no romance choices. Personal
+experiences still strengthen or damage trust, and family membership reveals no
+private secrets. Bonds follow the current observer after succession and work in
+existing saves without migration.
 
-The notebook distinguishes **observations**, **self-reported claims**, **unverified rumors**, and a reserved **confirmed** source category. A claimed name or job is not an omniscient read of the character. Trusted friends may disclose family stories; reserved people may still refuse. Hidden genomes and verified genealogies remain undiscovered. Independent rumor verification and investigation are not implemented.
+## Growth and aging
 
-Familiarity and trust are separate. Conversation has a three-second cooldown, six meaningful exchanges per citizen per day, diminishing rewards, and repeated-topic penalties. Intrusive family questions can damage trust and your local reputation. Some citizens are prejudiced against the player's outline. Their prejudice is not presented as biological truth.
+Characters change visible size at four fixed stages; they do not resize every day:
+
+| Stage | Age in days | Adult outline size |
+|---|---|---|
+| Child | 0–5 | 45% |
+| Teenager | 6–17 | 70% |
+| Adult | 18–64 | 100% |
+| Elder | 65+ | 85% |
+
+Polygon outlines and line-form children both grow. Lines keep a readable stroke,
+and family halos/name positions follow the visible outline. These are visual
+stages: inherited geometry, movement, collision, selection reach and age rules stay
+the same. Existing saves show the correct stage immediately, without migration.
+
+## Known family and time
+
+Known living family members, including spouses, have a soft gold dashed halo in
+the world and gold minimap dots. The player keeps the existing coral marker;
+selected citizens keep their green ring. Hidden biological connections do not
+receive a family highlight. Marks follow the current observer after succession.
+
+The game uses one day clock: **one day is 120 simulated seconds and adds one day
+of age**. Ages, cooldowns, refuge buttons and history now use days throughout.
+Children mature at 18 days old, retirement opens at 40 days old, and natural
+lifespans remain 78–92 days. This is a presentation change with the same numerical
+pace. Calendar history starts at Day 1, matching the HUD. Existing saves keep their
+ages/progress; no migration, RNG or balance change is needed.
+
+## Relationships and inheritance
+
+Courtship shares the existing three-second social cooldown and six meaningful
+exchanges per citizen per day, with a further three-action romance cap, diminishing
+gains and repeated-topic limits. NPC preferences, attraction, social expectations
+and willingness to raise children vary. Separation retains history and children.
+Family willingness combines a stable personal preference with the current bond.
+Varied relationship actions can help hesitant spouses become willing, while falling
+trust/affection can make them unready again. F8 shows baseline and current values.
+
+Observations, claims and unverified rumors remain distinct. Marriage never
+reveals private ancestry. The family register records household births, parents,
+siblings, marriages, deaths and playable history. A daughter's line form never
+reveals her latent side count or irregular-ancestry carrier state.
+
+Triangles must progress through irregular → isosceles → equilateral before gaining
+sides. Regular offspring retain side count or gain at most one, up to 32. Maternal
+carriers can reintroduce irregularity. Irregular polygons with four or more sides
+keep their sides while repairing regularity. Physical traits vary independently of
+rank. See [implemented rules and balance defaults](docs/FAMILY_RULES.md).
 
 ## Saving and recovering progress
 
-- **Manual:** Pause → Save manually. Pause → Load manual save explicitly restores that slot.
-- **Automatic:** every 30 seconds of simulated play, when pausing/opening the guide, and on supported page lifecycle events. Continue selects the newest valid manual/autosave and can fall back to an older valid one.
-- **New game:** asks before replacing existing progress; replaces the automatic slot, preserving the independent manual slot. Loads return paused. An ended autosave stays ended; loading an earlier manual save is an explicit recovery option.
+- Independent **manual and automatic slots** retain their original browser keys.
+  Autosaves occur every 30 simulated seconds, on pause/family screens, after family
+  actions and on supported page lifecycle events.
+- **Continue** selects the newest valid save, falling back when necessary. Loads
+  pause, except ended dynasties and pending heir choices.
+- **New expedition** confirms before replacing progress and preserves the manual slot.
+- **Export save file** downloads portable JSON. **Import save file** validates before
+  replacing active progress and asks before discarding an active expedition.
+  Browser slots remain until an explicit save or subsequent autosave.
+- Schema **v5**, generator **v1**, supports v1/v2/v3 and both frozen v4 checkpoints.
+  Phase 2A inventory, resources, NPC state, knowledge, trust, reputation and RNG
+  migrate. Failed loads/imports do not replace active progress.
 
-Saves remain in this browser/profile/origin. There is one manual slot and one automatic slot per origin, not one pair per seed. Clearing site data removes saves; changing browser, profile, hostname, or port does not transfer them. There is no cloud sync or export/import UI. Abrupt termination may skip lifecycle saves. Best-effort multi-tab conflict protection is not atomic locking; use one game tab for reliable play.
+Saves stay in their browser/profile/origin. Clearing site data removes them; keep
+exports for important dynasties. Abrupt termination can skip lifecycle saves.
+Multi-tab protection remains best-effort rather than atomic locking; use one active
+game tab. Storage denial/full storage shows a visible error without preventing
+play or silently erasing older slots.
 
-Malformed, incompatible, or inaccessible saves produce a visible message without replacing the current expedition. Full/unavailable storage does not prevent playing. The format is version 2 with world-generator version 1; genuine version-1 Phase 1.1 saves migrate. Original Phase 1 had no persistent saves.
+## Source and validation
 
-**Validation limitation:** the [QA report](docs/QA_REPORT.md) records historical automated checks using an explicit in-memory storage adapter; the original harness and raw artifacts are unavailable in this repository. Its separate [independent playtest](docs/QA_REPORT.md#independent-playtest-2026-10-15) records one successful native save/close/reopen/Continue cycle in headless Chromium on Linux. That limited observation does not establish durability across other browsers, origins, repeated cycles, or long sessions.
+### Reversible testing inspector
 
-## Source layout
+With an expedition loaded, press **F8** to open **All information**. Press **F8**
+again, **Escape**, or **Return to normal** to close it. On touch, use
+**Pause → Testing → All information**. Reload this updated HTML to get the feature;
+existing saves work without starting a new game.
 
-```text
-baseline/                 Untouched original Phase 1 HTML
-src/                      Focused JS fragments, HTML shell, CSS
-src/core.js               Constants, math, seeded RNG, common helpers
-src/characters.js         Identity/genome/body/runtime, observable presentation
-src/navigation.js         Collision broad-phase and A* navigation
-src/world.js              Seeded generation, resources, NPC survival/AI
-src/social.js             Public standing, identities, relationships, safe views
-src/persistence.js        Versioned snapshots, validation, storage and migration
-src/input.js              Keyboard, pointer and touch input
-src/renderer.js           Camera, Canvas drawing, minimap
-src/game.js               Fixed-step controller, survival, menus and HUD
-src/social-ui.js          Conversation and discovered-information panel
-src/bootstrap.js          Startup and opt-in QA hooks
-src/shell.html            Accessible UI structure
-src/style.css             Responsive layout
-tools/build.py            Deterministic single-file assembly
-tools/check_docs.py       Relative documentation link and path checks
-docs/                     Roadmap and QA report
-the-flatland.html        Included playable build
-```
+The inspector pauses simulation and shows hidden genomes, ancestry, preferences,
+relationships and raw records. Search any name/ID, including deceased ancestors,
+or select **World & dynasty** for the complete save snapshot and terrain records.
+**Full record** expands the detailed JSON. It does not change discoveries, trust,
+RNG or save data. Private details are cleared on close, and inspection mode is
+never saved. Ordinary bubbles, notebooks and family screens keep their usual
+discovery rules.
 
-The fragments share one strict lexical closure, not a framework or runtime loader. Build with `python tools/build.py`; verify with `python tools/build.py --check`. Do not edit the generated HTML directly. The original supplied HTML is preserved byte-for-byte at `baseline/the-flatland-phase1.html`.
+For console-driven testing with the optional debug query, run
+`FlatlandDebug.inspect()` to toggle the same view. F8 and the touch button also
+work without that query; the normal build still excludes the debug API.
 
-## Development and validation
+Source fragments in [src](src/) share a strict lexical closure and assemble using
+[the build script](tools/build.py). Edit source and rebuild instead of editing the
+generated HTML. The [original Phase 1 baseline](baseline/the-flatland-phase1.html)
+remains unchanged.
 
-Use Python 3.10+ for the dependency-free build and documentation checks. Edit the source fragments, then rebuild and check the distributable:
+| Module | Responsibility |
+|---|---|
+| [genetics](src/genetics.js) | Pure staged inheritance and genome validation |
+| [registry](src/registry.js) | Private stable-ID records and living world projections |
+| [romance](src/romance.js) | Preferences, attraction, consent and marriage history |
+| [family](src/family.js) | Transactional cohorts, death, shared time advancement and succession |
+| [renewal](src/renewal.js) | Saved policy, mutual NPC relationships, household anchors and private yearly events |
+| [family invariants](src/family-invariants.js) | Reciprocal spouse links and generation DAGs |
+| [observer notebooks](src/observer-notebooks.js), [household](src/household.js) | Observer transfer and derived household support |
+| [family view](src/family-view.js) | Privacy-safe family presentation DTO |
+| [family UI](src/family-ui.js) | Paused register, days and heir selection |
+| [save codec](src/save-codec.js), [migrations](src/save-migrations.js), [validation](src/save-validation.js) | Storage-independent schema readers and candidate validation |
+| [persistence](src/persistence.js) | Native storage, slot fallback, installation and file I/O |
+| [inspector](src/inspector.js) | Explicit, reversible private-truth view for testing |
+| [game](src/game.js), [world](src/world.js) | Existing survival and integration |
+
+Python 3.10+ and Node 18+ run dependency-free checks:
 
 ```sh
 python tools/build.py
 python tools/build.py --check
 python tools/check_docs.py
+node --test tools/test.cjs
 ```
 
-The build check verifies source/build agreement; the documentation check verifies relative links and file/directory references in this README and the Markdown documents directly under `docs/`. Neither check exercises gameplay or browser persistence.
-
-**Historical results:** the [QA report](docs/QA_REPORT.md) records 66 automated checks passed, none failed, and one environment-blocked native-persistence acceptance test. These results were not rerun during this documentation cleanup; the original test runner, fixtures, machine-readable results, and screenshots are absent. See its separate independent playtest subsection for the limited native-persistence observation.
-
-## Known gaps
-
-No original source archive was available for this cleanup. The repository does not include the original game-design, architecture, GitHub-setup, or development guides; development dependency manifest; automated test runner, test suites, or legacy save fixture; raw QA artifacts; screenshots; historical Phase 1 QA report; or original development-history bundle. These have not been recreated from memory. The QA report preserves the existing recorded results, but their underlying artifacts cannot currently be inspected or reproduced using an included gameplay test suite.
-
-## Repository and ownership
-
-The public repository is [PakingPie/Flatland-A-Web-Based-Game](https://github.com/PakingPie/Flatland-A-Web-Based-Game), with default branch `main`. Clone the existing repository to work locally:
+Real browser checks require Playwright and an installed Chromium. Each script
+starts its own ephemeral localhost server and isolated context/profile:
 
 ```sh
-git clone https://github.com/PakingPie/Flatland-A-Web-Based-Game.git
+node tools/browser-smoke.cjs
+node tools/browser-generations.cjs
+node tools/browser-bubbles.cjs
+node tools/browser-regressions.cjs
+node tools/browser-architecture.cjs
+node tools/browser-inspector.cjs
+node tools/browser-parenthood.cjs
+node tools/browser-renewal.cjs
+node tools/browser-family-presentation.cjs
+node tools/browser-growth.cjs
 ```
 
-At the reviewed snapshot (`e663cb2`, 2026-10-15), the public history contains five commits: the initial commit, roadmap, overview, a combined Phase 1.1 + 2A source/build import (`9c5b3ad`), and the subsequent Phase 1 baseline import (`e663cb2`). It does not contain separate original Phase 1.1 and Phase 2A development commits. No history was reconstructed for this cleanup.
+The dependency-free `node tools/population-study.cjs` runs a separate 20-seed,
+100-day demographic fixture, continuing after founder extinction without reviving
+anyone. It is not evidence of unassisted human play or an indefinitely viable dynasty.
 
-The project uses the [MIT license](LICENSE), Copyright (c) 2026 PerkinPie. Repository visibility does not establish a hosted game deployment. This project is independent of Aetherion and the Unreal projects.
+Use `FLATLAND_NODE_MODULES` for a bundled Playwright package directory and
+`FLATLAND_CHROMIUM` for an explicit executable. Otherwise normal module resolution
+and Playwright discovery apply. Screenshots, test JSON and isolated profiles remain
+in the ignored local output directory and are not published with the source.
 
-## Design and next milestone
+See [current QA](docs/QA_REPORT.md), [checkpoints](docs/IMPLEMENTATION_STATUS.md),
+[the roadmap](docs/ROADMAP.md) and [Phase 3.5 handoff](docs/PHASE35_HANDOFF.md).
 
-The [roadmap](docs/ROADMAP.md) records later-phase plans and unresolved design questions. Before starting Phase 2B, validate native persistence on the intended browser, including repeated close/reopen cycles. Courtship and voluntary partnership are planned, with marriage separate from biological parentage. Reproduction and side-count mutation need their own acceptance gates and saved-state migrations.
+## Current limits
+
+NPC renewal extends partner availability but cannot guarantee unrelated partners
+forever. Kinship is unchanged. NPC births reserve room for four children below
+96 living / 248 total records, with eight records of player headroom under the
+256-record global cap. Each NPC marriage permits two autonomous cohorts; player
+births retain their existing rules. No immigration or adoption is implemented.
+Births are immediate abstract events with no scheduled pregnancy. Full deceased
+records, event sources and observer notebooks remain in each export; no archive
+compaction or ID reuse occurs. V5 writes enforce a 2 MB UTF-8 envelope plus existing
+structural/event budgets. Old builds cannot read v5 exports; retain a pre-upgrade backup.
+
+The demographic fixture produced first cohorts on days 7–18; two of twenty seeds
+had no living population after 100 days. Daily callbacks can briefly pause the game:
+the fixture observed a median 159 ms and maximum 590 ms under concurrent QA load.
+These timings are not frame-rate or device guarantees. See the detailed [QA report](docs/QA_REPORT.md).
+
+Firefox, Safari, physical phones, long human play sessions and abrupt process-kill
+durability remain unverified. QA documents all scenario controls. Combat, law,
+economy, politics and multiplayer are outside this milestone.
+
+## Repository
+
+[PakingPie/Flatland-A-Web-Based-Game](https://github.com/PakingPie/Flatland-A-Web-Based-Game)
+uses the [MIT license](LICENSE), Copyright (c) 2026 PerkinPie. Main and the interrupted
+Pro branch are preserved. Its verification workflow was recovered without merging
+divergent history. This work does not deploy a hosted game or automatically merge
+the pull request. The project is independent of Aetherion and the Unreal projects.

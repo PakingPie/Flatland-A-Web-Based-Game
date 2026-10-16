@@ -24,6 +24,7 @@ if (new URLSearchParams(location.search).get('debug') === '1') {
         setResource(id, quantity) { const r = game.world.resources.find(r => r.id === id); if (!r)
             throw new Error('Unknown resource'); r.quantity = clamp(Math.floor(quantity), 0, r.capacity); r.respawn = r.quantity === 0 ? r.cycle : 0; },
         pause() { game.pause(); }, resume() { game.resume(); },
+        inspect() { return game.inspector.toggle(); },
         worldToScreen(x, y) { return game.renderer.worldToScreen(x, y); }, screenToWorld(x, y) { return game.renderer.screenToWorld(x, y); },
         path(ax, ay, bx, by) { return game.world.nav.path(ax, ay, bx, by); },
         validate() {
@@ -56,6 +57,15 @@ if (new URLSearchParams(location.search).get('debug') === '1') {
         npcVitals(id, values) { const c = game.world.social.citizen(id); if (!c) throw new Error('Unknown citizen'); for (const k of ['health','hunger','thirst','stamina']) if (Object.hasOwn(values,k)) { if (!Number.isFinite(values[k])) throw new TypeError('Non-finite vital'); c.vitals[k] = clamp(values[k],0,100); } },
         socialView(id) { const c = game.world.social.citizen(id); if (!c) throw new Error('Unknown citizen'); return game.world.social.view(c); },
         interact(id, topic) { return game.world.social.interact(id, topic); },
+        romance(id, topic) { return game.world.romance.interact(id, topic); },
+        familyView() { return game.world.family.view(); },
+        parenthoodReadiness(id) { const w=game.world,c=w.registry.get(id); if(!c || c===w.player) throw new Error('Choose another character'); return clone(w.romance.parenthoodReadiness(w.player,c)); },
+        courtshipCandidate(sex='female',familyPreference='ready') { const w=game.world; return w.npcs.find(c=>c.actual.life.alive && c.actual.identity.sex===sex && c.actual.life.ageYears>=18 && c.actual.life.ageYears<=55 && c.actual.profile?.personality.warmth>.5 && !w.romance.isCloseKin(w.player,c) && w.romance.compatibility(w.player,c).ok && (familyPreference==='hesitant'?w.romance.preferences(c).familyLife<.3:w.romance.preferences(c).familyLife>=.3))?.id || null; },
+        familyBirth() { return game.world.family.birth(); },
+        renewal(enabled) { if(enabled!==undefined) game.world.renewal.setEnabled(enabled);return game.world.renewal.exportState(); },
+        advanceYears(years) { const r=game.world.family.advance(years); if(!game.world.player.actual.life.alive) game.die(); game.refreshUI(); return r; },
+        successor(id) { game.familyUI.choose(id); return this.snapshot(); },
+        importSave(raw) { try { const restored=game.saves.decode(raw); game.installSave(restored); return true; } catch { return false; } },
         openCitizen(id) { game.socialUI.open(id); }, closeCitizen() { game.socialUI.close(); },
         socialState() { return game.world.social.exportState(); },
         config: C

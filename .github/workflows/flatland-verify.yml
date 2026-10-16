@@ -1,0 +1,19 @@
+name: Flatland verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify committed HTML matches source
+        run: python tools/build.py --check
+      - name: Check documentation references
+        run: python tools/check_docs.py
+      - name: Verify deterministic game rules and migrations
+        run: node --test tools/test.cjs

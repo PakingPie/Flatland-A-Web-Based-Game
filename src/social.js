@@ -10,6 +10,7 @@ const SOCIAL = Object.freeze({ reach: 108, cooldown: 3, dailyLimit: 6, historyLi
 function apparentStanding(c) {
     const form = c.body.visibleType;
     if (c.body.form === 'line') return { tier: 0, label: 'Restricted civic status · line-form woman' };
+    if (form.startsWith('Irregular ')) return { tier: 0, label: 'Outcast' };
     return ({ 'Irregular triangle': { tier: 0, label: 'Outcast' }, 'Isosceles triangle': { tier: 1, label: 'Soldier / laboring class' },
         'Equilateral triangle': { tier: 2, label: 'Respectable working class' }, Square: { tier: 3, label: 'Gentleman class' },
         Pentagon: { tier: 4, label: 'Professional class' }, Hexagon: { tier: 5, label: 'Prestigious citizen' },
@@ -64,7 +65,7 @@ class SocialSystem {
         world.player.playerKnowledge.relationship = emptyRelationship();
         world.player.publicIdentity.standing = apparentStanding(world.player);
     }
-    citizen(id) { return this.world.npcs.find(c => c.id === id) || null; }
+    citizen(id) { const c=this.world.registry.get(id); return c && c.id!==this.world.player.id && c.actual.life.alive ? c : null; }
     nearby(c) {
         const p = this.world.player;
         return !!c && c.actual.life.alive && dist2(p.x, p.y, c.x, c.y) <= SOCIAL.reach ** 2 && this.world.segmentClear(p.x, p.y, c.x, c.y, 3);
@@ -78,12 +79,28 @@ class SocialSystem {
         return result;
     }
     stage(c) {
-        const k = c.playerKnowledge, r = k.relationship;
+        const k = c.playerKnowledge, r = this.relationship(c);
         if (!k.discoveredFacts.name) return 0;
         if (r.familiarity >= 76 && r.trust >= 60) return 4;
         if (r.familiarity >= 48 && r.trust >= 30) return 3;
         if (r.familiarity >= 24 && r.trust >= 12) return 2;
         return 1;
+    }
+    familyBond(c) {
+        const w=this.world,p=w.player,none={role:'',familiarity:0,trust:0};
+        if(c===p) return none;
+        // Ordinary roles derive only from known household events, never hidden ancestry.
+        const births=w.family.births.filter(b=>w.renewal.knowsBirth(b.id));
+        const parents=id=>new Set(births.filter(b=>b.childIds.includes(id)).flatMap(b=>[b.motherId,b.fatherId]));
+        const ownParents=parents(p.id),theirParents=parents(c.id),female=c.actual.identity.sex==='female';
+        if(ownParents.has(c.id)) return {role:female?'Mother':'Father',familiarity:48,trust:20};
+        if(theirParents.has(p.id)) return {role:female?'Daughter':'Son',familiarity:48,trust:20};
+        if([...ownParents].some(id=>theirParents.has(id))) return {role:female?'Sister':'Brother',familiarity:36,trust:12};
+        return none;
+    }
+    relationship(c) {
+        const r=c.playerKnowledge.relationship,b=this.familyBond(c);
+        return {...r,familiarity:clamp(r.familiarity+b.familiarity,0,100),trust:clamp(r.trust+b.trust,-30,100)};
     }
     learn(c, key, value, kind = 'claim', sourceId = c.id) {
         c.playerKnowledge.discoveredFacts[key] = { value, kind, sourceId, at: this.world.elapsed };
@@ -95,7 +112,7 @@ class SocialSystem {
     }
     reputationLabel() { return this.reputation.score >= 8 ? 'Considerate locally' : this.reputation.score <= -5 ? 'A difficult reputation' : 'Little known locally'; }
     attitude(c) {
-        const p = c.actual.profile, r = c.playerKnowledge.relationship, rank = c.publicIdentity.standing.tier;
+        const p = c.actual.profile, r = this.relationship(c), rank = c.publicIdentity.standing.tier;
         const outsider = apparentStanding(this.world.player).tier === 0;
         const bias = outsider ? p.personality.prejudice * (4 + rank * 2.1) : 0;
         return p.personality.warmth * 14 + p.disposition + r.trust * .24 + this.reputation.score * .12 - bias;
@@ -162,7 +179,7 @@ class SocialSystem {
                 return this.response(c, topic, `Here in ${district}: ${opinion}`, 5 * factor, 3 * trustGain, .25, 'positive');
             }
             case 'interests':
-                if (r.familiarity < 13 || (p.personality.reserve > .78 && stage < 2)) return this.response(c, topic, '“We barely know one another. Let us keep to ordinary conversation for now.”', 1, -1, 0, 'refused');
+                if (this.relationship(c).familiarity < 13 || (p.personality.reserve > .78 && stage < 2)) return this.response(c, topic, '“We barely know one another. Let us keep to ordinary conversation for now.”', 1, -1, 0, 'refused');
                 this.learn(c, 'interests', p.preferences.likes);
                 if (stage >= 2) this.learn(c, 'dislikes', p.preferences.dislikes);
                 return this.response(c, topic, `“I enjoy ${p.preferences.likes}.${stage >= 2 ? ` I could do without ${p.preferences.dislikes}.` : ''}”`, 5 * factor, 3 * trustGain, .1, 'positive');
@@ -171,6 +188,13 @@ class SocialSystem {
                 if (p.personality.reserve > .82) return this.response(c, topic, '“I trust you in many things. My family history is still mine to keep.” Trust does not unlock every secret.', 0, 0, 0, 'refused');
                 this.learn(c, 'family', p.background.knowsFamily ? `I was raised near ${p.background.origin}. ${p.background.family}` : 'I do not know my ancestry. The surviving records tell me very little.');
                 this.learn(c, 'ambition', p.background.ambition);
+                const shared=[...this.world.romance.marriages.filter(m=>m.ids.includes(c.id)).flatMap(m=>m.ids),...c.actual.lineage.childrenIds].filter(id=>id!==c.id);
+                if(shared.length) {
+                    this.world.renewal.learnEvents(c);
+                    const members=[...new Set(shared)].map(id=>this.world.registry.get(id));
+                    this.learn(c,'publicRelationships',`Shared household names: ${members.slice(0,12).map(n=>n.publicIdentity.displayName).join(', ')}.`,'claim',c.id);
+                    for(const member of members) this.learn(member,'name',member.publicIdentity.displayName,'claim',c.id);
+                }
                 if (stage >= 4) {
                     this.learn(c, 'concern', p.background.concern);
                     if (p.background.discloseSensitive) this.learn(c, 'privateHistory', p.background.sensitive);
@@ -178,7 +202,7 @@ class SocialSystem {
                 return this.response(c, topic, `“${k.discoveredFacts.family.value} ${p.background.ambition}”${stage >= 4 ? ' They share a private concern; anything else remains their choice.' : ''} Family stories are claims, not genetic evidence.`, 4 * factor, 4 * trustGain, .15, 'positive');
             case 'rumor': {
                 if (r.trust < 3 || p.preferences.dislikes === 'idle gossip') return this.response(c, topic, '“I would rather not pass stories along just now.”', 0, 0, 0, 'refused');
-                const others = this.world.npcs.filter(other => other.id !== c.id);
+                const others = this.world.registry.all().filter(other => other.id !== c.id && other.id !== this.world.player.id);
                 const subject = this.rng.pick(others), accurate = this.rng.next() > .35;
                 const value = accurate ? subject.actual.profile.preferences.likes : 'collecting ceremonial seals';
                 const text = `${subject.publicIdentity.displayName} is said to enjoy ${value}.`;
@@ -194,8 +218,8 @@ class SocialSystem {
     view(c) {
         const observed = observeCitizen(c), k = c.playerKnowledge, stage = this.stage(c);
         const facts = Object.entries(SOCIAL.factLabels).map(([key, label]) => ({ key, label, ...(k.discoveredFacts[key] ? copyJSON(k.discoveredFacts[key]) : { locked: true }) }));
-        return { id: c.id, name: k.discoveredFacts.name?.value || 'Unknown citizen', observed, facts,
-            relationship: { familiarity: k.relationship.familiarity, trust: k.relationship.trust, stage, label: SOCIAL.stages[stage] },
+        return { adult: c.actual.life.ageYears >= 18, id: c.id, name: k.discoveredFacts.name?.value || 'Unknown citizen', observed, facts,
+            relationship: { familiarity: this.relationship(c).familiarity, trust: this.relationship(c).trust, stage, label: SOCIAL.stages[stage],familyRole:this.familyBond(c).role },
             rumors: copyJSON(k.rumors), inRange: this.nearby(c), cooldown: Math.max(0, SOCIAL.cooldown - (this.world.elapsed - k.relationship.lastAt)),
             remaining: k.relationship.day === Math.floor(this.world.elapsed / C.DAY) ? Math.max(0, SOCIAL.dailyLimit - k.relationship.today) : SOCIAL.dailyLimit,
             introduced: !!k.discoveredFacts.name };
@@ -204,20 +228,20 @@ class SocialSystem {
     importState(data, envelopeVersion) {
         if (data === null && envelopeVersion === 1) {
             // Phase 1.1 had no social discoveries; preserve its simulation, add fresh identities.
-            for (const c of [this.world.player, ...this.world.npcs]) c.playerKnowledge.relationship = { ...emptyRelationship(), ...c.playerKnowledge.relationship };
+            for (const c of this.world.registry.all()) c.playerKnowledge.relationship = { ...emptyRelationship(), ...c.playerKnowledge.relationship };
             return;
         }
         insist(plain(data) && data.version === 1 && integerIn(data.rngState, 0, 4294967295), 'Invalid society state.');
         const rep = data.reputation;
         insist(plain(rep) && numberIn(rep.score, -100, 100) && Array.isArray(rep.events) && rep.events.length <= 48, 'Invalid reputation.');
-        insist(rep.events.every(e => plain(e) && numberIn(e.delta, -100, 100) && shortText(e.reason, 100) && this.citizen(e.witnessId) && numberIn(e.at, 0, this.world.elapsed + .001)), 'Invalid reputation history.');
+        insist(rep.events.every(e => plain(e) && numberIn(e.delta, -100, 100) && shortText(e.reason, 100) && this.world.registry.get(e.witnessId) && numberIn(e.at, 0, this.world.elapsed + .001)), 'Invalid reputation history.');
         this.rng.state = data.rngState; this.reputation = copyJSON(rep);
     }
     static validateKnowledge(k, elapsed, world) {
         for (const [key, f] of Object.entries(k.discoveredFacts)) {
-            insist(Object.hasOwn(SOCIAL.factLabels, key) && plain(f) && shortText(f.value, 1000) && ['claim', 'observation', 'confirmed'].includes(f.kind) && (f.sourceId === 'player' || world.npcs.some(c => c.id === f.sourceId)) && numberIn(f.at, 0, elapsed + .001), 'Invalid discovered fact.');
+            insist(Object.hasOwn(SOCIAL.factLabels, key) && plain(f) && shortText(f.value, 1000) && ['claim', 'observation', 'confirmed'].includes(f.kind) && (f.sourceId === 'player' || world.registry.get(f.sourceId)) && numberIn(f.at, 0, elapsed + .001), 'Invalid discovered fact.');
         }
-        insist(k.rumors.length <= 12 && k.rumors.every(r => plain(r) && shortText(r.id, 100) && shortText(r.sourceName, 100) && shortText(r.text, 600) && world.npcs.some(c => c.id === r.subjectId) && world.npcs.some(c => c.id === r.sourceId) && r.status === 'unverified' && numberIn(r.at, 0, elapsed + .001)), 'Invalid rumor record.');
+        insist(k.rumors.length <= 12 && k.rumors.every(r => plain(r) && shortText(r.id, 100) && shortText(r.sourceName, 100) && shortText(r.text, 600) && world.registry.get(r.subjectId) && world.registry.get(r.sourceId) && r.status === 'unverified' && numberIn(r.at, 0, elapsed + .001)), 'Invalid rumor record.');
         const r = k.relationship;
         if (r.lastAt === undefined) { insist(!Object.keys(k.discoveredFacts).length && !k.rumors.length && r.familiarity === 0 && r.trust === 0, 'Invalid legacy relationship.'); return; }
         insist(numberIn(r.lastAt, -999, elapsed + .001) && integerIn(r.day, -1, Math.floor(elapsed / C.DAY)) && integerIn(r.today, 0, SOCIAL.dailyLimit) && plain(r.topics) && Array.isArray(r.history) && r.history.length <= SOCIAL.historyLimit, 'Invalid relationship timing/history.');
