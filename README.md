@@ -1,31 +1,82 @@
 # The Flatland
-## Version 0.3.5 — Growing children and smaller elders
 
-Phase 3.5 now includes bounded [autonomous NPC families](docs/POPULATION_RENEWAL_DESIGN.md),
-with mutual private relationships, daily marriages/births and stable household
-inheritance. New expeditions enable renewal; existing saves keep their founding-only
-policy until you choose **Pause → Population & families → Enable NPC families**.
-Export a backup first. Disabling stops future events and keeps existing families.
-The population remains finite. The subsequent [Phase 4A sparring plan](docs/PHASE4A_PLAN.md)
-remains a proposal; combat, law, guards and civilization are not implemented.
+<p align="center">
+  <img src="docs/images/banner.svg" alt="The Flatland — an offline world of shapes, families and generations" width="1400" />
+</p>
 
-A lightweight offline Canvas survival and society simulation inspired by Edwin
-Abbott's *Flatland*. Survive as an irregular triangle, meet citizens, court a
-consenting partner, marry, raise children and continue as a chosen adult son or
-daughter. Social prestige is fictional; it does not measure morality or fitness.
+An offline survival and society game inspired by Edwin Abbott's *Flatland*.
+Start as an irregular triangle. Explore a two-dimensional world, get to know its
+citizens, raise a family and continue as an adult son or daughter in the same world.
 
-Open **[the-flatland.html](the-flatland.html)** in a browser. All code, styling and
-graphics are embedded, without network assets, accounts, backend or frameworks.
-For a stable browser storage origin, serve this folder locally:
+**One HTML file · No accounts or network assets · Playable generations · MIT**
+
+[**Download the project**](https://github.com/PakingPie/Flatland-A-Web-Based-Game/archive/refs/heads/main.zip)
+· [Play locally](#play-locally) · [See the game](#a-life-in-flatland)
+· [Roadmap](docs/ROADMAP.md) · [Development & validation](#source-and-validation)
+
+**Playable prototype · v0.3.5.** [Current limits](#current-limits).
+
+## A life in Flatland
+
+### Explore and survive
+
+Find food and water, rest at refuges and learn your way around the wards. Every
+citizen shares the same world; the next generation stays in it too.
+
+[![The actual game world, with an irregular triangle player, survival meters, resources, citizens and a minimap](docs/images/explore.png)](docs/images/explore.png)
+
+### Meet people. Build trust.
+
+A compact action bubble keeps conversation and courtship close to the character.
+Friendship, attraction and consent are separate: even a trusted friend can decline
+romance. Choosing an action resumes time and walks you over automatically.
+
+<p align="center">
+  <a href="docs/images/relationships.png"><img src="docs/images/relationships.png" alt="A paused courtship bubble beside two citizens, with Compliment, Invite out, Our future and Commitment actions" width="800" /></a>
+</p>
+
+### Raise a family. Choose who carries it forward.
+
+Children inherit individual geometry and traits. Known relatives have gold halos
+and family bonds. When a living adult descendant can take over, choose a son or
+daughter and keep playing in the same world—with siblings, history and household
+connections intact.
+
+<p align="center">
+  <a href="docs/images/succession.png"><img src="docs/images/succession.png" alt="The family register offers an adult son and daughter, each with their own Continue as button" width="498" /></a>
+</p>
+
+*These are actual in-game captures from isolated demonstration worlds, with time
+and positions staged for clarity. Click a screenshot to view it at full size.*
+
+## Play locally
+
+Survival, conversation, marriage, inheritance, succession and autonomous NPC
+families are implemented. Combat and civilization remain future work. Society's
+prestige is fictional, not a measure of moral worth.
+
+1. [Download the project ZIP](https://github.com/PakingPie/Flatland-A-Web-Based-Game/archive/refs/heads/main.zip)
+   and extract it, or clone this repository.
+2. Open **[the-flatland.html](the-flatland.html)** from the extracted folder in a
+   browser. The game embeds its code, styling and graphics; no build step is needed.
+3. For important saves, use a stable local address and keep exported backups.
+
+To serve the folder locally:
 
 ```sh
 python -m http.server 8000 --bind 127.0.0.1
 ```
 
-Open [the local game](http://127.0.0.1:8000/the-flatland.html). Return with the same
-browser profile, hostname, port and protocol to find your saves. Python only
-serves static files. Direct file opening works in tested Chromium; file-origin
-storage durability has not been established.
+Then open [the local game](http://127.0.0.1:8000/the-flatland.html). Python only
+serves static files. Return with the same browser profile, hostname, port and
+protocol to find your saves. Direct file opening works in tested Chromium;
+file-origin save durability has not been established.
+
+New expeditions enable autonomous NPC families. Existing saves keep their
+founding-only policy until **Pause → Population & families → Enable NPC families**.
+Export a backup first. Disabling renewal keeps existing families. The population
+remains finite; see [current limits](#current-limits) and the
+[Phase 4A plan](docs/PHASE4A_PLAN.md).
 
 ## Playing a generation
 
@@ -100,6 +151,10 @@ existing saves without migration.
 ## Growth and aging
 
 Characters change visible size at four fixed stages; they do not resize every day:
+
+[![The same polygon outline and line-form citizens shown as tiny children, smaller teenagers, full-size adults and slightly smaller elders](docs/images/life-stages.png)](docs/images/life-stages.png)
+
+*Staged comparison of the four sizes, drawn by the game's renderer.*
 
 | Stage | Age in days | Adult outline size |
 |---|---|---|
@@ -242,8 +297,9 @@ anyone. It is not evidence of unassisted human play or an indefinitely viable dy
 
 Use `FLATLAND_NODE_MODULES` for a bundled Playwright package directory and
 `FLATLAND_CHROMIUM` for an explicit executable. Otherwise normal module resolution
-and Playwright discovery apply. Screenshots, test JSON and isolated profiles remain
-in the ignored local output directory and are not published with the source.
+and Playwright discovery apply. Raw QA screenshots, test JSON and isolated profiles remain
+in the ignored local output directory. The selected public README images have
+separate [capture and provenance notes](docs/images/README.md).
 
 See [current QA](docs/QA_REPORT.md), [checkpoints](docs/IMPLEMENTATION_STATUS.md),
 [the roadmap](docs/ROADMAP.md) and [Phase 3.5 handoff](docs/PHASE35_HANDOFF.md).
@@ -274,5 +330,5 @@ economy, politics and multiplayer are outside this milestone.
 [PakingPie/Flatland-A-Web-Based-Game](https://github.com/PakingPie/Flatland-A-Web-Based-Game)
 uses the [MIT license](LICENSE), Copyright (c) 2026 PerkinPie. Main and the interrupted
 Pro branch are preserved. Its verification workflow was recovered without merging
-divergent history. This work does not deploy a hosted game or automatically merge
-the pull request. The project is independent of Aetherion and the Unreal projects.
+divergent history. The generational release was merged through [PR #1](https://github.com/PakingPie/Flatland-A-Web-Based-Game/pull/1).
+This repository does not currently provide a hosted deployment. The project is independent of Aetherion and the Unreal projects.
