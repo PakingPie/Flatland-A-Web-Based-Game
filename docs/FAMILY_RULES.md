@@ -1,4 +1,4 @@
-# Implemented family and inheritance rules (v0.3.2)
+# Implemented family and inheritance rules (v0.3.3)
 
 These adjustable gameplay defaults resolve Phase 2B/3 implementation questions.
 They are not statements about real genetics or moral worth.
@@ -24,7 +24,7 @@ refuge healing of 2.1 health per second instead of 1.8.
 
 Birth eligibility requires living opposite-sex spouses aged 18–60, affection 42+,
 trust 18+, mutual willingness to raise children, playable health 35+ and food/water
-30+. Hesitant spouses can reconsider as the relationship grows. Pair births have a two-family-year cooldown.
+30+. Hesitant spouses can reconsider as the relationship grows. Pair births have a two-family-day cooldown.
 Cohort probabilities are 65% two children, 30% three, 5% four. Sex is independently
 50/50, so both sexes are not guaranteed within a cohort. Birth is an immediate
 abstract household event; there is no pregnancy queue. The current budget is 256
@@ -92,17 +92,17 @@ The pure seeded implementation and constants are in [genetics](../src/genetics.j
 
 ## Time, death and succession
 
-One survival day (120 simulated seconds) equals one family year. This preserves
+One day lasts 120 simulated seconds and adds one day of age. This preserves
 ordinary movement and consumption rates. Living individuals age continuously;
-natural lifespan is deterministically 78–92 years per identity.
+natural lifespan is deterministically 78–92 days per identity.
 
-A supplied player at a refuge can advance one or five years. Each year processes
+A supplied player at a refuge can advance one or five days. Each day processes
 aging, natural deaths, widowhood, maturation and resource regeneration. Community
 subsistence holds living characters' food/water at least 55 and restores stamina.
 The pack, positions and AI paths remain; ordinary survival frames are not replayed.
-The shared clock splits at year boundaries and natural deaths. NPC family events
+The shared clock splits at day boundaries and natural deaths. NPC family events
 run after deaths/widowhood, with no aging before a child's birth. Both ordinary
-time and refuge years use the same scheduler; the advance stops when the current
+time and refuge days use the same scheduler; the advance stops when the current
 player dies, before new family events at that boundary.
 
 Voluntary retirement opens at 40. A living adult biological descendant can inherit
@@ -147,21 +147,21 @@ the debug query parameter.
 The user adopted [bundle A–E](POPULATION_RENEWAL_DESIGN.md#adopted-decision-bundle--2026-10-16).
 New expeditions enable renewal. Existing saves retain founding-only behavior
 until **Pause → Population & families → Enable NPC families**. Activation and
-re-enabling begin at the next family year without historical catch-up. Disabling
+re-enabling begin at the next family day without historical catch-up. Disabling
 keeps existing people, marriages and history.
 
-Each year permits at most one new private courting pair, one new NPC marriage and
+Each day permits at most one new private courting pair, one new NPC marriage and
 one NPC cohort globally. Adults must be unrelated and mutually compatible, using
 each counterpart's public reputation rather than the observer's. Private directed
-trust/affection start at zero and gain 10/12 per eligible yearly evaluation. Each
+trust/affection start at zero and gain 10/12 per eligible daily evaluation. Each
 side needs trust 18+ and affection 42+ to commit: four successful evaluations.
-Newly formed marriages cannot give birth in that year. Same-sex marriages retain
+Newly formed marriages cannot give birth in that day. Same-sex marriages retain
 the same household support and no joint biological births.
 
 Each NPC parent must independently meet the current willingness formula; both
 must be alive, aged 18–60 and at health 35+. Background community subsistence
 abstracts food/water eligibility without refilling ordinary NPC meters or helping
-the playable character. Cohorts retain the 2–4 distribution and two-year cooldown.
+the playable character. Cohorts retain the 2–4 distribution and two-day cooldown.
 Two autonomous cohorts are permitted per marriage, counting player cohorts too;
 player commands keep their existing rules. Require room for four NPC children
 under 96 living / 248 total records. The global 256-record cap is unchanged; deaths
@@ -186,3 +186,18 @@ notebooks remain in the export. No compaction, immigration, adoption, ID reuse o
 kinship relaxation occurs. A closed population can still lose all eligible partners
 or become extinct. See [current evidence and limits](QA_REPORT.md) and the
 [handoff](PHASE35_HANDOFF.md).
+
+
+## Presentation: days and known family
+
+The day vocabulary replaces the former family-year vocabulary without changing
+any durations, age thresholds, RNG streams or saved numeric values. Family ages
+are explicitly in days; calendar birth/marriage/death history is one-based like
+the HUD. Legacy field/API names such as `ageYears`, `lastBirthYear`, `processedYear`
+and the optional debug `advanceYears` remain compatible implementation names.
+
+Gold dashed halos and gold minimap dots identify living members of the observer's
+known family, including spouses. The current player is excluded and retains the
+coral marker. Deceased records are never drawn; undiscovered biological relatives
+receive no marker. Selected-citizen rings stay green. These derived visual marks
+are never saved and cannot teach facts or advance RNG.

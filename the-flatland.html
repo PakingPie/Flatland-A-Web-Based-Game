@@ -1083,7 +1083,7 @@ button {
     <div class="stat" id="hungerStat"><div class="stat-label"><span>Food</span><span id="hungerText">84</span></div><div class="track" role="progressbar" aria-label="Food" aria-valuemin="0" aria-valuemax="100" id="hungerBar"><div class="fill" id="hungerFill" style="background:var(--green)"></div></div></div>
     <div class="stat" id="thirstStat"><div class="stat-label"><span>Water</span><span id="thirstText">78</span></div><div class="track" role="progressbar" aria-label="Water" aria-valuemin="0" aria-valuemax="100" id="thirstBar"><div class="fill" id="thirstFill" style="background:var(--water)"></div></div></div>
     <div class="stat" id="staminaStat"><div class="stat-label"><span>Stamina</span><span id="staminaText">100</span></div><div class="track" role="progressbar" aria-label="Stamina" aria-valuemin="0" aria-valuemax="100" id="staminaBar"><div class="fill" id="staminaFill" style="background:var(--gold)"></div></div></div>
-    <div class="identity"><span id="playerIdentity">Irregular triangle · age 19</span><br><span id="reputationSummary">Little known locally</span><br><button class="small-btn" id="familyBtn">Family &amp; succession</button></div>
+    <div class="identity"><span id="playerIdentity">Irregular triangle · age 19 days</span><br><span id="reputationSummary">Little known locally</span><br><button class="small-btn" id="familyBtn">Family &amp; succession</button></div>
   </section>
   <section class="panel objectives" aria-label="Expedition goals"><div class="eyebrow" id="objectiveTitle">Your first expedition</div>
     <div class="objective" id="goalDays"><span class="check"></span><span>Survive full days</span><span class="count" id="daysCount">0 / 3</span></div>
@@ -1101,7 +1101,7 @@ button {
     <button class="action" id="talkBtn" title="T: speak to a nearby citizen"><kbd>T</kbd><span>Talk</span></button>
     <button class="action" id="sprintBtn" title="Hold Shift, or hold this button, while moving"><kbd>Shift</kbd><span>Sprint</span></button>
   </div><div class="control-tip">WASD / arrows to move · T to talk · Hover / click to inspect · P to pause & save</div></section>
-  <section class="panel map-panel" aria-label="World map"><div class="map-head"><span>FIELD MAP</span><span>N ↑</span></div><canvas id="minimap" width="336" height="224" aria-label="Map with your location and refuge markers"></canvas><div class="map-foot"><span>▲ You</span><span>◇ Refuge</span></div></section>
+  <section class="panel map-panel" aria-label="World map"><div class="map-head"><span>FIELD MAP</span><span>N ↑</span></div><canvas id="minimap" width="336" height="224" aria-label="Map with your location, known family and refuge markers"></canvas><div class="map-foot"><span>▲ You</span><span style="color:#f1cd88">● Family</span><span>◇ Refuge</span></div></section>
   <div id="joystick" role="group" aria-label="Touch movement joystick"><div id="stick"></div></div>
   <aside class="panel" id="tooltip" hidden></aside>
 
@@ -1121,8 +1121,8 @@ button {
 <section class="overlay" id="pauseScreen" aria-label="Paused" hidden><div class="modal"><div class="eyebrow">The world can wait</div><h2>Expedition paused</h2><p id="pauseReason">Take a breath. Nothing advances while paused.</p><button class="primary" id="resumeBtn">Resume expedition</button><div class="secondary-row"><button class="small-btn" id="pauseFamilyBtn">Family &amp; succession</button><button class="small-btn" id="pauseHelpBtn">Controls & field guide</button><button class="small-btn" id="restartBtn">Restart same seed</button><button class="small-btn" id="newSeedBtn">New world seed</button></div><div class="secondary-row"><button class="small-btn" id="saveBtn">Save manually</button><button class="small-btn" id="loadBtn">Load manual save</button><button class="small-btn" id="exportSaveBtn">Export save file</button><button class="small-btn" id="importSaveBtn">Import save file</button></div><p class="save-status" data-save-status role="status"></p><p class="fine">Saves stay in this browser. Export a backup for safekeeping.</p><details><summary>Population &amp; families</summary><p id="renewalStatus"></p><p class="fine">Citizens may choose partners and children independently, including someone you are courting. The population remains finite. Turning this off keeps existing families and history. Export a backup using the button above before enabling it in an older expedition.</p><button class="small-btn" id="renewalToggleBtn">Enable NPC families</button></details><details><summary>Testing</summary><button class="small-btn" id="openInspectorBtn">All information · F8</button></details></div></section>
 <section class="overlay" id="helpScreen" aria-label="Controls and field guide" hidden><div class="modal"><div class="eyebrow">Field guide</div><h2>Your next move</h2>
 <dl class="instructions"><dt>WASD / arrows</dt><dd>Move. Shift to sprint. On touch, use the joystick.</dd><dt>E / Gather</dt><dd>Hold to collect nearby food or water.</dd><dt>F / R</dt><dd>Eat / drink from your pack.</dd><dt>Space / Rest</dt><dd>Rest. Refuges can heal you.</dd><dt>Click a citizen / T</dt><dd>Choose an action. You walk over automatically. Move or Cancel to stop.</dd><dt>P / Escape</dt><dd>Pause. Escape also closes a citizen menu.</dd></dl>
-<details><summary>Relationships &amp; family</summary><p>Vary your conversations. Friendship and attraction are separate. Marriage requires mutual interest. Same-sex spouses share household support; joint biological births currently require a male and female spouse.</p><p>At a refuge, advance family years. Children mature at 18. Retire at 40 or choose an adult descendant upon death. No adult heir means the playable lineage ends. Daughters can inherit too.</p></details>
-<details><summary>Survival &amp; time</summary><p>Food and water fill your pack; use them to refill your meters. Empty meters cost health. Field rest restores stamina; refuge rest also heals when food and water exceed 30.</p><p>Citizen menus and Family pause the world. Walking and interactions resume it. One survival day equals one family year. Refuge year advances provide subsistence and process aging and deaths.</p></details>
+<details><summary>Relationships &amp; family</summary><p>Vary your conversations. Friendship and attraction are separate. Marriage requires mutual interest. Same-sex spouses share household support; joint biological births currently require a male and female spouse.</p><p>At a refuge, advance days. Children mature at 18 days old. Retire at 40 days old or choose an adult descendant upon death. No adult heir means the playable lineage ends. Daughters can inherit too. Gold halos and gold minimap dots mark known family, including your spouse. Undiscovered relatives are not marked.</p></details>
+<details><summary>Survival &amp; time</summary><p>Food and water fill your pack; use them to refill your meters. Empty meters cost health. Field rest restores stamina; refuge rest also heals when food and water exceed 30.</p><p>Citizen menus and Family pause the world. Walking and interactions resume it. One day lasts 120 simulated seconds and adds one day of age. Refuge day advances provide subsistence and process aging and deaths.</p></details>
 <details><summary>Notes &amp; saves</summary><p>Details holds your notebook. Unconfirmed claims and rumors can be wrong. Marriage does not reveal hidden ancestry or a daughter's latent geometry.</p><p>Pause to save, load or export a backup. Browser saves stay in this browser and origin. A new life preserves the manual slot. Import validates before replacing active progress.</p></details>
 <details><summary>Testing inspector</summary><p>F8 toggles a paused view of all character information, including private ancestry. Press F8 or Escape to return. This does not teach your character secrets or change saved knowledge. On touch: Pause → Testing → All information.</p></details>
 <button class="primary" id="closeHelpBtn">Back to game</button></div></section>
@@ -1133,7 +1133,7 @@ button {
   <div class="secondary-row"><button class="small-btn" id="closeFamilyBtn">Return to expedition</button><button class="small-btn" id="familySaveBtn">Save manually</button></div>
   <p class="save-status" data-save-status role="status"></p><p id="familyOutcome" role="status" aria-live="polite"></p>
   <h3>Household life</h3><p id="familyBirthStatus"></p><button class="small-btn" id="familyBirthBtn">Have children</button>
-  <p id="timeAdvanceStatus"></p><div class="secondary-row"><button class="small-btn" id="advance1Btn">Live 1 year</button><button class="small-btn" id="advance5Btn">Live 5 years</button></div>
+  <p id="timeAdvanceStatus"></p><div class="secondary-row"><button class="small-btn" id="advance1Btn">Live 1 day</button><button class="small-btn" id="advance5Btn">Live 5 days</button></div>
   <h3>Your family</h3>
   <div id="familyMembers"></div><div id="undiscoveredHeirs" class="secondary-row"></div><details><summary>Marriage history</summary><p class="family-record" id="familyMarriages"></p></details><details><summary>Life history</summary><p class="family-record" id="familyHistory"></p></details>
 </div></section>
@@ -2303,8 +2303,8 @@ function familyView(family) {
             children:c.actual.lineage.childrenIds.filter(id=>knownIds.has(id)).map(id=>family.name(family.character(id))),
             siblings:known.filter(other=>other.id!==c.id && c.actual.lineage.motherId && other.actual.lineage.motherId===c.actual.lineage.motherId && other.actual.lineage.fatherId===c.actual.lineage.fatherId).map(other=>family.name(other)),
             traits:family.births.some(b=>b.childIds.includes(c.id) && family.world.renewal.knowsBirth(b.id)) ? `Observed in family life: ${c.body.radius>20?'large':'medium'} outline, ${c.actual.genome.mobility>1.03?'brisk':c.actual.genome.mobility<.97?'measured':'steady'} pace, ${c.actual.genome.metabolism>1.03?'hearty':c.actual.genome.metabolism<.97?'light':'moderate'} appetite. ${c.body.form==='line'?'Latent geometry remains undiscovered.':'Visible geometry: '+c.body.visibleType+'.'}` : 'Private hereditary ancestry remains undiscovered.',
-            death:c.actual.life.alive ? '' : `${c.actual.life.deathCause || 'death'} · family year ${Math.floor((c.actual.life.deathAt||0)/C.DAY)}` })),
-        marriages:family.world.romance.marriages.filter(m=>family.world.renewal.knowsMarriage(m.id) && m.ids.every(id=>knownIds.has(id))).map(m=>({names:m.ids.map(id=>family.name(family.character(id))),at:Math.floor(m.at/C.DAY),end:m.endedAt===null?'ongoing':`${m.reason} in year ${Math.floor(m.endedAt/C.DAY)}`})),
+            death:c.actual.life.alive ? '' : `${c.actual.life.deathCause || 'death'} · day ${Math.floor((c.actual.life.deathAt||0)/C.DAY)+1}` })),
+        marriages:family.world.romance.marriages.filter(m=>family.world.renewal.knowsMarriage(m.id) && m.ids.every(id=>knownIds.has(id))).map(m=>({names:m.ids.map(id=>family.name(family.character(id))),at:Math.floor(m.at/C.DAY),end:m.endedAt===null?'ongoing':`${m.reason} on day ${Math.floor(m.endedAt/C.DAY)+1}`})),
         events:family.history.filter(e=>e.ids.every(id=>knownIds.has(id)) && (e.kind!=='birth' || family.births.some(b=>b.at===e.at && b.childIds.every(id=>e.ids.includes(id)) && family.world.renewal.knowsBirth(b.id)))).map(e=>({kind:e.kind,names:e.ids.map(id=>family.name(family.character(id))),year:Math.floor(e.at/C.DAY)})) };
 }
 
@@ -2323,11 +2323,11 @@ class FamilySystem {
         const a = this.world.player, b = this.world.romance.spouse(a);
         if (!b || !a.actual.life.alive || !b.actual.life.alive) return 'A living spouse and mutual commitment are required.';
         if (a.actual.identity.sex === b.actual.identity.sex) return 'Your marriage provides household support. Joint biological births require a male and female parent under the current inheritance rules.';
-        if ([a,b].some(c=>c.actual.life.ageYears < FAMILY.adult || c.actual.life.ageYears > FAMILY.fertileUntil)) return 'Both biological parents must be aged 18–60.';
+        if ([a,b].some(c=>c.actual.life.ageYears < FAMILY.adult || c.actual.life.ageYears > FAMILY.fertileUntil)) return 'Both biological parents must be aged 18–60 days.';
         const pair = this.world.romance.pair(a,b);
         const readiness=this.world.romance.parenthoodReadiness(a,b);
         if(!readiness.ready) return readiness.reason;
-        if (this.year - pair.lastBirthYear < FAMILY.birthCooldown) return `Allow ${Math.ceil(FAMILY.birthCooldown - (this.year-pair.lastBirthYear))} more family year(s) between births.`;
+        if (this.year - pair.lastBirthYear < FAMILY.birthCooldown) return `Allow ${Math.ceil(FAMILY.birthCooldown - (this.year-pair.lastBirthYear))} more day(s) between births.`;
         if (this.records().length > FAMILY.maxPopulation - 4) return 'This dynasty has reached the current population budget.';
         if (a.vitals.health < 35 || a.vitals.hunger < 30 || a.vitals.thirst < 30) return 'Recover your health and supplies before expanding the household.';
         return '';
@@ -2452,7 +2452,7 @@ class FamilySystem {
                 c.vitals.hunger=Math.max(55,c.vitals.hunger); c.vitals.thirst=Math.max(55,c.vitals.thirst); c.vitals.stamina=100;
             }
         }
-        return {ok:true,text:`${passed} family year(s) pass at the refuge. Community subsistence covers the interval; your pack is unchanged. Check family history for births, adulthood and deaths.`};
+        return {ok:true,text:`${passed} day(s) pass at the refuge. Community subsistence covers the interval; your pack is unchanged. Check family history for births, adulthood and deaths.`};
     }
     descendants(c=this.world.player) {
         const result=[], pending=[...c.actual.lineage.childrenIds], seen=new Set();
@@ -2463,7 +2463,7 @@ class FamilySystem {
     canSucceed() { return !this.world.player.actual.life.alive || this.world.player.actual.life.ageYears>=FAMILY.retirement; }
     succeed(id) {
         const w=this.world, old=w.player, next=this.candidates().find(c=>c.id===id);
-        if(!next || !this.canSucceed()) return {ok:false,text:'Choose a living adult descendant after age 40 retirement or upon death.'};
+        if(!next || !this.canSucceed()) return {ok:false,text:'Choose a living adult descendant after age 40 days retirement or upon death.'};
         w.renewal.beforeControl(old);
         this.notebooks[old.id]=captureObserverNotebook(w);
         if(old.actual.life.alive) this.history.push({kind:'retirement',ids:[old.id],at:w.elapsed});
@@ -3395,9 +3395,10 @@ class Renderer {
         for (const r of world.resources)
             if (visible(r.x, r.y, 30))
                 this.resource(ctx, r, world.elapsed, r === nearest);
+        const relatives=this.familyHighlights();
         for (const c of world.npcs)
             if (visible(c.x, c.y, 40))
-                this.citizen(ctx, c, alpha, world.elapsed, false);
+                this.citizen(ctx, c, alpha, world.elapsed, false,relatives.has(c.id));
         this.citizen(ctx, p, alpha, world.elapsed, true);
         // Day/night is atmospheric only in this phase; it never conceals vital UI.
         const phase = (world.elapsed % C.DAY) / C.DAY, night = Math.max(0, Math.sin((phase - .50) * TAU)) * .13;
@@ -3512,11 +3513,21 @@ class Renderer {
         }
         ctx.restore();
     }
-    citizen(ctx, c, alpha, time, isPlayer) {
+    familyHighlights() {
+        // Use the observer's known family, never private ancestry traversal.
+        const w=this.game.world;
+        return new Set(w.family.knownFamily().filter(c=>c.actual.life.alive && c.id!==w.player.id).map(c=>c.id));
+    }
+    citizen(ctx, c, alpha, time, isPlayer, isRelative=false) {
         if (!c.actual.life.alive) return;
         const x = lerp(c.px, c.x, alpha), y = lerp(c.py, c.y, alpha), a = moveAngle(c.prevAngle, c.angle, alpha);
         ctx.save();
         ctx.translate(x, y);
+        if(isRelative) {
+            ctx.save();ctx.beginPath();ctx.arc(0,0,c.body.radius+13,0,TAU);
+            ctx.fillStyle='#f1cd8810';ctx.fill();ctx.strokeStyle='#f1cd88';ctx.lineWidth=2;
+            ctx.shadowColor='#f1cd88';ctx.shadowBlur=9;ctx.setLineDash([5,4]);ctx.stroke();ctx.restore();
+        }
         const ui=this.game.socialUI;
         if(!isPlayer && (ui?.selectedId===c.id || ui?.controller?.pending?.id===c.id)) {
             ctx.beginPath();ctx.arc(0,0,c.body.radius+8,0,TAU);ctx.strokeStyle='#a6cfaa';ctx.lineWidth=2;ctx.stroke();
@@ -3550,7 +3561,7 @@ class Renderer {
         ctx.restore();
         if (!isPlayer && c.playerKnowledge.discoveredFacts.name && dist2(c.x, c.y, this.game.world.player.x, this.game.world.player.y) < 340 ** 2) {
             ctx.textAlign = 'center'; ctx.font = '9px ui-sans-serif, system-ui'; ctx.fillStyle = '#c8d4c3';
-            ctx.fillText(c.playerKnowledge.discoveredFacts.name.value, 0, -c.body.radius - 10);
+            ctx.fillText(c.playerKnowledge.discoveredFacts.name.value, 0, -c.body.radius - (isRelative?25:10));
         }
         if (c.ai?.activity === 'gathering') {
             ctx.fillStyle = '#afcaaf';
@@ -3605,11 +3616,12 @@ class Renderer {
             ctx.fill();
             ctx.restore();
         }
-        ctx.fillStyle = '#b7c9b46a';
+        const relatives=this.familyHighlights();
         for (const c of world.npcs) {
             if (!c.actual.life.alive) continue;
+            const relative=relatives.has(c.id);ctx.fillStyle=relative?'#f1cd88':'#b7c9b46a';
             ctx.beginPath();
-            ctx.arc(c.x, c.y, 9, 0, TAU);
+            ctx.arc(c.x, c.y, relative?19:9, 0, TAU);
             ctx.fill();
         }
         const p = world.player;
@@ -3978,14 +3990,14 @@ class Game {
         if(this.world) {
             $('renewalToggleBtn').textContent=this.world.renewal.enabled?'Disable NPC families':'Enable NPC families';
             $('renewalToggleBtn').disabled=!this.world.player.actual.life.alive;
-            $('renewalStatus').textContent=this.world.renewal.enabled?'NPC families are enabled. Changes begin at the next family year.':'The founding population ages without new NPC families.';
+            $('renewalStatus').textContent=this.world.renewal.enabled?'NPC families are enabled. Changes begin at the next day.':'The founding population ages without new NPC families.';
         }
         const w = this.world;
         if (!w)
             return;
         const p = w.player;
         $('generationTag').textContent = `Generation ${p.actual.lineage.generation}`;
-        $('playerIdentity').textContent = `${p.body.visibleType} · age ${Math.floor(p.actual.life.ageYears)}`;
+        $('playerIdentity').textContent = `${p.body.visibleType} · age ${Math.floor(p.actual.life.ageYears)} days`;
         for (const key of ['health', 'hunger', 'thirst', 'stamina']) {
             const value = clamp(p.vitals[key], 0, 100), num = Math.ceil(value);
             $(key + 'Text').textContent = num;
@@ -4229,7 +4241,7 @@ class FamilyUI {
     }
     birth() { const r=this.game.world.family.birth(); $('familyOutcome').textContent=briefReply(r,'birth'); this.refresh(); this.game.saves.save('auto',true); }
     advance(years) {
-        const g=this.game,r=g.world.family.advance(years); $('familyOutcome').textContent=r.ok?(years===1?'1 family year passes.':`${years} family years pass.`):briefReply(r,'advance');
+        const g=this.game,r=g.world.family.advance(years); $('familyOutcome').textContent=r.ok?(years===1?'1 day passes.':`${years} days pass.`):briefReply(r,'advance');
         if(!g.world.player.actual.life.alive) g.die();
         this.refresh(); g.refreshUI(); g.renderer.snap(); g.renderer.map(); g.saves.save('auto',true);
     }
@@ -4251,8 +4263,8 @@ class FamilyUI {
         }
         const text=(el,value)=>{if(el.textContent!==value) el.textContent=value;};
         text(row.title,`${m.name}${m.current?' · You':''} · Generation ${m.generation}`);
-        text(row.details,`Age ${m.age} · ${m.sex} · ${m.form} · ${m.alive ? (m.age<18?'Child':'Adult') : m.death}`);
-        text(row.eligibility,m.current?'Current playable character':m.eligible?'Adult heir':!m.alive?'Deceased':m.age<18?`Adult in ${18-m.age} years`:'Family member');
+        text(row.details,`Age ${m.age} days · ${m.sex} · ${m.form} · ${m.alive ? (m.age<18?'Child':'Adult') : m.death}`);
+        text(row.eligibility,m.current?'Current playable character':m.eligible?'Adult heir':!m.alive?'Deceased':m.age<18?`Adult in ${18-m.age} days`:'Family member');
         text(row.traits,m.traits);
         text(row.links,`Parents: ${m.parents.join(', ') || 'Not recorded'} · Children: ${m.children.join(', ') || 'None'} · Siblings: ${m.siblings.join(', ') || 'None recorded'}`);
         if(m.eligible) {
@@ -4266,14 +4278,14 @@ class FamilyUI {
     }
     refresh() {
         const g=this.game, f=g.world.family, v=f.view(), p=g.world.player;
-        $('familySummary').textContent=`Generation ${v.generation} · ${f.name(p)}, age ${Math.floor(p.actual.life.ageYears)} · Spouse: ${v.spouse}`;
+        $('familySummary').textContent=`Generation ${v.generation} · ${f.name(p)}, age ${Math.floor(p.actual.life.ageYears)} days · Spouse: ${v.spouse}`;
         $('familyBirthStatus').textContent=v.birthReason.includes('Joint biological')?'Joint births require a male and female spouse.':v.birthReason || 'Ready to raise children.';
         $('familyBirthBtn').disabled=!!v.birthReason;
         $('closeFamilyBtn').disabled=!p.actual.life.alive && f.candidates().length>0;
-        $('successionStatus').textContent=!p.actual.life.alive ? (f.candidates().length ? 'Choose an adult heir to continue.' : 'No adult heir. This lineage has ended.') : `${f.candidates().length} adult heirs · Children mature at 18 · ${v.canSucceed?'You may retire now.':'Retire at 40.'}`;
+        $('successionStatus').textContent=!p.actual.life.alive ? (f.candidates().length ? 'Choose an adult heir to continue.' : 'No adult heir. This lineage has ended.') : `${f.candidates().length} adult heirs · Children mature at 18 days · ${v.canSucceed?'You may retire now.':'Retire at 40 days.'}`;
         const refuge=!!g.world.refugeAt(p.x,p.y);
         for(const n of [1,5]) $(`advance${n}Btn`).disabled=!p.actual.life.alive || !refuge;
-        $('timeAdvanceStatus').textContent=refuge ? 'Refuge years provide subsistence. Your pack is kept.' : 'Return to a refuge to advance years.';
+        $('timeAdvanceStatus').textContent=refuge ? 'Refuge days provide subsistence. Your pack is kept.' : 'Return to a refuge to advance days.';
         const list=$('familyMembers'), ids=new Set(v.members.map(m=>m.id));
         for(const [id,row] of this.memberRows) if(!ids.has(id)) { row.card.remove(); this.memberRows.delete(id); }
         v.members.forEach((m,index)=>{
@@ -4285,8 +4297,8 @@ class FamilyUI {
             const button=document.createElement('button');button.className='small-btn';button.textContent=heir.label;
             button.dataset.successor=heir.id;button.addEventListener('click',()=>this.choose(heir.id));unseen.appendChild(button);
         }
-        $('familyMarriages').textContent=v.marriages.map(m=>`${m.names.join(' + ')} · married year ${m.at} · ${m.end}`).join('\n') || 'No recorded marriages.';
-        $('familyHistory').textContent=v.events.map(e=>`Year ${e.year} · ${e.kind} · ${e.names.join(', ')}`).join('\n') || 'Your family history begins here.';
+        $('familyMarriages').textContent=v.marriages.map(m=>`${m.names.join(' + ')} · married day ${m.at+1} · ${m.end}`).join('\n') || 'No recorded marriages.';
+        $('familyHistory').textContent=v.events.map(e=>`Day ${e.year+1} · ${e.kind} · ${e.names.join(', ')}`).join('\n') || 'Your family history begins here.';
     }
 }
 
@@ -4338,7 +4350,7 @@ class InformationInspector {
     render() {
         const g=this.game,w=g.world,id=$('inspectorCharacter').value,c=w.registry.get(id);
         if(id==='world') {
-            $('inspectorSummary').textContent=`Seed ${w.seed} · Family year ${(w.elapsed/C.DAY).toFixed(2)} · ${w.registry.living().length} living / ${w.registry.all().length} total records`;
+            $('inspectorSummary').textContent=`Seed ${w.seed} · Day ${Math.floor(w.elapsed/C.DAY)+1} · ${w.registry.living().length} living / ${w.registry.all().length} total records`;
             $('inspectorRecord').textContent=JSON.stringify({save:g.saves.capture(),resources:w.resources,terrain:{obstacles:w.obstacles,refuges:w.refuges,roads:w.roads,districts:w.districts}},null,2);
             return;
         }
@@ -4347,7 +4359,7 @@ class InformationInspector {
         const preferences=w.romance.preferences(c),pair=c.id===w.player.id?null:w.romance.pairs[w.romance.key(w.player,c)] || null;
         const readiness=c.id===w.player.id?null:w.romance.parenthoodReadiness(w.player,c);
         const summary=[
-            `${a.identity.name} · ${c.id} · ${a.identity.sex} · age ${a.life.ageYears.toFixed(2)} · ${a.life.alive?'Living':a.life.deathCause || 'Deceased'}`,
+            `${a.identity.name} · ${c.id} · ${a.identity.sex} · age ${a.life.ageYears.toFixed(2)} days · ${a.life.alive?'Living':a.life.deathCause || 'Deceased'}`,
             `Visible form: ${c.body.visibleType} · Generation ${a.lineage.generation}`,
             `Hidden geometry: ${genome.sideCount} sides · ${genome.geometryStage} · regularity ${genome.regularity.toFixed(3)} · sharpness ${genome.sharpness.toFixed(3)}`,
             `Irregular-ancestry carrier: ${genome.latentIrregularAncestry?'Yes':'No'} · Mutation tendency: ${genome.mutationTendency.toFixed(3)}`,

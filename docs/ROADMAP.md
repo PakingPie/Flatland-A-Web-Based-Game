@@ -2,7 +2,7 @@
 
 **Design baseline:** v0.3 · 2026-10-15  
 **Project:** Browser-based, two-dimensional survival, society, and generational evolution game inspired by Edwin A. Abbott's *Flatland*.  
-**Status:** Phase 1.1, 2A, 2B, 3 and bounded Phase 3.5 NPC renewal are implemented in [the playable build](../the-flatland.html), v0.3.2 / save v5. See [current QA](QA_REPORT.md), [implemented family rules](FAMILY_RULES.md) and [checkpoints](IMPLEMENTATION_STATUS.md). The usability follow-up adds anchored action bubbles, automatic approach, paused choices and concise tutorials. Later phases remain planned.
+**Status:** Phase 1.1, 2A, 2B, 3 and bounded Phase 3.5 NPC renewal are implemented in [the playable build](../the-flatland.html), v0.3.3 / save v5. See [current QA](QA_REPORT.md), [implemented family rules](FAMILY_RULES.md) and [checkpoints](IMPLEMENTATION_STATUS.md). The usability follow-up adds anchored action bubbles, automatic approach, paused choices and concise tutorials. Later phases remain planned.
 
 **Repository and license:** [PakingPie/Flatland-A-Web-Based-Game](https://github.com/PakingPie/Flatland-A-Web-Based-Game) is public and uses the [MIT license](../LICENSE), Copyright (c) 2026 PerkinPie. Public deployment is a separate decision.
 
@@ -21,6 +21,11 @@
 | 4A — Combat foundations | **Proposed after 3.5; no combat implemented** | One voluntary nonlethal melee encounter, visible geometry, defense, retreat | [Bounded plan and entry gates](PHASE4A_PLAN.md); persistence, survival and generations preserved |
 | 4 later — Combat & Law | Planned separately | Lethal danger, lasting injuries, witnesses, guards, crimes | Combat and legal reactions follow geometry and social context |
 | 5 — Civilization | Planned | Trade, property, class mobility, politics, institutions and reform | Multiple viable long-term paths beyond becoming a circle |
+
+**Time vocabulary:** v0.3.3 presents the same 120-second aging interval as a day
+throughout the UI. Earlier family-year terminology below is historical; numeric
+rules and legacy save fields are unchanged. Known family now have gold halos and
+minimap dots, without revealing undiscovered biological relationships.
 
 **Milestone strategy:** Courtship/marriage was tested and committed before genetics; births/genetics and then aging/succession received separate commits. Native Chromium persistence passed before family implementation and after generational transitions. Finish architecture hardening and sustainable population design before combat.
 

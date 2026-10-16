@@ -1,5 +1,11 @@
 # Autonomous NPC families — adopted rules and implementation
 
+**Vocabulary update, v0.3.3:** the UI now calls the same 120-second family-age
+interval a day, including ages, cooldowns and calendar history. The adopted
+numerical rules below are unchanged. Historical year terminology and saved
+field/API names remain compatible; this is not a new population policy.
+
+
 **Adopted 2026-10-16:** the user approved decision bundle A–E below. It now governs
 the staged implementation. Earlier proposal text remains design history; where
 it is less specific, the adopted bundle takes precedence. The scheduler and v5 lossless format are now implemented and validated;

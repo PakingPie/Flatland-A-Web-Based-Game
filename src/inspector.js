@@ -45,7 +45,7 @@ class InformationInspector {
     render() {
         const g=this.game,w=g.world,id=$('inspectorCharacter').value,c=w.registry.get(id);
         if(id==='world') {
-            $('inspectorSummary').textContent=`Seed ${w.seed} · Family year ${(w.elapsed/C.DAY).toFixed(2)} · ${w.registry.living().length} living / ${w.registry.all().length} total records`;
+            $('inspectorSummary').textContent=`Seed ${w.seed} · Day ${Math.floor(w.elapsed/C.DAY)+1} · ${w.registry.living().length} living / ${w.registry.all().length} total records`;
             $('inspectorRecord').textContent=JSON.stringify({save:g.saves.capture(),resources:w.resources,terrain:{obstacles:w.obstacles,refuges:w.refuges,roads:w.roads,districts:w.districts}},null,2);
             return;
         }
@@ -54,7 +54,7 @@ class InformationInspector {
         const preferences=w.romance.preferences(c),pair=c.id===w.player.id?null:w.romance.pairs[w.romance.key(w.player,c)] || null;
         const readiness=c.id===w.player.id?null:w.romance.parenthoodReadiness(w.player,c);
         const summary=[
-            `${a.identity.name} · ${c.id} · ${a.identity.sex} · age ${a.life.ageYears.toFixed(2)} · ${a.life.alive?'Living':a.life.deathCause || 'Deceased'}`,
+            `${a.identity.name} · ${c.id} · ${a.identity.sex} · age ${a.life.ageYears.toFixed(2)} days · ${a.life.alive?'Living':a.life.deathCause || 'Deceased'}`,
             `Visible form: ${c.body.visibleType} · Generation ${a.lineage.generation}`,
             `Hidden geometry: ${genome.sideCount} sides · ${genome.geometryStage} · regularity ${genome.regularity.toFixed(3)} · sharpness ${genome.sharpness.toFixed(3)}`,
             `Irregular-ancestry carrier: ${genome.latentIrregularAncestry?'Yes':'No'} · Mutation tendency: ${genome.mutationTendency.toFixed(3)}`,

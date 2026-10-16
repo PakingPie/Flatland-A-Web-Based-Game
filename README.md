@@ -1,8 +1,8 @@
 # The Flatland
-## Version 0.3.2 — Autonomous NPC families and lossless archives
+## Version 0.3.3 — Family highlights and one day clock
 
 Phase 3.5 now includes bounded [autonomous NPC families](docs/POPULATION_RENEWAL_DESIGN.md),
-with mutual private relationships, yearly marriages/births and stable household
+with mutual private relationships, daily marriages/births and stable household
 inheritance. New expeditions enable renewal; existing saves keep their founding-only
 policy until you choose **Pause → Population & families → Enable NPC families**.
 Export a backup first. Disabling stops future events and keeps existing families.
@@ -40,9 +40,9 @@ storage durability has not been established.
    does not increase willingness.
 5. Open **Family & succession** from your condition panel or Pause. Eligible,
    consenting spouses can have two to four individually inherited children.
-6. At a refuge use **Live 1 / 5 family years**. Community subsistence covers needs
+6. At a refuge use **Live 1 / 5 days**. Community subsistence covers needs
    and preserves packed supplies; aging, adulthood and natural deaths still occur.
-7. Children become adults at 18. At 40 you may retire and choose a living adult
+7. Children become adults at 18 days old. At 40 days old you may retire and choose a living adult
    biological descendant. Adult descendants can also continue upon your death.
 8. The selected heir becomes playable in the **same world**. Siblings and retired
    founders remain NPCs. Save and Continue to resume that generation.
@@ -67,7 +67,7 @@ require a male and female spouse. Marriage and biological parentage are separate
 | Talk / inspect | T / click citizen | Talk / tap citizen |
 | Conversation | Action bubble; 1–4 select visible choices | Tap an action |
 | Courtship / proposal | Romance → actions / Commitment | Same bubble choices |
-| Family, years, heir selection | Condition panel or Pause → Family | Same buttons |
+| Family, days, heir selection | Condition panel or Pause → Family | Same buttons |
 | Close citizen / family panel | Escape or close button | Close button |
 | Pause / help | P / H | Pause / Help |
 | Save, load, export, import | Pause menu | Pause menu |
@@ -87,6 +87,20 @@ more topics one level deeper. Greet, Talk, Romance and Family use existing rules
 Details holds discovered facts and unconfirmed rumors. Short speech bubbles
 replace mechanical explanations after actions. Family traits and histories expand
 on demand. Help retains optional rule explanations.
+
+## Known family and time
+
+Known living family members, including spouses, have a soft gold dashed halo in
+the world and gold minimap dots. The player keeps the existing coral marker;
+selected citizens keep their green ring. Hidden biological connections do not
+receive a family highlight. Marks follow the current observer after succession.
+
+The game uses one day clock: **one day is 120 simulated seconds and adds one day
+of age**. Ages, cooldowns, refuge buttons and history now use days throughout.
+Children mature at 18 days old, retirement opens at 40 days old, and natural
+lifespans remain 78–92 days. This is a presentation change with the same numerical
+pace. Calendar history starts at Day 1, matching the HUD. Existing saves keep their
+ages/progress; no migration, RNG or balance change is needed.
 
 ## Relationships and inheritance
 
@@ -166,7 +180,7 @@ remains unchanged.
 | [family invariants](src/family-invariants.js) | Reciprocal spouse links and generation DAGs |
 | [observer notebooks](src/observer-notebooks.js), [household](src/household.js) | Observer transfer and derived household support |
 | [family view](src/family-view.js) | Privacy-safe family presentation DTO |
-| [family UI](src/family-ui.js) | Paused register, years and heir selection |
+| [family UI](src/family-ui.js) | Paused register, days and heir selection |
 | [save codec](src/save-codec.js), [migrations](src/save-migrations.js), [validation](src/save-validation.js) | Storage-independent schema readers and candidate validation |
 | [persistence](src/persistence.js) | Native storage, slot fallback, installation and file I/O |
 | [inspector](src/inspector.js) | Explicit, reversible private-truth view for testing |
@@ -193,10 +207,11 @@ node tools/browser-architecture.cjs
 node tools/browser-inspector.cjs
 node tools/browser-parenthood.cjs
 node tools/browser-renewal.cjs
+node tools/browser-family-presentation.cjs
 ```
 
 The dependency-free `node tools/population-study.cjs` runs a separate 20-seed,
-100-year demographic fixture, continuing after founder extinction without reviving
+100-day demographic fixture, continuing after founder extinction without reviving
 anyone. It is not evidence of unassisted human play or an indefinitely viable dynasty.
 
 Use `FLATLAND_NODE_MODULES` for a bundled Playwright package directory and
@@ -219,8 +234,8 @@ records, event sources and observer notebooks remain in each export; no archive
 compaction or ID reuse occurs. V5 writes enforce a 2 MB UTF-8 envelope plus existing
 structural/event budgets. Old builds cannot read v5 exports; retain a pre-upgrade backup.
 
-The demographic fixture produced first cohorts in years 6–17; two of twenty seeds
-had no living population at year 100. Yearly callbacks can briefly pause the game:
+The demographic fixture produced first cohorts on days 7–18; two of twenty seeds
+had no living population after 100 days. Daily callbacks can briefly pause the game:
 the fixture observed a median 159 ms and maximum 590 ms under concurrent QA load.
 These timings are not frame-rate or device guarantees. See the detailed [QA report](docs/QA_REPORT.md).
 

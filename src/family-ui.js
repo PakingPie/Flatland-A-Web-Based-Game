@@ -23,7 +23,7 @@ class FamilyUI {
     }
     birth() { const r=this.game.world.family.birth(); $('familyOutcome').textContent=briefReply(r,'birth'); this.refresh(); this.game.saves.save('auto',true); }
     advance(years) {
-        const g=this.game,r=g.world.family.advance(years); $('familyOutcome').textContent=r.ok?(years===1?'1 family year passes.':`${years} family years pass.`):briefReply(r,'advance');
+        const g=this.game,r=g.world.family.advance(years); $('familyOutcome').textContent=r.ok?(years===1?'1 day passes.':`${years} days pass.`):briefReply(r,'advance');
         if(!g.world.player.actual.life.alive) g.die();
         this.refresh(); g.refreshUI(); g.renderer.snap(); g.renderer.map(); g.saves.save('auto',true);
     }
@@ -45,8 +45,8 @@ class FamilyUI {
         }
         const text=(el,value)=>{if(el.textContent!==value) el.textContent=value;};
         text(row.title,`${m.name}${m.current?' · You':''} · Generation ${m.generation}`);
-        text(row.details,`Age ${m.age} · ${m.sex} · ${m.form} · ${m.alive ? (m.age<18?'Child':'Adult') : m.death}`);
-        text(row.eligibility,m.current?'Current playable character':m.eligible?'Adult heir':!m.alive?'Deceased':m.age<18?`Adult in ${18-m.age} years`:'Family member');
+        text(row.details,`Age ${m.age} days · ${m.sex} · ${m.form} · ${m.alive ? (m.age<18?'Child':'Adult') : m.death}`);
+        text(row.eligibility,m.current?'Current playable character':m.eligible?'Adult heir':!m.alive?'Deceased':m.age<18?`Adult in ${18-m.age} days`:'Family member');
         text(row.traits,m.traits);
         text(row.links,`Parents: ${m.parents.join(', ') || 'Not recorded'} · Children: ${m.children.join(', ') || 'None'} · Siblings: ${m.siblings.join(', ') || 'None recorded'}`);
         if(m.eligible) {
@@ -60,14 +60,14 @@ class FamilyUI {
     }
     refresh() {
         const g=this.game, f=g.world.family, v=f.view(), p=g.world.player;
-        $('familySummary').textContent=`Generation ${v.generation} · ${f.name(p)}, age ${Math.floor(p.actual.life.ageYears)} · Spouse: ${v.spouse}`;
+        $('familySummary').textContent=`Generation ${v.generation} · ${f.name(p)}, age ${Math.floor(p.actual.life.ageYears)} days · Spouse: ${v.spouse}`;
         $('familyBirthStatus').textContent=v.birthReason.includes('Joint biological')?'Joint births require a male and female spouse.':v.birthReason || 'Ready to raise children.';
         $('familyBirthBtn').disabled=!!v.birthReason;
         $('closeFamilyBtn').disabled=!p.actual.life.alive && f.candidates().length>0;
-        $('successionStatus').textContent=!p.actual.life.alive ? (f.candidates().length ? 'Choose an adult heir to continue.' : 'No adult heir. This lineage has ended.') : `${f.candidates().length} adult heirs · Children mature at 18 · ${v.canSucceed?'You may retire now.':'Retire at 40.'}`;
+        $('successionStatus').textContent=!p.actual.life.alive ? (f.candidates().length ? 'Choose an adult heir to continue.' : 'No adult heir. This lineage has ended.') : `${f.candidates().length} adult heirs · Children mature at 18 days · ${v.canSucceed?'You may retire now.':'Retire at 40 days.'}`;
         const refuge=!!g.world.refugeAt(p.x,p.y);
         for(const n of [1,5]) $(`advance${n}Btn`).disabled=!p.actual.life.alive || !refuge;
-        $('timeAdvanceStatus').textContent=refuge ? 'Refuge years provide subsistence. Your pack is kept.' : 'Return to a refuge to advance years.';
+        $('timeAdvanceStatus').textContent=refuge ? 'Refuge days provide subsistence. Your pack is kept.' : 'Return to a refuge to advance days.';
         const list=$('familyMembers'), ids=new Set(v.members.map(m=>m.id));
         for(const [id,row] of this.memberRows) if(!ids.has(id)) { row.card.remove(); this.memberRows.delete(id); }
         v.members.forEach((m,index)=>{
@@ -79,7 +79,7 @@ class FamilyUI {
             const button=document.createElement('button');button.className='small-btn';button.textContent=heir.label;
             button.dataset.successor=heir.id;button.addEventListener('click',()=>this.choose(heir.id));unseen.appendChild(button);
         }
-        $('familyMarriages').textContent=v.marriages.map(m=>`${m.names.join(' + ')} · married year ${m.at} · ${m.end}`).join('\n') || 'No recorded marriages.';
-        $('familyHistory').textContent=v.events.map(e=>`Year ${e.year} · ${e.kind} · ${e.names.join(', ')}`).join('\n') || 'Your family history begins here.';
+        $('familyMarriages').textContent=v.marriages.map(m=>`${m.names.join(' + ')} · married day ${m.at+1} · ${m.end}`).join('\n') || 'No recorded marriages.';
+        $('familyHistory').textContent=v.events.map(e=>`Day ${e.year+1} · ${e.kind} · ${e.names.join(', ')}`).join('\n') || 'Your family history begins here.';
     }
 }

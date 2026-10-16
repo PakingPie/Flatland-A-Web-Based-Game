@@ -345,14 +345,14 @@ class Game {
         if(this.world) {
             $('renewalToggleBtn').textContent=this.world.renewal.enabled?'Disable NPC families':'Enable NPC families';
             $('renewalToggleBtn').disabled=!this.world.player.actual.life.alive;
-            $('renewalStatus').textContent=this.world.renewal.enabled?'NPC families are enabled. Changes begin at the next family year.':'The founding population ages without new NPC families.';
+            $('renewalStatus').textContent=this.world.renewal.enabled?'NPC families are enabled. Changes begin at the next day.':'The founding population ages without new NPC families.';
         }
         const w = this.world;
         if (!w)
             return;
         const p = w.player;
         $('generationTag').textContent = `Generation ${p.actual.lineage.generation}`;
-        $('playerIdentity').textContent = `${p.body.visibleType} · age ${Math.floor(p.actual.life.ageYears)}`;
+        $('playerIdentity').textContent = `${p.body.visibleType} · age ${Math.floor(p.actual.life.ageYears)} days`;
         for (const key of ['health', 'hunger', 'thirst', 'stamina']) {
             const value = clamp(p.vitals[key], 0, 100), num = Math.ceil(value);
             $(key + 'Text').textContent = num;

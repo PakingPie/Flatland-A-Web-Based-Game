@@ -1,4 +1,26 @@
-# QA report — Phase 3.5 renewal (v0.3.2 / save v5)
+# QA report — Phase 3.5 renewal (v0.3.3 / save v5)
+
+## Family highlights and day vocabulary — 2026-10-16
+
+V0.3.3 adds gold dashed halos and gold minimap dots for the current observer's
+known living family, including spouses. Deceased records, the player, strangers
+and undiscovered biological relations receive no family marker. Marking is derived
+from the same privacy-safe family membership used by the register and is never
+persisted. Selected-citizen rings remain green and the player remains coral.
+
+One day remains 120 simulated seconds, with one unit of age per day. Ages,
+refuge advancement, cooldowns, history and Help now consistently say days;
+calendar event labels start at Day 1 like the HUD. Numeric rules, save v5, legacy
+field names, IDs, RNG and raw event timestamps remain unchanged.
+
+All 78 deterministic cases and nine Chromium scripts pass. The new
+[family presentation suite](../tools/browser-family-presentation.cjs) observes
+actual Canvas gold strokes/dots, post-succession membership, hidden-cohort
+provenance, read-only payloads and the actual 1-day button's 120-second age step.
+Desktop/portrait/landscape captures were inspected. Raw evidence stays local in
+ignored output; no normal player profile was used. Earlier reports below retain
+the old year terminology and suite counts as historical evidence.
+
 
 Executed 2026-10-16 on Windows with Node 24.12.0, Python 3.14.2 and real Chromium
 149.0.7827.55 using the bundled Playwright runtime. The

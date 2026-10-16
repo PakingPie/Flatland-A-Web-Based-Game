@@ -159,9 +159,10 @@ class Renderer {
         for (const r of world.resources)
             if (visible(r.x, r.y, 30))
                 this.resource(ctx, r, world.elapsed, r === nearest);
+        const relatives=this.familyHighlights();
         for (const c of world.npcs)
             if (visible(c.x, c.y, 40))
-                this.citizen(ctx, c, alpha, world.elapsed, false);
+                this.citizen(ctx, c, alpha, world.elapsed, false,relatives.has(c.id));
         this.citizen(ctx, p, alpha, world.elapsed, true);
         // Day/night is atmospheric only in this phase; it never conceals vital UI.
         const phase = (world.elapsed % C.DAY) / C.DAY, night = Math.max(0, Math.sin((phase - .50) * TAU)) * .13;
@@ -276,11 +277,21 @@ class Renderer {
         }
         ctx.restore();
     }
-    citizen(ctx, c, alpha, time, isPlayer) {
+    familyHighlights() {
+        // Use the observer's known family, never private ancestry traversal.
+        const w=this.game.world;
+        return new Set(w.family.knownFamily().filter(c=>c.actual.life.alive && c.id!==w.player.id).map(c=>c.id));
+    }
+    citizen(ctx, c, alpha, time, isPlayer, isRelative=false) {
         if (!c.actual.life.alive) return;
         const x = lerp(c.px, c.x, alpha), y = lerp(c.py, c.y, alpha), a = moveAngle(c.prevAngle, c.angle, alpha);
         ctx.save();
         ctx.translate(x, y);
+        if(isRelative) {
+            ctx.save();ctx.beginPath();ctx.arc(0,0,c.body.radius+13,0,TAU);
+            ctx.fillStyle='#f1cd8810';ctx.fill();ctx.strokeStyle='#f1cd88';ctx.lineWidth=2;
+            ctx.shadowColor='#f1cd88';ctx.shadowBlur=9;ctx.setLineDash([5,4]);ctx.stroke();ctx.restore();
+        }
         const ui=this.game.socialUI;
         if(!isPlayer && (ui?.selectedId===c.id || ui?.controller?.pending?.id===c.id)) {
             ctx.beginPath();ctx.arc(0,0,c.body.radius+8,0,TAU);ctx.strokeStyle='#a6cfaa';ctx.lineWidth=2;ctx.stroke();
@@ -314,7 +325,7 @@ class Renderer {
         ctx.restore();
         if (!isPlayer && c.playerKnowledge.discoveredFacts.name && dist2(c.x, c.y, this.game.world.player.x, this.game.world.player.y) < 340 ** 2) {
             ctx.textAlign = 'center'; ctx.font = '9px ui-sans-serif, system-ui'; ctx.fillStyle = '#c8d4c3';
-            ctx.fillText(c.playerKnowledge.discoveredFacts.name.value, 0, -c.body.radius - 10);
+            ctx.fillText(c.playerKnowledge.discoveredFacts.name.value, 0, -c.body.radius - (isRelative?25:10));
         }
         if (c.ai?.activity === 'gathering') {
             ctx.fillStyle = '#afcaaf';
@@ -369,11 +380,12 @@ class Renderer {
             ctx.fill();
             ctx.restore();
         }
-        ctx.fillStyle = '#b7c9b46a';
+        const relatives=this.familyHighlights();
         for (const c of world.npcs) {
             if (!c.actual.life.alive) continue;
+            const relative=relatives.has(c.id);ctx.fillStyle=relative?'#f1cd88':'#b7c9b46a';
             ctx.beginPath();
-            ctx.arc(c.x, c.y, 9, 0, TAU);
+            ctx.arc(c.x, c.y, relative?19:9, 0, TAU);
             ctx.fill();
         }
         const p = world.player;

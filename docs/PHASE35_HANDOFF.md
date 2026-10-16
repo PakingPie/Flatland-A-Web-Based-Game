@@ -1,5 +1,16 @@
 # Phase 3.5 renewal handoff
 
+**Presentation follow-up, v0.3.3:** known living family now have gold dashed halos
+and minimap dots. Hidden biological connections remain unmarked. All user-facing
+ages and time labels use days: one day remains 120 simulated seconds and adds one
+unit of age. No migration or numeric balance change; old save/API year field names
+stay compatible. Event dates are one-based like the HUD. Current validation is
+78 deterministic cases and nine browser scripts, including the Canvas/privacy/day
+presentation suite. Earlier renewal/census evidence below uses its historical
+year vocabulary. The human playtest gate before combat is still uncompleted and
+unwaived.
+
+
 ## Current state — 2026-10-16
 
 The user adopted population decision bundle A–E after design checkpoint `8389cfa`.
@@ -50,7 +61,7 @@ birth RNG, cooldown and discoveries. No ancestry deletion or weakened kinship.
 
 ## Validation and limits
 
-The [QA report](QA_REPORT.md) records the deterministic suite, all eight isolated
+The [QA report](QA_REPORT.md) records the deterministic suite, all nine isolated
 Chromium scripts and the 20-seed / 100-year demographic study. Native v5 shutdown and
 Continue, original v1–v4 fields, dead records, notebooks, pending heirs, daughter
 anchors, policy controls, F8 and standalone opening are covered. Population and
@@ -87,7 +98,7 @@ soldiers, civilization, lethal attacks and lasting injuries stay outside 4A.
 > POPULATION_RENEWAL_DESIGN, FAMILY_RULES, QA_REPORT, IMPLEMENTATION_STATUS and
 > PHASE4A_PLAN. Bundle A–E is adopted and renewal is implemented; do not ask to
 > reapprove it. Preserve the tested preparation/archive/renewal milestones and
-> any parallel work. Rerun build/docs/rules and all eight Chromium suites before
+> any parallel work. Rerun build/docs/rules and all nine Chromium suites before
 > changing gameplay. Keep v1–v4 migration, v5 full deceased archives, stable IDs,
 > ancestry privacy, bubbles, succession, F8, playable willingness, original slot
 > keys and standalone HTML. New games enable renewal; legacy saves require explicit
