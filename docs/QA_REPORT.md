@@ -1,5 +1,25 @@
 # QA report — Phase 3.5 renewal (v0.3.5 / save v5)
 
+## Merged Phase 4A baseline — 2026-10-16
+
+The first Phase 4A checkpoint adds six pure melee cases: **88/88 rule tests**,
+all ten existing Chromium suites, build agreement and documentation checks pass.
+Profiles, contact, fixed-step single-hit/recovery timing, defense/nonlethal damage
+and hidden-genome independence are covered. Gameplay is not connected at this
+checkpoint. The original 82 cases remain included, not replaced.
+
+Clean `main` at `b8caef8` passes build agreement, all documentation references,
+**82/82 rule tests and all ten browser suites**. Native save/restart, generations,
+bubbles, survival/touch regressions, architecture, F8, parenthood, renewal,
+family presentation and growth all pass. The installed Chromium was selected
+explicitly; the sandbox blocked its launch, so isolated test-owned profiles and
+localhost servers ran outside the sandbox. Normal player saves were not opened.
+
+The user explicitly deferred the human balance playtest for bounded Phase 4A.
+This supersedes older “unwaived” gate statements in this historical report.
+Unassisted survival, travel, partner discovery, courtship and competing NPC
+commitments remain unverified. Controlled browser checks do not satisfy them.
+
 ## Approved visual growth stages — 2026-10-16
 
 V0.3.5 implements the user-approved child/teen/adult/elder stages: 0–5 days at

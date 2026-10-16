@@ -1,5 +1,29 @@
 # Phase 3.5 completion and bounded Phase 4A combat proposal
 
+## Current entry decision — 2026-10-16
+
+Continue from merged `main` at `b8caef8` on new branch
+`codex/phase-4a-sparring`. PRs #1 and #2 are merged; the older branch prompts
+below are historical and must not be resumed. The clean merged baseline passes
+82 rule tests, all ten Chromium suites, build agreement and documentation links.
+Test-owned profiles and localhost servers were used; normal saves were untouched.
+
+The user explicitly chose: “Explicitly defer the human playtest for bounded
+Phase 4A; keep it documented as unverified.” This closes the entry decision,
+without providing human balance evidence. Unassisted survival, travel, partner
+discovery, courtship and competing NPC commitments remain unverified. The bounded
+nonlethal proposal below is the implementation scope; law, guards, civilization,
+lethal attacks and lasting injuries remain outside it.
+
+First checkpoint: pure contour profiles use triangle extension 22 / half-arc 0.5
+radians, polygon 14 / 1.0, line 18 / 0.75. Reach is the sum of the participants'
+visible bounding radii plus the attacker's extension. Line radius is a fixed 17
+times visual life-stage scale. All profiles use 21 fixed wind-up ticks, 39 recovery
+ticks, 12 strike stamina, 8 damage, 60% frontal mitigation costing 8 stamina, and
+6 stamina/second held guard drain. Wind-up facing is locked. Contact also needs
+clear terrain. No genome or prestige is passed into the profile function.
+Encounter and input state stay transient; save schema and generator stay v5/v1.
+
 **2026-10-16 · design only.** Baseline `a54a872` on
 `codex/phase-2b-3-generations`, continuing
 [PR #1](https://github.com/PakingPie/Flatland-A-Web-Based-Game/pull/1).
@@ -129,7 +153,7 @@ original browser keys, world generator and v1–v4 readers.
    daughter succession. Update QA/rules/status/handoff and rebuild standalone HTML.
 
 Every commit must keep build agreement, document references, all existing rule
-cases and all seven existing Chromium scripts passing, with meaningful new combat
+cases and all ten existing Chromium scripts passing, with meaningful new combat
 cases and a browser combat suite. Do not raise counts by retelling check groups
 as individual tests. Keep fixtures frozen and raw evidence local/ignored. Stop
 and fix a failing milestone before proceeding.
