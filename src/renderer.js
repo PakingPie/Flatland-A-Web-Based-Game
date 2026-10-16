@@ -160,6 +160,7 @@ class Renderer {
             if (visible(r.x, r.y, 30))
                 this.resource(ctx, r, world.elapsed, r === nearest);
         const relatives=this.familyHighlights();
+        this.game.spar?.draw(ctx);
         for (const c of world.npcs)
             if (visible(c.x, c.y, 40))
                 this.citizen(ctx, c, alpha, world.elapsed, false,relatives.has(c.id));

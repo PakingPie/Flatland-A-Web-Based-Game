@@ -1,5 +1,23 @@
 # QA report — Phase 3.5 renewal (v0.3.5 / save v5)
 
+## Playable sparring checkpoint — 2026-10-16
+
+**95/95 rule tests and eleven Chromium suites pass**, including the new
+[sparring scenario](../tools/browser-sparring.cjs). Build and document checks pass.
+The scenario uses staged valid positions/needs, a real introduction and actual
+walking invitation. It covers cancellation without damage, J strike/recovery,
+K frontal blocking, all paused menus/F8, blur, disabled Family day advance, native
+touch strike/held guard/end, sustained retreat, exhaustion and supplied refuge
+healing. Desktop, portrait and short landscape captures were inspected locally.
+Seven additional world/controller cases cover refusals, terrain/facing, one
+opponent, nonlethal floor, transient save state, natural death and daughter control.
+The ten original browser suites and all original rule cases still pass.
+
+This checkpoint connects the bounded encounter. Native saving during a live
+encounter and full generational browser combat are the next checkpoint; existing
+save/legacy/generation regression coverage already passes. Human play remains
+explicitly deferred and unverified. Raw output stays ignored and local.
+
 ## Merged Phase 4A baseline — 2026-10-16
 
 The first Phase 4A checkpoint adds six pure melee cases: **88/88 rule tests**,

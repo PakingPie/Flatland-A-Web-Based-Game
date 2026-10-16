@@ -46,12 +46,13 @@ class SocialUI {
         const id=this.selectedId;
         this.close(false);
         if(action.kind==='family') { this.game.familyUI.open(); return; }
+        this.game.spar.end();
         this.game.world.player.runtime.resting=false;
         this.approach.start(id,action); this.game.canvas.focus({preventScroll:true});
     }
     perform(id,action) {
         const w=this.game.world;
-        const result=action.kind==='social'?w.social.interact(id,action.topic):w.romance.interact(id,action.topic);
+        const result=action.kind==='spar'?this.game.spar.invite(id):action.kind==='social'?w.social.interact(id,action.topic):w.romance.interact(id,action.topic);
         const changes=result.changes;
         const cue=action.topic==='children'?'Family plans':action.topic==='propose' && result.ok?'♥ Married':changes?.trust>0?'Trust ↑':changes?.trust<0?'Trust ↓':action.kind==='romance'&&result.ok?'♥ Affection ↑':'';
         const reply=action.topic==='introduce'&&result.ok?`“I’m ${w.social.view(w.social.citizen(id)).name}.”`:
@@ -69,7 +70,7 @@ class SocialUI {
         const love=(label,topic,icon='♡')=>({label,icon,action:{kind:'romance',topic}});
         const group=(label,next,icon='⋯')=>({label,icon,group:next});
         const details=group('Details','details','◇');
-        if(this.group==='talk') return [social('Chat','chat'),social('Interests','interests'),group('More topics','stories')];
+        if(this.group==='talk') return [social('Chat','chat'),social('Interests','interests'),group('More topics','stories'),...(v.introduced && v.adult && this.game.world.player.actual.life.ageYears>=18?[{label:'Invite to spar',icon:'◇',action:{kind:'spar',topic:'spar'}}]:[])];
         if(this.group==='stories') return [social('Work','occupation'),social('Society','district'),social('Family stories','family'),social('Rumors','rumor')];
         if(this.group==='romance') return [love('Compliment','compliment'),love('Invite out','outing'),love('Our future','commitment'),group('Commitment','commitment')];
         if(this.group==='commitment') return [love('Preferences','preferences','◇'),love('Discuss children','children'),love('Propose','propose'),...(romance.status==='married'?[love('Separate','separate','↗')]:[])];

@@ -9,6 +9,7 @@ if (new URLSearchParams(location.search).get('debug') === '1') {
     window.FlatlandDebug = Object.freeze({
         start(seed = 'abbott-1884') { game.start(seed); },
         manual(value = true) { game.debugManual = !!value; game.accumulator = 0; },
+        sparring() { const a=game.spar.active;return a?clone({playerId:a.playerId,opponentId:a.opponentId,tick:a.tick,swings:a.swings,guards:a.guards,feedback:game.spar.feedback}):null; },
         advance(seconds) { if (!Number.isFinite(seconds) || seconds < 0 || seconds > 3600)
             throw new RangeError('Use 0–3600 seconds.'); for (let i = 0, n = Math.round(seconds / C.DT); i < n && game.state === 'running'; i++)
             game.step(C.DT); game.renderer.snap(); game.refreshUI(); return this.snapshot(); },

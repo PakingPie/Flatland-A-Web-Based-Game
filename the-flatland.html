@@ -1043,6 +1043,12 @@ button {
 @media (max-height:500px) { .action-bubble { width:278px; padding:11px; } }
 
 /* Family register is a paused, scrollable modal on desktop and touch. */
+#sparPanel { pointer-events:auto; background:#14262bf2; border:1px solid var(--gold); border-radius:12px; padding:10px; margin-bottom:6px; max-width:100%; font-size:11px; }
+#sparPanel strong,#sparPanel small { display:block; line-height:1.5; }
+#sparFeedback { color:var(--gold); }
+.spar-actions { display:flex; justify-content:center; gap:6px; margin:6px 0; }
+.spar-actions button { min-height:44px; padding:7px 10px; font-size:11px; touch-action:none; }
+@media (max-height:500px) { #sparPanel { padding:5px 8px; } #sparPanel > small:last-child { display:none; } .spar-actions { margin:3px 0; } }
 .family-modal { max-width:780px; text-align:left; }
 .family-modal h3 { color:var(--gold); margin:20px 0 8px; font-size:14px; }
 .family-member { border:1px solid #70867b55; border-radius:8px; padding:12px; margin:10px 0; overflow-wrap:anywhere; }
@@ -1093,7 +1099,7 @@ button {
   </section>
   <div id="location"></div><div id="notice" class="panel" hidden></div>
   <div id="log" role="status" aria-live="polite" aria-atomic="false"></div>
-  <section class="bottom-center" aria-label="Actions"><div id="context"></div><button id="cancelApproachBtn" class="small-btn" hidden>Cancel walk</button><div id="restDetails" hidden></div><div class="actionbar">
+  <section class="bottom-center" aria-label="Actions"><div id="sparPanel" hidden><strong id="sparStatus"></strong><small id="sparFeedback" role="status"></small><div class="spar-actions"><button id="strikeBtn" class="small-btn">Strike · J</button><button id="defendBtn" class="small-btn">Hold guard · K</button><button id="endSparBtn" class="small-btn">End spar</button></div><small>Move to face · Sprint away to retreat</small></div><div id="context"></div><button id="cancelApproachBtn" class="small-btn" hidden>Cancel walk</button><div id="restDetails" hidden></div><div class="actionbar">
     <button class="action" id="gatherBtn" title="Hold E, or hold this button, to gather"><kbd>E</kbd><span>Gather</span></button>
     <button class="action" id="eatBtn" title="F: eat one provision"><kbd>F</kbd><span>Eat</span><span class="qty" id="foodCount">1</span></button>
     <button class="action water" id="drinkBtn" title="R: drink one flask"><kbd>R</kbd><span>Drink</span><span class="qty" id="waterCount">1</span></button>
@@ -1118,19 +1124,20 @@ button {
   <div class="seedrow"><label for="seedInput">World seed</label><input id="seedInput" value="abbott-1884" maxlength="48" spellcheck="false" autocomplete="off" aria-label="World seed"></div>
   <button class="primary" id="continueBtn" disabled>Continue →</button><p class="save-status" data-save-status role="status"></p><button class="small-btn" id="startBtn">New life →</button><button class="small-btn" id="startImportBtn">Import save file</button><p class="fine">Move, gather, meet your neighbors. Help is always available.</p>
 </div></section>
-<section class="overlay" id="pauseScreen" aria-label="Paused" hidden><div class="modal"><div class="eyebrow">The world can wait</div><h2>Expedition paused</h2><p id="pauseReason">Take a breath. Nothing advances while paused.</p><button class="primary" id="resumeBtn">Resume expedition</button><div class="secondary-row"><button class="small-btn" id="pauseFamilyBtn">Family &amp; succession</button><button class="small-btn" id="pauseHelpBtn">Controls & field guide</button><button class="small-btn" id="restartBtn">Restart same seed</button><button class="small-btn" id="newSeedBtn">New world seed</button></div><div class="secondary-row"><button class="small-btn" id="saveBtn">Save manually</button><button class="small-btn" id="loadBtn">Load manual save</button><button class="small-btn" id="exportSaveBtn">Export save file</button><button class="small-btn" id="importSaveBtn">Import save file</button></div><p class="save-status" data-save-status role="status"></p><p class="fine">Saves stay in this browser. Export a backup for safekeeping.</p><details><summary>Population &amp; families</summary><p id="renewalStatus"></p><p class="fine">Citizens may choose partners and children independently, including someone you are courting. The population remains finite. Turning this off keeps existing families and history. Export a backup using the button above before enabling it in an older expedition.</p><button class="small-btn" id="renewalToggleBtn">Enable NPC families</button></details><details><summary>Testing</summary><button class="small-btn" id="openInspectorBtn">All information · F8</button></details></div></section>
+<section class="overlay" id="pauseScreen" aria-label="Paused" hidden><div class="modal"><div class="eyebrow">The world can wait</div><h2>Expedition paused</h2><p id="pauseReason">Take a breath. Nothing advances while paused.</p><button class="primary" id="resumeBtn">Resume expedition</button><button class="small-btn" data-end-spar hidden>End spar</button><div class="secondary-row"><button class="small-btn" id="pauseFamilyBtn">Family &amp; succession</button><button class="small-btn" id="pauseHelpBtn">Controls & field guide</button><button class="small-btn" id="restartBtn">Restart same seed</button><button class="small-btn" id="newSeedBtn">New world seed</button></div><div class="secondary-row"><button class="small-btn" id="saveBtn">Save manually</button><button class="small-btn" id="loadBtn">Load manual save</button><button class="small-btn" id="exportSaveBtn">Export save file</button><button class="small-btn" id="importSaveBtn">Import save file</button></div><p class="save-status" data-save-status role="status"></p><p class="fine">Saves stay in this browser. Export a backup for safekeeping.</p><details><summary>Population &amp; families</summary><p id="renewalStatus"></p><p class="fine">Citizens may choose partners and children independently, including someone you are courting. The population remains finite. Turning this off keeps existing families and history. Export a backup using the button above before enabling it in an older expedition.</p><button class="small-btn" id="renewalToggleBtn">Enable NPC families</button></details><details><summary>Testing</summary><button class="small-btn" id="openInspectorBtn">All information · F8</button></details></div></section>
 <section class="overlay" id="helpScreen" aria-label="Controls and field guide" hidden><div class="modal"><div class="eyebrow">Field guide</div><h2>Your next move</h2>
 <dl class="instructions"><dt>WASD / arrows</dt><dd>Move. Shift to sprint. On touch, use the joystick.</dd><dt>E / Gather</dt><dd>Hold to collect nearby food or water.</dd><dt>F / R</dt><dd>Eat / drink from your pack.</dd><dt>Space / Rest</dt><dd>Rest. Refuges can heal you.</dd><dt>Click a citizen / T</dt><dd>Choose an action. You walk over automatically. Move or Cancel to stop.</dd><dt>P / Escape</dt><dd>Pause. Escape also closes a citizen menu.</dd></dl>
 <details><summary>Relationships &amp; family</summary><p>Vary your conversations. Friendship and attraction are separate. Marriage requires mutual interest. Same-sex spouses share household support; joint biological births currently require a male and female spouse.</p><p>At a refuge, advance days. Children mature at 18 days old. Retire at 40 days old or choose an adult descendant upon death. No adult heir means the playable lineage ends. Daughters can inherit too. Children look tiny until day 6, teenagers are smaller until day 18, adults reach full size, and elders shrink slightly from day 65. These size stages are visual; movement and interaction reach stay the same. Gold halos and gold minimap dots mark known family, including your spouse. Undiscovered relatives are not marked.</p></details>
 <details><summary>Survival &amp; time</summary><p>Food and water fill your pack; use them to refill your meters. Empty meters cost health. Field rest restores stamina; refuge rest also heals when food and water exceed 30.</p><p>Citizen menus and Family pause the world. Walking and interactions resume it. One day lasts 120 simulated seconds and adds one day of age. Refuge day advances provide subsistence and process aging and deaths.</p></details>
 <details><summary>Notes &amp; saves</summary><p>Details holds your notebook. Unconfirmed claims and rumors can be wrong. Marriage does not reveal hidden ancestry or a daughter's latent geometry.</p><p>Pause to save, load or export a backup. Browser saves stay in this browser and origin. A new life preserves the manual slot. Import validates before replacing active progress.</p></details>
 <details><summary>Testing inspector</summary><p>F8 toggles a paused view of all character information, including private ancestry. Press F8 or Escape to return. This does not teach your character secrets or change saved knowledge. On touch: Pause → Testing → All information.</p></details>
+<details><summary>Friendly sparring</summary><p>Greet a living adult, then Talk → Invite to spar. Both need health 35+, food/water 30+ and stamina 30+. A citizen who distrusts you can decline. J strikes once; hold K to guard the front. Touch buttons do the same. Move to face your opponent. Amber sectors show wind-up and the threatened range; blue arcs show guard. Strikes cost stamina. Guard reduces frontal hits and drains stamina. Sprint away for two seconds or use End spar to stop.</p><p>Practice cannot lower health below 1. Spent health/stamina remain; rest at a supplied refuge to heal. Ordinary actions end practice. Menus, Family, Help and F8 freeze it. End practice before advancing days. Saving retains vitals; loading ends practice, pauses the world and clears every pending strike. No lasting injuries or relationship rewards.</p></details>
 <button class="primary" id="closeHelpBtn">Back to game</button></div></section>
 <section class="overlay" id="deathScreen" aria-label="Expedition ended" hidden><div class="modal"><div class="eyebrow">The end of this expedition</div><h2>Even small lives matter.</h2><p class="lede" id="deathCause"></p><p id="deathStats"></p><div class="rule"></div><button class="primary" id="retryBtn">Try again · same world</button><div class="secondary-row"><button class="small-btn" id="deathFamilyBtn">View dynasty history</button><button class="small-btn" id="menuBtn">Choose a different seed</button></div><p class="fine">Only a living adult descendant can inherit control. If all descendants are minors or deceased, this playable lineage ends. You can still view the family history.</p></div></section>
 <section class="overlay" id="familyScreen" aria-label="Family and succession" hidden><div class="modal family-modal">
   <div class="eyebrow">A life carried forward · World paused</div><h2>Family &amp; succession</h2>
   <p id="familySummary"></p><p id="successionStatus"></p>
-  <div class="secondary-row"><button class="small-btn" id="closeFamilyBtn">Return to expedition</button><button class="small-btn" id="familySaveBtn">Save manually</button></div>
+  <div class="secondary-row"><button class="small-btn" id="closeFamilyBtn">Return to expedition</button><button class="small-btn" id="familySaveBtn">Save manually</button><button class="small-btn" data-end-spar hidden>End spar</button></div>
   <p class="save-status" data-save-status role="status"></p><p id="familyOutcome" role="status" aria-live="polite"></p>
   <h3>Household life</h3><p id="familyBirthStatus"></p><button class="small-btn" id="familyBirthBtn">Have children</button>
   <p id="timeAdvanceStatus"></p><div class="secondary-row"><button class="small-btn" id="advance1Btn">Live 1 day</button><button class="small-btn" id="advance5Btn">Live 5 days</button></div>
@@ -2457,6 +2464,7 @@ class FamilySystem {
     deathAge(c) { return 78 + hash(`${this.world.seed}:lifespan:${c.id}`) % 15; }
     markDeath(c, cause='old age') {
         if (c.actual.life.deathAt !== undefined) return;
+        if(this.world.sparring?.has(c.id)) this.world.sparring.end('Practice ended.');
         c.actual.life.alive=false; c.actual.life.deathAt=this.world.elapsed; c.actual.life.deathCause=cause;
         c.vitals.health=0; c.runtime.moving=c.runtime.sprinting=c.runtime.resting=false;
         if(c.ai) { c.ai.path=[]; c.ai.pathIndex=0; c.ai.targetId=null; c.ai.activity='idle'; }
@@ -2498,6 +2506,7 @@ class FamilySystem {
     }
     advance(years) {
         const w=this.world, p=w.player;
+        if(w.sparring) return {ok:false,text:'End sparring before advancing days.'};
         if(![1,5].includes(years) || !p.actual.life.alive || !w.refugeAt(p.x,p.y) || p.vitals.health<35 || p.vitals.hunger<30 || p.vitals.thirst<30)
             return {ok:false,text:'Time advance requires a living, supplied character at a refuge (health 35+, food and water 30+).'};
         let passed=0;
@@ -2521,6 +2530,7 @@ class FamilySystem {
     succeed(id) {
         const w=this.world, old=w.player, next=this.candidates().find(c=>c.id===id);
         if(!next || !this.canSucceed()) return {ok:false,text:'Choose a living adult descendant after age 40 days retirement or upon death.'};
+        w.sparring?.end('');
         w.renewal.beforeControl(old);
         this.notebooks[old.id]=captureObserverNotebook(w);
         if(old.actual.life.alive) this.history.push({kind:'retirement',ids:[old.id],at:w.elapsed});
@@ -3135,6 +3145,116 @@ class SaveStore {
     }
 }
 
+// ---- sparring.js ----
+// One transient encounter. Registry IDs are resolved every tick; no saved combat state.
+class Sparring {
+    constructor(game) {
+        this.game=game;this.active=null;this.feedback='';
+        for(const b of document.querySelectorAll('[data-end-spar]')) b.addEventListener('click',()=>{this.end();this.game.familyUI.refresh();});
+    }
+    has(id) { return !!this.active && [this.active.playerId,this.active.opponentId].includes(id); }
+    profile(c) { return combatProfile(c.body,lifeStage(c.actual.life.ageYears).scale); }
+    reason(id) {
+        const w=this.game.world,p=w.player,c=w.registry.get(id);
+        if(this.active) return 'Finish this practice first.';
+        if(!c || c===p || !w.social.view(c).introduced) return 'Introduce yourself first.';
+        if([p,c].some(a=>!a.actual.life.alive || a.actual.life.ageYears<18)) return 'Practice is for living adults.';
+        if([p,c].some(a=>a.vitals.health<35 || a.vitals.hunger<30 || a.vitals.thirst<30 || a.vitals.stamina<30)) return 'We need health, supplies and energy first.';
+        if(!w.social.nearby(c) || !w.segmentClear(p.x,p.y,c.x,c.y,3)) return 'Come closer on a clear path.';
+        return '';
+    }
+    invite(id) {
+        const reason=this.reason(id);if(reason) return {ok:false,text:reason};
+        const w=this.game.world,p=w.player,c=w.registry.get(id);
+        // Consent is specific to this low-stakes practice and current readiness.
+        // A hostile personal relationship can decline; rank/attraction play no role.
+        if(w.social.relationship(c).trust<0) return {ok:false,text:'“I do not want to practice together.”'};
+        this.game.socialUI.controller?.cancel();this.game.input.clear();
+        p.runtime.resting=c.runtime.resting=false;
+        this.active={world:w,playerId:p.id,opponentId:c.id,swings:{[p.id]:freshSwing(),[c.id]:freshSwing()},
+            tick:0,escape:0,wait:60,guards:{},path:[],index:0,replan:0};
+        w.sparring=this;this.feedback='Practice begins. Watch the amber wind-up.';
+        this.refresh();return {ok:true,text:'“A friendly practice. Stop whenever you like.”'};
+    }
+    end(text='Practice ended. Rest at a supplied refuge to heal.') {
+        if(!this.active) return;
+        const w=this.active.world;w.sparring=null;this.active=null;
+        this.game.input.attack=false;this.game.input.hold.defend=false;
+        if(text) this.game.notify(text);
+        this.refresh();
+    }
+    requestStrike() {
+        if(this.active && this.game.state==='running' && !this.game.socialUI.isOpen) this.game.input.attack=true;
+    }
+    step() {
+        const a=this.active,g=this.game,w=g.world;if(!a) {g.input.attack=false;return;}
+        const p=w.registry.get(a.playerId),c=w.registry.get(a.opponentId);
+        if(w!==a.world || w.player.id!==a.playerId || !p?.actual.life.alive || !c?.actual.life.alive) {this.end('Practice ended.');return;}
+        if([p,c].some(v=>v.vitals.health<=1 || v.vitals.stamina<=1e-8)) {this.end('Practice finished. Take a breath.');return;}
+        a.tick++;a.escape=dist2(p.x,p.y,c.x,c.y)>MELEE.escapeRange**2?a.escape+1:0;
+        if(a.escape>=MELEE.escapeTicks) {this.end('You leave the practice.');return;}
+        const ps=a.swings[p.id],cs=a.swings[c.id];
+        a.guards[p.id]=g.input.defend && ps.phase!=='windup';
+        a.guards[c.id]=a.tick%240>=120 && a.tick%240<180 && cs.phase==='ready';
+        for(const v of [p,c]) if(a.guards[v.id]) v.vitals.stamina=Math.max(0,v.vitals.stamina-MELEE.guardDrain*C.DT);
+        if(g.input.attack) { g.input.attack=false;this.attack(p,a.guards[p.id]); }
+        // Existing NPC needs continue, but no gathering/rest or ordinary AI owns this actor.
+        const metabolism=c.actual.genome.metabolism*w.romance.household(c);
+        c.runtime.moving=false;c.vitals.hunger=Math.max(0,c.vitals.hunger-.15*metabolism*C.DT);c.vitals.thirst=Math.max(0,c.vitals.thirst-.23*metabolism*C.DT);
+        if(cs.phase==='ready') {
+            c.angle=moveAngle(c.angle,Math.atan2(p.y-c.y,p.x-c.x),C.DT*7);
+            const distance=hypot(c.x-p.x,c.y-p.y),reach=meleeReach(this.profile(c),this.profile(p));
+            if(!a.guards[c.id] && a.escape===0 && distance>reach-4) {
+                if(--a.replan<=0 || a.index>=a.path.length) {a.path=w.nav.path(c.x,c.y,p.x,p.y)||[];a.index=0;a.replan=48;}
+                while(a.index<a.path.length && hypot(a.path[a.index].x-c.x,a.path[a.index].y-c.y)<5) a.index++;
+                const dest=w.segmentClear(c.x,c.y,p.x,p.y,c.body.radius)?p:a.path[a.index];
+                if(dest) {const dx=dest.x-c.x,dy=dest.y-c.y,d=hypot(dx,dy),step=Math.min(67*C.DT,d,Math.max(0,distance-reach+4));w.move(c,dx/(d||1)*step,dy/(d||1)*step);c.runtime.moving=true;}
+            }
+            if(--a.wait<=0 && !a.guards[c.id] && meleeContact(c,p,this.profile(c),this.profile(p),(x,y,bx,by)=>w.segmentClear(x,y,bx,by,3))) this.attack(c,false);
+        }
+        for(const [source,target] of [[p,c],[c,p]]) {
+            const swing=a.swings[source.id];
+            if(tickSwing(swing)) {
+                const pose={x:source.x,y:source.y,angle:swing.angle};
+                if(meleeContact(pose,target,this.profile(source),this.profile(target),(x,y,bx,by)=>w.segmentClear(x,y,bx,by,3))) {
+                    const hit=sparDamage(target.vitals.health,target.vitals.stamina,a.guards[target.id] && faces(target,source,Math.PI/2));
+                    target.vitals.health=hit.health;target.vitals.stamina=hit.stamina;
+                    this.feedback=hit.blocked?'Frontal block · reduced hit':source===p?'Your strike connects.':'Their strike connects.';
+                } else this.feedback='Strike missed.';
+            }
+            if(source===c && swing.phase==='ready' && !a.guards[c.id]) source.vitals.stamina=Math.min(100,source.vitals.stamina+3*C.DT);
+        }
+        if([p,c].some(v=>v.vitals.health<=1 || v.vitals.stamina<=1e-8)) this.end('Practice finished. Take a breath.');
+    }
+    attack(c,guard) {
+        const a=this.active,s=a.swings[c.id];
+        if(!guard && beginSwing(s,c.vitals.stamina,c.angle)) {c.vitals.stamina-=MELEE.cost;if(c.id===a.opponentId)a.wait=60;}
+    }
+    refresh() {
+        const a=this.active;$('sparPanel').hidden=!a;
+        for(const b of document.querySelectorAll('[data-end-spar]')) b.hidden=!a;
+        if(!a) return;
+        const c=a.world.registry.get(a.opponentId);if(!c) return;
+        const swing=a.swings[c.id];
+        $('sparStatus').textContent=`${a.world.social.view(c).name} · Health ${Math.ceil(c.vitals.health)} · Stamina ${Math.ceil(c.vitals.stamina)} · ${swing.phase==='windup'?'WIND-UP':a.guards[c.id]?'Defending':swing.phase}`;
+        $('sparFeedback').textContent=this.feedback;
+        $('defendBtn').classList.toggle('active',!!a.guards[a.playerId]);
+    }
+    draw(ctx) {
+        const a=this.active;if(!a) return;
+        for(const id of [a.playerId,a.opponentId]) {
+            const c=a.world.registry.get(id);if(!c) continue;
+            const other=a.world.registry.get(id===a.playerId?a.opponentId:a.playerId);if(!other) continue;
+            const s=a.swings[id],p=this.profile(c),reach=meleeReach(p,this.profile(other)),angle=s.phase==='windup'?s.angle:c.angle;
+            ctx.save();ctx.translate(c.x,c.y);
+            ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,reach,angle-p.arc,angle+p.arc);ctx.closePath();
+            ctx.fillStyle=s.phase==='windup'?'#f1cd884d':'#a9e0e510';ctx.fill();ctx.strokeStyle=s.phase==='windup'?'#f1cd88':'#a9e0e555';ctx.lineWidth=1;ctx.stroke();
+            if(a.guards[id]) {ctx.beginPath();ctx.arc(0,0,p.radius+7,c.angle-Math.PI/2,c.angle+Math.PI/2);ctx.strokeStyle='#a9e0e5';ctx.lineWidth=3;ctx.stroke();}
+            ctx.restore();
+        }
+    }
+}
+
 // ---- input.js ----
 class Input {
     constructor(game) {
@@ -3160,6 +3280,7 @@ class Input {
             document.body.classList.add('touch');
         this.bindHold('gatherBtn', 'gather', () => game.gather());
         this.bindHold('sprintBtn', 'sprint');
+        this.bindHold('defendBtn', 'defend');
         const joy = $('joystick');
         joy.addEventListener('pointerdown', e => { if (this.joyPointer !== null || game.state !== 'running')
             return; this.joyPointer = e.pointerId; joy.setPointerCapture(e.pointerId); this.updateStick(e); e.preventDefault(); });
@@ -3194,7 +3315,7 @@ class Input {
             this.touch = { x: 0, y: 0 };
         $('stick').style.transform = `translate(${x}px,${y}px)`;
     }
-    clear() { this.keys.clear(); this.hold.gather = this.hold.sprint = false; this.touch = { x: 0, y: 0 }; this.joyPointer = null; this.mouse.inside = false; $('stick').style.transform = ''; }
+    clear() { this.keys.clear(); this.attack=false; this.hold.gather = this.hold.sprint = this.hold.defend = false; this.touch = { x: 0, y: 0 }; this.joyPointer = null; this.mouse.inside = false; $('stick').style.transform = ''; }
     keyDown(e) {
         if (e.code === 'Tab' && (this.game.state !== 'running' || this.game.socialUI?.isOpen)) {
             const dialog = this.game.socialUI?.isOpen ? $('citizenPanel') : document.querySelector('.overlay:not([hidden])');
@@ -3224,6 +3345,7 @@ class Input {
         if (e.target instanceof HTMLButtonElement && (e.code === 'Space' || e.code === 'Enter'))
             return;
         const relevant = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'ShiftLeft', 'ShiftRight', 'KeyE', 'KeyF', 'KeyR', 'Space', 'Escape', 'KeyP', 'KeyH', 'KeyT', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Enter'];
+        relevant.push('KeyJ','KeyK');
         if (!relevant.includes(e.code))
             return;
         e.preventDefault();
@@ -3263,6 +3385,7 @@ class Input {
         if (this.game.state !== 'running')
             return;
         this.keys.add(e.code);
+        if(e.code==='KeyJ') this.game.spar.requestStrike();
         if (e.code === 'KeyF')
             this.game.consume('food');
         if (e.code === 'KeyR')
@@ -3284,6 +3407,7 @@ class Input {
     }
     get sprint() { return this.hold.sprint || this.keys.has('ShiftLeft') || this.keys.has('ShiftRight'); }
     get gather() { return this.hold.gather || this.keys.has('KeyE'); }
+    get defend() { return this.hold.defend || this.keys.has('KeyK'); }
 }
 // ─────────────────────────────────────────────────────────────────────────────
 // 05. Rendering. Static geometry is culled; no full-world high-DPI texture is held.
@@ -3453,6 +3577,7 @@ class Renderer {
             if (visible(r.x, r.y, 30))
                 this.resource(ctx, r, world.elapsed, r === nearest);
         const relatives=this.familyHighlights();
+        this.game.spar?.draw(ctx);
         for (const c of world.npcs)
             if (visible(c.x, c.y, 40))
                 this.citizen(ctx, c, alpha, world.elapsed, false,relatives.has(c.id));
@@ -3726,6 +3851,7 @@ class Game {
         this.socialUI = new SocialUI(this);
         this.familyUI = new FamilyUI(this);
         this.inspector = new InformationInspector(this);
+        this.spar = new Sparring(this);
         this.setScreen('menu');
         this.saves.refreshMenu();
         requestAnimationFrame(t => this.frame(t));
@@ -3757,6 +3883,8 @@ class Game {
         bind('drinkBtn', () => this.consume('water'));
         bind('restBtn', () => this.toggleRest());
         bind('cancelApproachBtn', () => this.socialUI.controller?.cancel());
+        bind('strikeBtn', () => this.spar.requestStrike());
+        bind('endSparBtn', () => this.spar.end());
         bind('renewalToggleBtn',()=>{
             if(this.state!=='paused' || !this.world.player.actual.life.alive) return;
             this.world.renewal.setEnabled(!this.world.renewal.enabled);
@@ -3792,6 +3920,7 @@ class Game {
         this.saves.load(slot);
     }
     installSave({ world, saved }) {
+        this.spar?.end('');
         this.socialUI?.reset();
         this.input.clear();
         this.world = world; this.runId = saved.runId;
@@ -3809,6 +3938,7 @@ class Game {
         this.refreshUI(); this.renderer.snap(); this.renderer.map();
     }
     start(seed) {
+        this.spar?.end('');
         seed = String(seed || 'abbott-1884').trim().slice(0, 48) || 'abbott-1884';
         this.socialUI?.reset();
         this.input.clear();
@@ -3876,6 +4006,7 @@ class Game {
         const r = this.nearestResource();
         if (!r)
             return;
+        this.spar.end();
         if (this.pack[r.kind] >= C.PACK) {
             this.gatherCooldown = .8;
             this.log(`${r.kind === 'food' ? 'Food' : 'Water'} pack full (${C.PACK}/${C.PACK}). Use some before gathering more.`);
@@ -3892,6 +4023,7 @@ class Game {
     consume(kind) {
         if (this.state !== 'running')
             return;
+        this.spar.end();
         if (this.pack[kind] <= 0) {
             this.log(`No ${kind} in your pack. Find ${kind === 'food' ? 'a green berry patch' : 'a blue spring'}.`, true);
             return;
@@ -3910,6 +4042,7 @@ class Game {
     toggleRest() {
         if (this.state !== 'running')
             return;
+        this.spar.end();
         const p = this.world.player;
         p.runtime.resting = !p.runtime.resting;
         if (p.runtime.resting) {
@@ -3934,6 +4067,10 @@ class Game {
             run.sprintRecovery = .65;
             if (v.stamina <= 0)
                 run.exhausted = true;
+        }
+        else if (this.spar.active) {
+            const swing=this.spar.active.swings[p.id];
+            if(swing?.phase==='ready' && !input.defend) v.stamina=Math.min(100,v.stamina+3*dt);
         }
         else if (run.sprintRecovery === 0) {
             v.stamina = Math.min(100, v.stamina + dt * (run.resting ? 27 : moving ? 9 : 15));
@@ -3997,8 +4134,9 @@ class Game {
         w.family.flushRenewal();
         if (this.input.gather)
             this.gather();
+        this.spar.step();
         for (const c of w.npcs)
-            w.updateNPC(c, dt);
+            if(!this.spar.has(c.id)) w.updateNPC(c, dt);
         w.separateCitizens();
         for (const f of this.effects)
             f.age += dt;
@@ -4046,6 +4184,7 @@ class Game {
         requestAnimationFrame(t => this.frame(t));
     }
     refreshUI() {
+        this.spar?.refresh();
         if(this.world) {
             $('renewalToggleBtn').textContent=this.world.renewal.enabled?'Disable NPC families':'Enable NPC families';
             $('renewalToggleBtn').disabled=!this.world.player.actual.life.alive;
@@ -4190,12 +4329,13 @@ class SocialUI {
         const id=this.selectedId;
         this.close(false);
         if(action.kind==='family') { this.game.familyUI.open(); return; }
+        this.game.spar.end();
         this.game.world.player.runtime.resting=false;
         this.approach.start(id,action); this.game.canvas.focus({preventScroll:true});
     }
     perform(id,action) {
         const w=this.game.world;
-        const result=action.kind==='social'?w.social.interact(id,action.topic):w.romance.interact(id,action.topic);
+        const result=action.kind==='spar'?this.game.spar.invite(id):action.kind==='social'?w.social.interact(id,action.topic):w.romance.interact(id,action.topic);
         const changes=result.changes;
         const cue=action.topic==='children'?'Family plans':action.topic==='propose' && result.ok?'♥ Married':changes?.trust>0?'Trust ↑':changes?.trust<0?'Trust ↓':action.kind==='romance'&&result.ok?'♥ Affection ↑':'';
         const reply=action.topic==='introduce'&&result.ok?`“I’m ${w.social.view(w.social.citizen(id)).name}.”`:
@@ -4213,7 +4353,7 @@ class SocialUI {
         const love=(label,topic,icon='♡')=>({label,icon,action:{kind:'romance',topic}});
         const group=(label,next,icon='⋯')=>({label,icon,group:next});
         const details=group('Details','details','◇');
-        if(this.group==='talk') return [social('Chat','chat'),social('Interests','interests'),group('More topics','stories')];
+        if(this.group==='talk') return [social('Chat','chat'),social('Interests','interests'),group('More topics','stories'),...(v.introduced && v.adult && this.game.world.player.actual.life.ageYears>=18?[{label:'Invite to spar',icon:'◇',action:{kind:'spar',topic:'spar'}}]:[])];
         if(this.group==='stories') return [social('Work','occupation'),social('Society','district'),social('Family stories','family'),social('Rumors','rumor')];
         if(this.group==='romance') return [love('Compliment','compliment'),love('Invite out','outing'),love('Our future','commitment'),group('Commitment','commitment')];
         if(this.group==='commitment') return [love('Preferences','preferences','◇'),love('Discuss children','children'),love('Propose','propose'),...(romance.status==='married'?[love('Separate','separate','↗')]:[])];
@@ -4299,7 +4439,7 @@ class FamilyUI {
         if(!g.world.player.actual.life.alive) { if(g.world.family.candidates().length) return; g.setScreen('dead'); return; }
         g.setScreen(this.returnState==='paused'?'paused':'running');
     }
-    birth() { const r=this.game.world.family.birth(); $('familyOutcome').textContent=briefReply(r,'birth'); this.refresh(); this.game.saves.save('auto',true); }
+    birth() { this.game.spar.end(); const r=this.game.world.family.birth(); $('familyOutcome').textContent=briefReply(r,'birth'); this.refresh(); this.game.saves.save('auto',true); }
     advance(years) {
         const g=this.game,r=g.world.family.advance(years); $('familyOutcome').textContent=r.ok?(years===1?'1 day passes.':`${years} days pass.`):briefReply(r,'advance');
         if(!g.world.player.actual.life.alive) g.die();
@@ -4345,8 +4485,8 @@ class FamilyUI {
         $('closeFamilyBtn').disabled=!p.actual.life.alive && f.candidates().length>0;
         $('successionStatus').textContent=!p.actual.life.alive ? (f.candidates().length ? 'Choose an adult heir to continue.' : 'No adult heir. This lineage has ended.') : `${f.candidates().length} adult heirs · Children mature at 18 days · ${v.canSucceed?'You may retire now.':'Retire at 40 days.'}`;
         const refuge=!!g.world.refugeAt(p.x,p.y);
-        for(const n of [1,5]) $(`advance${n}Btn`).disabled=!p.actual.life.alive || !refuge;
-        $('timeAdvanceStatus').textContent=refuge ? 'Refuge days provide subsistence. Your pack is kept.' : 'Return to a refuge to advance days.';
+        for(const n of [1,5]) $(`advance${n}Btn`).disabled=!p.actual.life.alive || !refuge || !!g.spar.active;
+        $('timeAdvanceStatus').textContent=g.spar.active?'End sparring before advancing days.':refuge ? 'Refuge days provide subsistence. Your pack is kept.' : 'Return to a refuge to advance days.';
         const list=$('familyMembers'), ids=new Set(v.members.map(m=>m.id));
         for(const [id,row] of this.memberRows) if(!ids.has(id)) { row.card.remove(); this.memberRows.delete(id); }
         v.members.forEach((m,index)=>{
@@ -4458,6 +4598,7 @@ if (new URLSearchParams(location.search).get('debug') === '1') {
     window.FlatlandDebug = Object.freeze({
         start(seed = 'abbott-1884') { game.start(seed); },
         manual(value = true) { game.debugManual = !!value; game.accumulator = 0; },
+        sparring() { const a=game.spar.active;return a?clone({playerId:a.playerId,opponentId:a.opponentId,tick:a.tick,swings:a.swings,guards:a.guards,feedback:game.spar.feedback}):null; },
         advance(seconds) { if (!Number.isFinite(seconds) || seconds < 0 || seconds > 3600)
             throw new RangeError('Use 0–3600 seconds.'); for (let i = 0, n = Math.round(seconds / C.DT); i < n && game.state === 'running'; i++)
             game.step(C.DT); game.renderer.snap(); game.refreshUI(); return this.snapshot(); },

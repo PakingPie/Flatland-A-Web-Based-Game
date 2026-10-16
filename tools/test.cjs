@@ -7,7 +7,7 @@ const { test } = require('node:test');
 require('./combat-rules.cjs');
 const files = ['core','genetics','characters','registry','navigation','world','social','romance','household','family-invariants','observer-notebooks','family-view','family','renewal','approach','save-format','save-validation','save-migrations','save-codec','persistence'];
 const storage=new Map();
-const context = vm.createContext({ console, document: { getElementById: () => ({textContent:'', hidden:true}), querySelectorAll:()=>[] }, performance, structuredClone,
+const context = vm.createContext({ console, document: { getElementById: () => ({textContent:'', hidden:true,classList:{toggle(){}}}), querySelectorAll:()=>[] }, performance, structuredClone,
     localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}, confirm:()=>true });
 vm.runInContext(files.map(f => fs.readFileSync(`src/${f}.js`, 'utf8')).join('\n') + '\nglobalThis.rules = {lifeStage,visualRadius,World,RNG,SaveStore,SaveCodec,hash,ROMANCE,emptyRelationship,inheritGenome,normalizeGenome,validateGenome,GENETICS,FAMILY,CitizenApproach,briefReply};', context);
 const { World, RNG, SaveStore, hash, emptyRelationship } = context.rules;
@@ -576,3 +576,5 @@ test('automatic approach takes a collision-free route around a building',()=>{
     for(let i=0;i<2000 && q.pending;i++){w.elapsed+=1/60;const m=q.movement(1/60);if(m)w.move(w.player,m.x*136/60,m.y*136/60);assert.ok(w.circleClear(w.player.x,w.player.y,w.player.body.radius-.001));}
     assert.ok(arrived);
 });
+
+require('./combat-integration.cjs')({test,assert,context,World,prepare,saveFor,json,familyWorld,mature});
