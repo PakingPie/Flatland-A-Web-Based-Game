@@ -16,12 +16,19 @@ Started on clean merged `main` at `b8caef8`. PRs #1 and #2 are merged. Work is o
 2. `b013f60`: walking invitations, deterministic opponent, desktop/touch controls,
    feedback, retreat/end and pause/family/death integration; 95 rule cases and
    eleven browser suites passed. Three layouts were inspected locally.
-3. Final persistence checkpoint: live wind-up save/shutdown/Continue and native
-   export/import, daughter combat, natural death/pending heir, policy regressions,
-   real corner/terrain contact and this handoff. See [QA](QA_REPORT.md) for totals.
+3. `6585a8b`: final persistence checkpoint, with live wind-up save/shutdown/Continue,
+   native export/import, daughter combat, natural death/pending heir, policy
+   regressions, real corner/terrain contact and this handoff. See [QA](QA_REPORT.md)
+   for totals.
 
 No push, PR creation or merge was performed. Raw profiles, screenshots, JSON and
 test exports remain under ignored local output. Normal player saves were not used.
+
+Continuation verification on 2026-10-16 started clean at `6585a8b`: rebuilt HTML
+has no diff, 96/96 rule cases, all twelve browser scripts, build agreement and
+documentation checks pass again. See [the QA refresh](QA_REPORT.md) for environment
+and evidence limits. Follow-up edits correct documentation and a stale migration
+success label only; human balance remains deferred and unverified.
 
 ## Entry gate and limits
 

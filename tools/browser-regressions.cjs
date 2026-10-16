@@ -18,7 +18,7 @@ const output=path.resolve('output/playwright');fs.mkdirSync(output,{recursive:tr
         assert.equal(s.seed,'phase2a-fixture');assert.equal(s.pack.food,4);assert.equal(s.pack.water,5);assert.equal(s.npcs[0].playerKnowledge.relationship.trust,31);assert.equal(s.resources[0].quantity,0);
         assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('flatland.manual.v1'))).version,2);
         await page.locator('#saveBtn').click();assert.equal(JSON.parse(await page.evaluate(()=>localStorage.getItem('flatland.manual.v1'))).version,5);
-        results.push('PASS native Phase 2A Continue migration, preserved inventory/resources/trust, explicit v4 save');
+        results.push('PASS native Phase 2A Continue migration, preserved inventory/resources/trust, explicit v5 save');
         await page.evaluate(()=>{FlatlandDebug.start('regression');FlatlandDebug.manual();FlatlandDebug.teleport(1728,1280);});
         await page.keyboard.down('KeyW');await page.evaluate(()=>FlatlandDebug.advance(.5));await page.keyboard.up('KeyW');
         s=await page.evaluate(()=>FlatlandDebug.snapshot());const walk=1280-s.player.y;assert.ok(walk>60 && walk<75);

@@ -1,4 +1,13 @@
-# Implementation checkpoints — Phase 2B / 3 / 3.5
+# Implementation checkpoints — Phase 2B / 3 / 3.5 / 4A
+
+## Phase 4A continuation verification — 2026-10-16
+
+Resumed clean at `6585a8b` on `codex/phase-4a-sparring`. Rebuilding produces no
+HTML diff; all 96 rule cases, twelve Chromium scripts, build agreement and 116
+local document references pass again. Corrected visible-bound sparring wording
+and a stale v4 migration success label/report to v5; no gameplay or save changes.
+Raw evidence stays local/ignored. Human balance remains explicitly deferred and
+unverified. See [QA](QA_REPORT.md) and [the handoff](PHASE4A_HANDOFF.md).
 
 ## Bounded Phase 4A — 2026-10-16
 

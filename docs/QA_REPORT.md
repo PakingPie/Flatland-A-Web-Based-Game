@@ -1,5 +1,23 @@
 # QA report — bounded Phase 4A (v0.4.0 / save v5)
 
+## Continuation verification at `6585a8b` — 2026-10-16
+
+Started clean on `codex/phase-4a-sparring`. Rebuilt standalone HTML with no
+generated diff; build agreement, all 116 local documentation path references,
+**96/96 rule cases and all twelve browser scripts pass again**. The browser
+scripts report no page exceptions. Node 24.12.0, Python 3.14.2 and Chromium
+149.0.7827.55 were used. The sandbox blocked Chromium launch; the passing runs
+used isolated test-owned profiles and localhost servers outside it.
+
+Desktop, portrait and short-landscape sparring captures were inspected locally.
+Raw logs, results, screenshots, exports and profiles remain under ignored
+`output/playwright`; normal player saves were untouched. Corrected stale wording
+about visible-bound sparring reach and the migration success label/report from
+v4 to v5; the existing save assertion already required v5. The migration browser
+suite passed again after that label correction. No gameplay or save rules changed.
+Human balance remains explicitly deferred and unverified; this rerun provides
+controlled automated evidence only, with the existing browser/device limits.
+
 ## Final Phase 4A persistence and generations — 2026-10-16
 
 **96/96 rule cases, all twelve Chromium suites, build agreement and documentation
@@ -323,7 +341,7 @@ because no original v1 save was recoverable.
 
 The browser preservation suite additionally installs the original v2 fixture in
 **native localStorage**, reopens the page and uses Continue. Inventory, resources
-and trust match. The original slot remains v2 until explicit Save, which writes v4.
+and trust match. The original slot remains v2 until explicit Save, which writes v5.
 Failed loads/imports are validated against a separate candidate and preserve active
 progress and browser slots. The generated HTML and source remain deterministic.
 

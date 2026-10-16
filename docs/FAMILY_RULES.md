@@ -271,4 +271,5 @@ line size depends on age and the existing fixed public line body, never her hidd
 genome. Adult shapes/genes, side counts, irregularity, movement, physical collision,
 selection radius, interaction reach, adulthood, fertility and lifespan remain
 unchanged. In particular, a tiny child still uses the existing adult clearance for
-navigation and selection. This first pass has no size-based combat or aging debuff.
+navigation and selection. Sparring uses these visible bounds for contact reach,
+as described above; the stages add no aging debuff or other stat changes.
