@@ -1,5 +1,21 @@
 # Implementation checkpoints — Phase 2B / 3 / 3.5
 
+## V5 lossless archive and transactional cohort checkpoint — 2026-10-16
+
+Schema v5 retains the complete character array, deceased runtime snapshots,
+notebooks and event sources. Private renewal policy/RNG/cursor and household
+anchors/cohort counts are saved separately. V1–v4 still decode through their
+original readers, with renewal disabled and unchanged input/slots. V5 enforces
+UTF-8 bytes; legacy string-unit acceptance is retained. World generator and browser
+keys are unchanged. No scheduler or autonomous reproduction is enabled yet.
+
+Player cohorts are planned in detached state and validated as a complete candidate
+save before any live IDs, RNG, links, discoveries or cooldown are changed. Browser
+preflight uses the full active run snapshot; headless checks use the same simulation
+snapshot boundary. Oversized notebooks refuse atomically. All 69 deterministic
+cases, seven isolated Chromium suites, build agreement and documentation checks
+pass. Existing frozen v4 payload fields remain exact; v5 adds only renewal state.
+
 ## Adopted renewal bundle; explicit-parent preparation — 2026-10-16
 
 The user approved bundle A–E. Froze [the parenthood-v4 fixture](../tools/fixtures/parenthood-v4.json) by executing `a54a872`

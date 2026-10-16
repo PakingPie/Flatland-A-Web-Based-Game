@@ -17,6 +17,7 @@ const output=path.resolve('output/playwright');fs.mkdirSync(output,{recursive:tr
             for(let seed=0;seed<40 && !id;seed++){FlatlandDebug.start(`hesitant-${seed}`);id=FlatlandDebug.courtshipCandidate('female','hesitant');}
             if(!id)throw Error('No hesitant fixture partner');
             const data=JSON.parse(FlatlandDebug.exportSave()),s=data.payload,a=s.characters[0],b=s.characters.find(c=>c.id===id),ids=[a.id,b.id].sort();
+            data.version=4;delete s.renewal;
             b.x=b.px=a.x+40;b.y=b.py=a.y;
             b.playerKnowledge.relationship.trust=30;b.playerKnowledge.relationship.familiarity=50;
             b.playerKnowledge.discoveredFacts.name={value:b.actual.identity.name,kind:'confirmed',sourceId:'player',at:s.elapsed};

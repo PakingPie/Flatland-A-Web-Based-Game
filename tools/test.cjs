@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
-const files = ['core','genetics','characters','registry','navigation','world','social','romance','household','family-invariants','observer-notebooks','family-view','family','approach','save-format','save-validation','save-migrations','save-codec','persistence'];
+const files = ['core','genetics','characters','registry','navigation','world','social','romance','household','family-invariants','observer-notebooks','family-view','family','renewal','approach','save-format','save-validation','save-migrations','save-codec','persistence'];
 const storage=new Map();
 const context = vm.createContext({ console, document: { getElementById: () => ({textContent:'', hidden:true}), querySelectorAll:()=>[] }, performance, structuredClone,
     localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}, confirm:()=>true });
@@ -27,7 +27,46 @@ test('parenthood checkpoint v4 retains every deceased record and observer notebo
     const original=JSON.parse(fs.readFileSync('tools/fixtures/parenthood-v4.json','utf8'));
     const store=saveFor(new World('unused')),out=store.decode(JSON.stringify(original));
     store.game={...gameFor(out.world),...out.saved,world:out.world,progress:{...out.saved.progress,visited:new Set(out.saved.progress.visited)},noticeUntil:out.saved.notice.until};
-    assert.deepEqual(json(store.capture()),original.payload);
+    const captured=json(store.capture());delete captured.renewal;assert.deepEqual(captured,original.payload);
+});
+
+test('v5 lossless archive round-trips and all legacy policies stay disabled',()=>{
+    for(const fixture of ['phase2a-v2','phase2b-v3','released-v4','parenthood-v4']) {
+        const raw=fs.readFileSync(`tools/fixtures/${fixture}.json`,'utf8'),out=context.rules.SaveCodec.decode(raw),store=saveFor(out.world);
+        assert.equal(out.world.renewal.enabled,false);assert.equal(out.envelope.version,JSON.parse(raw).version);
+        const a=json(store.capture()),b=store.decode(store.encode()).world;
+        assert.deepEqual(json(b.registry.all().map(c=>c.actual)),a.characters.map(c=>c.actual));
+        assert.deepEqual(json(b.family.notebooks),a.family.notebooks);
+        assert.deepEqual(json(b.renewal.exportState()),a.renewal);
+    }
+});
+
+test('v5 rejects invalid anchor, cohort count, cursor and RNG without mutating the source',()=>{
+    const {w}=familyWorld(),store=saveFor(w),before=store.encode();
+    for(const mutate of [s=>s.renewal.processedYear=999,s=>s.renewal.birthRngState=-1,s=>s.renewal.households['marriage-1'].anchorId='missing',s=>s.renewal.households['marriage-1'].cohorts=2]) {
+        const d=JSON.parse(before);mutate(d.payload);d.checksum=hash(JSON.stringify(d.payload));
+        assert.throws(()=>store.decode(JSON.stringify(d)),/renewal|household/i);
+    }
+    assert.deepEqual(json(store.capture()),JSON.parse(before).payload);
+});
+
+test('v5 measures UTF-8 bytes while the legacy string-unit reader retains its acceptance',()=>{
+    const data=JSON.parse(saveFor(new World('unicode')).encode());
+    data.padding=Array.from({length:180},()=>'界'.repeat(4000));
+    const raw=JSON.stringify(data);assert.ok(raw.length<2_000_000);assert.ok(Buffer.byteLength(raw)>2_000_000);
+    assert.throws(()=>context.rules.SaveCodec.parse(raw),/byte budget/);
+    data.version=4;assert.equal(context.rules.SaveCodec.parse(JSON.stringify(data)).version,4);
+});
+
+test('oversized notebook rejects the whole birth with no IDs, RNG, cooldown or discovery consumed',()=>{
+    const {w}=familyWorld(),k=json(w.npcs[0].playerKnowledge);
+    k.discoveredFacts.family={value:'x'.repeat(1000),kind:'claim',sourceId:w.npcs[0].id,at:w.elapsed};
+    // Valid knowledge entries, repeated across archived observers and subjects;
+    // the retained history exceeds the structural budget before a new cohort.
+    for(const observer of w.registry.all()) w.family.notebooks[observer.id]={knowledge:Object.fromEntries(w.registry.all().map(c=>[c.id,k])),reputation:{score:0,events:[]}};
+    const before=json(saveFor(w).capture()),result=w.family.birth();
+    assert.equal(result.ok,false);assert.match(result.text,/large|budget/i);
+    assert.deepEqual(json(saveFor(w).capture()),before);
 });
 
 test('detached explicit-parent planning preserves a54a872 inheritance and consumes no live state',()=>{
@@ -43,7 +82,7 @@ test('frozen released v4 family, daughter observer and deceased ancestors round-
     const raw=fs.readFileSync('tools/fixtures/released-v4.json','utf8'), original=JSON.parse(raw);
     const store=saveFor(new World('unused')), restored=store.decode(raw);
     store.game={...gameFor(restored.world),...restored.saved,world:restored.world,progress:{...restored.saved.progress,visited:new Set(restored.saved.progress.visited)},noticeUntil:restored.saved.notice.until};
-    assert.deepEqual(json(store.capture()),original.payload);
+    const captured=json(store.capture());delete captured.renewal;assert.deepEqual(captured,original.payload);
     assert.equal(restored.world.player.actual.identity.sex,'female');
     assert.equal(restored.world.family.character('founder-000').actual.life.alive,false);
     assert.ok(restored.world.family.notebooks['founder-000']);

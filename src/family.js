@@ -24,8 +24,13 @@ class FamilySystem {
     birth() {
         const reason = this.birthEligibility(); if (reason) return {ok:false,text:reason};
         const w=this.world,a=w.player,b=w.romance.spouse(a);
-        const plan=this.planCohort(a.id,b.id,a.id,this.rng.state);
-        return this.commitCohort(plan,this.rng,true);
+        try {
+            const marriage=w.romance.marriages.find(m=>m.endedAt===null && m.ids.includes(a.id) && m.ids.includes(b.id));
+            const anchor=w.renewal?.households[marriage?.id]?.anchorId || a.id;
+            const plan=this.planCohort(a.id,b.id,anchor,this.rng.state);
+            this.preflightCohort(plan,false);
+            return this.commitCohort(plan,this.rng,true);
+        } catch(error) { return {ok:false,text:`This household cannot add a cohort: ${error.message}`}; }
     }
     // Detached planning preserves IDs/RNG and observer state until the entire
     // cohort is accepted. Explicit parents never require swapping world.player.
@@ -59,7 +64,27 @@ class FamilySystem {
         this.nextId=plan.nextId;rng.state=plan.rngState;
         w.romance.pair(a,b).lastBirthYear=this.year;
         this.births.push(record); this.history.push({kind:'birth',ids:[record.motherId,record.fatherId,...ids],at:w.elapsed});
+        const marriage=w.romance.marriages.find(m=>m.endedAt===null && m.ids.includes(a.id) && m.ids.includes(b.id));
+        if(marriage && w.renewal?.households[marriage.id]) w.renewal.households[marriage.id].cohorts++;
+        if(!known) w.renewal.backgroundBirthIds.push(record.id);
         return {ok:true,text:`You both choose family life. ${ids.length} children are born; each has an individual inherited genome. Open Family to meet them.`,ids};
+    }
+    preflightCohort(plan,background) {
+        const w=this.world,s=w.captureForValidation ? w.captureForValidation() : captureWorld(w);
+        for(const c of plan.children) {
+            if(!background) c.playerKnowledge.discoveredFacts.name={value:c.actual.identity.name,kind:'confirmed',sourceId:'player',at:w.elapsed};
+            s.characters.push(captureCharacter(c));
+        }
+        for(const id of [plan.aId,plan.bId]) s.characters.find(c=>c.id===id).actual.lineage.childrenIds.push(...plan.ids);
+        s.family.nextId=plan.nextId;
+        if(background) {s.renewal.birthRngState=plan.rngState;s.renewal.backgroundBirthIds.push(plan.record.id);}
+        else s.family.rngState=plan.rngState;
+        s.family.births.push(plan.record);s.family.history.push({kind:'birth',ids:[plan.record.motherId,plan.record.fatherId,...plan.ids],at:w.elapsed});
+        const key=w.romance.key(this.character(plan.aId),this.character(plan.bId));
+        s.romance.pairs[key].lastBirthYear=this.year;
+        const m=s.romance.marriages.find(m=>m.endedAt===null && m.ids.includes(plan.aId) && m.ids.includes(plan.bId));
+        if(m) s.renewal.households[m.id].cohorts++;
+        SaveCodec.decode(JSON.stringify({format:SaveFormat.name,version:5,worldVersion:1,savedAt:0,revision:0,payload:s,checksum:hash(JSON.stringify(s))}));
     }
     deathAge(c) { return 78 + hash(`${this.world.seed}:lifespan:${c.id}`) % 15; }
     markDeath(c, cause='old age') {

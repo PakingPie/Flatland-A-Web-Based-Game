@@ -1559,6 +1559,7 @@ class World {
         this.social = new SocialSystem(this);
         this.romance = new RomanceSystem(this);
         this.family = new FamilySystem(this);
+        this.renewal = new RenewalSystem(this);
         this.conversationId = null;
     }
     get player() { return this.registry.get(this.registry.currentId); }
@@ -2183,6 +2184,7 @@ class RomanceSystem {
                 return finish('I am not ready. Let affection and trust grow through different shared experiences.');
             const m = { id: `marriage-${this.marriages.length + 1}`, ids: [a.id, b.id], at: time, endedAt: null, reason: null };
             this.marriages.push(m); pair.status = 'married'; this.syncBonds();
+            w.renewal?.registerMarriage(m);
             w.social.reputationEvent(1, 'marriage', b.id);
             return finish('Yes. Let us build a life together. Household support lowers food and water use by 12% and improves rest.', 'positive');
         }
@@ -2325,8 +2327,13 @@ class FamilySystem {
     birth() {
         const reason = this.birthEligibility(); if (reason) return {ok:false,text:reason};
         const w=this.world,a=w.player,b=w.romance.spouse(a);
-        const plan=this.planCohort(a.id,b.id,a.id,this.rng.state);
-        return this.commitCohort(plan,this.rng,true);
+        try {
+            const marriage=w.romance.marriages.find(m=>m.endedAt===null && m.ids.includes(a.id) && m.ids.includes(b.id));
+            const anchor=w.renewal?.households[marriage?.id]?.anchorId || a.id;
+            const plan=this.planCohort(a.id,b.id,anchor,this.rng.state);
+            this.preflightCohort(plan,false);
+            return this.commitCohort(plan,this.rng,true);
+        } catch(error) { return {ok:false,text:`This household cannot add a cohort: ${error.message}`}; }
     }
     // Detached planning preserves IDs/RNG and observer state until the entire
     // cohort is accepted. Explicit parents never require swapping world.player.
@@ -2360,7 +2367,27 @@ class FamilySystem {
         this.nextId=plan.nextId;rng.state=plan.rngState;
         w.romance.pair(a,b).lastBirthYear=this.year;
         this.births.push(record); this.history.push({kind:'birth',ids:[record.motherId,record.fatherId,...ids],at:w.elapsed});
+        const marriage=w.romance.marriages.find(m=>m.endedAt===null && m.ids.includes(a.id) && m.ids.includes(b.id));
+        if(marriage && w.renewal?.households[marriage.id]) w.renewal.households[marriage.id].cohorts++;
+        if(!known) w.renewal.backgroundBirthIds.push(record.id);
         return {ok:true,text:`You both choose family life. ${ids.length} children are born; each has an individual inherited genome. Open Family to meet them.`,ids};
+    }
+    preflightCohort(plan,background) {
+        const w=this.world,s=w.captureForValidation ? w.captureForValidation() : captureWorld(w);
+        for(const c of plan.children) {
+            if(!background) c.playerKnowledge.discoveredFacts.name={value:c.actual.identity.name,kind:'confirmed',sourceId:'player',at:w.elapsed};
+            s.characters.push(captureCharacter(c));
+        }
+        for(const id of [plan.aId,plan.bId]) s.characters.find(c=>c.id===id).actual.lineage.childrenIds.push(...plan.ids);
+        s.family.nextId=plan.nextId;
+        if(background) {s.renewal.birthRngState=plan.rngState;s.renewal.backgroundBirthIds.push(plan.record.id);}
+        else s.family.rngState=plan.rngState;
+        s.family.births.push(plan.record);s.family.history.push({kind:'birth',ids:[plan.record.motherId,plan.record.fatherId,...plan.ids],at:w.elapsed});
+        const key=w.romance.key(this.character(plan.aId),this.character(plan.bId));
+        s.romance.pairs[key].lastBirthYear=this.year;
+        const m=s.romance.marriages.find(m=>m.endedAt===null && m.ids.includes(plan.aId) && m.ids.includes(plan.bId));
+        if(m) s.renewal.households[m.id].cohorts++;
+        SaveCodec.decode(JSON.stringify({format:SaveFormat.name,version:5,worldVersion:1,savedAt:0,revision:0,payload:s,checksum:hash(JSON.stringify(s))}));
     }
     deathAge(c) { return 78 + hash(`${this.world.seed}:lifespan:${c.id}`) % 15; }
     markDeath(c, cause='old age') {
@@ -2446,6 +2473,62 @@ class FamilySystem {
     }
 }
 
+// ---- renewal.js ----
+// Private household policy. Dead characters remain complete registry records.
+// Export is read-only: opening F8 or saving must never initialize hidden state.
+class RenewalSystem {
+    constructor(world) {
+        this.world=world;this.enabled=false;this.activatedAt=null;
+        this.processedYear=Math.floor(world.elapsed/C.DAY);
+        this.matchingRng=new RNG(world.seed+':renewal:matching');
+        this.birthRng=new RNG(world.seed+':renewal:births');
+        this.pairs={};this.households={};this.backgroundBirthIds=[];this.knownEvents={};
+    }
+    anchorFor(ids,key) {
+        const f=this.world.family,founder=f.character('founder-000');
+        const dynasty=new Set([founder.id,...f.descendants(founder).map(c=>c.id)]);
+        const members=ids.filter(id=>dynasty.has(id));
+        insist(members.length<=1,'Ambiguous household anchor.');
+        return members[0] || [...ids].sort()[hash(`${this.world.seed}:anchor:${key}`)%2];
+    }
+    cohortsFor(m) {
+        return this.world.family.births.filter(b=>m.ids.includes(b.motherId) && m.ids.includes(b.fatherId) && b.at>=m.at && (m.endedAt===null || b.at<=m.endedAt)).length;
+    }
+    registerMarriage(m,origin='player') {
+        this.households[m.id]={anchorId:this.anchorFor(m.ids,m.id),cohorts:this.cohortsFor(m),origin};
+    }
+    initializeLegacy() {
+        this.processedYear=Math.floor(this.world.elapsed/C.DAY);
+        for(const m of this.world.romance.marriages) this.registerMarriage(m,'legacy');
+    }
+    exportState() {
+        return copyJSON({version:1,enabled:this.enabled,activatedAt:this.activatedAt,processedYear:this.processedYear,
+            matchingRngState:this.matchingRng.state,birthRngState:this.birthRng.state,pairs:this.pairs,
+            households:this.households,backgroundBirthIds:this.backgroundBirthIds,knownEvents:this.knownEvents});
+    }
+    importState(s) {
+        const w=this.world,year=Math.floor(w.elapsed/C.DAY),exists=id=>!!w.registry.get(id);
+        insist(plain(s) && s.version===1 && typeof s.enabled==='boolean' && (s.activatedAt===null || numberIn(s.activatedAt,0,w.elapsed+.001)) && (!s.enabled || s.activatedAt!==null) && integerIn(s.processedYear,0,year),'Invalid renewal policy or cursor.');
+        insist(integerIn(s.matchingRngState,0,4294967295) && integerIn(s.birthRngState,0,4294967295) && plain(s.pairs) && Object.keys(s.pairs).length<=1000 && plain(s.households) && plain(s.knownEvents),'Invalid renewal state.');
+        const marriages=w.romance.marriages,births=w.family.births;
+        insist(Object.keys(s.households).length===marriages.length,'Missing household state.');
+        for(const [id,h] of Object.entries(s.households)) {
+            const m=marriages.find(m=>m.id===id);
+            insist(m && plain(h) && h.anchorId===this.anchorFor(m.ids,id) && integerIn(h.cohorts,0,256) && h.cohorts===this.cohortsFor(m) && ['legacy','player','npc'].includes(h.origin),'Invalid household anchor or cohort count.');
+        }
+        for(const [key,p] of Object.entries(s.pairs)) {
+            insist(plain(p) && Array.isArray(p.ids) && p.ids.length===2 && p.ids[0]!==p.ids[1] && p.ids.every(exists) && key===[...p.ids].sort().join('|') && plain(p.trust) && plain(p.affection) && p.ids.every(id=>numberIn(p.trust[id],-30,100) && numberIn(p.affection[id],0,100)) && Object.keys(p.trust).length===2 && Object.keys(p.affection).length===2 && integerIn(p.startedYear,0,year) && integerIn(p.progressYear,p.startedYear,year) && typeof p.closed==='boolean','Invalid NPC relationship.');
+        }
+        const ids=(list,records)=>Array.isArray(list) && new Set(list).size===list.length && list.every(id=>records.some(r=>r.id===id));
+        insist(ids(s.backgroundBirthIds,births),'Invalid background birth provenance.');
+        for(const [id,k] of Object.entries(s.knownEvents)) insist(exists(id) && plain(k) && ids(k.birthIds,births) && ids(k.marriageIds,marriages),'Invalid household discovery.');
+        this.enabled=s.enabled;this.activatedAt=s.activatedAt;this.processedYear=s.processedYear;
+        this.matchingRng.state=s.matchingRngState;this.birthRng.state=s.birthRngState;
+        this.pairs=copyJSON(s.pairs);this.households=copyJSON(s.households);
+        this.backgroundBirthIds=[...s.backgroundBirthIds];this.knownEvents=copyJSON(s.knownEvents);
+    }
+}
+
 // ---- approach.js ----
 // Transient player intent. Saves retain the world, never a queued UI click.
 // Uses the same conservative navigation and collision checks as the citizens.
@@ -2491,12 +2574,32 @@ function briefReply(result, topic) {
 // Versioned, transactional local saves. Immutable terrain and identities are seeded;
 // every mutable simulation field is restored into a candidate World before install.
 // The checksum detects accidental corruption; it is NOT an anti-cheat mechanism.
-const SaveFormat = Object.freeze({ name: 'the-flatland', version: 4, worldVersion: 1,
+const SaveFormat = Object.freeze({ name: 'the-flatland', version: 5, worldVersion: 1,
     keys: { manual: 'flatland.manual.v1', auto: 'flatland.auto.v1' }, maxBytes: 2_000_000 });
 
 // ---- save-validation.js ----
 // Stateless validators and character DTO conversion; no storage or DOM access.
 const copyJSON = value => JSON.parse(JSON.stringify(value));
+function utf8Bytes(text) {
+    let bytes=0;
+    for(let i=0;i<text.length;i++) {
+        const c=text.charCodeAt(i);
+        if(c<128) bytes++;
+        else if(c<2048) bytes+=2;
+        else if(c>=0xd800 && c<=0xdbff && i+1<text.length && text.charCodeAt(i+1)>=0xdc00 && text.charCodeAt(i+1)<=0xdfff) {bytes+=4;i++;}
+        else bytes+=3;
+    }
+    return bytes;
+}
+// Shared complete simulation snapshot, also usable without DOM/storage for
+// detached cohort validation. Browser callers supply their real UI/run fields.
+function captureWorld(w,extras={}) {
+    return {runId:'candidate',seed:w.seed,elapsed:w.elapsed,rngState:w.rng.state,currentPlayerId:w.player.id,
+        ended:!w.player.actual.life.alive,characters:w.registry.all().map(captureCharacter),
+        resources:w.resources.map(r=>({id:r.id,quantity:r.quantity,respawn:r.respawn})),
+        pack:{food:0,water:0},progress:{gathered:0,visited:[],complete:false},gatherCooldown:0,warningLatch:{},effects:[],messages:[],notice:{text:'',until:0,hidden:true},
+        family:w.family.exportState(),romance:w.romance.exportState(),social:w.social.exportState(),renewal:w.renewal.exportState(),...copyJSON(extras)};
+}
 function insist(ok, message) { if (!ok) throw new Error(message); }
 function numberIn(n, lo, hi) { return typeof n === 'number' && Number.isFinite(n) && n >= lo && n <= hi; }
 function integerIn(n, lo, hi) { return Number.isInteger(n) && numberIn(n, lo, hi); }
@@ -2570,6 +2673,7 @@ function migrateSavePopulation(w, s, version) {
         case 3: // Marriage: same seeded population, with persistent pairs.
             restoreLegacyPopulation(w,s); break;
         case 4: // Dynamic individuals, full genomes, and playable observer ID.
+        case 5: // Lossless character archive plus private renewal state.
             restoreFamilyPopulation(w,s.characters,s.currentPlayerId ?? s.family?.playableIds?.at(-1)); break;
         default: throw new Error('No population migration for save version.');
     }
@@ -2583,9 +2687,12 @@ function migrateSaveSystems(w, s, version) {
         case 3:
             w.social.importState(s.social,3); w.romance.importState(s.romance); break;
         case 4:
+        case 5:
             w.social.importState(s.social,4); w.family.importState(s.family); w.romance.importState(s.romance,true); break;
         default: throw new Error('No system migration for save version.');
     }
+    if(version===5) w.renewal.importState(s.renewal);
+    else w.renewal.initializeLegacy();
 }
 function restoreFamilyPopulation(w, records, currentId) {
     const baseIds=w.registry.all().map(c=>c.id);
@@ -2625,7 +2732,8 @@ class SaveCodec {
         try { data = JSON.parse(raw); } catch { throw new Error('Save contains damaged JSON.'); }
         checkJSONTree(data);
         insist(plain(data) && data.format === SaveFormat.name, 'This is not a Flatland save.');
-        insist([1, 2, 3, 4].includes(data.version), 'Save version is not supported by this build.');
+        insist([1, 2, 3, 4, 5].includes(data.version), 'Save version is not supported by this build.');
+        if(data.version===5) insist(utf8Bytes(raw)<=SaveFormat.maxBytes,'Save exceeds the UTF-8 byte budget.');
         insist(data.worldVersion === SaveFormat.worldVersion, 'World generator version is incompatible.');
         insist(plain(data.payload) && data.checksum === hash(JSON.stringify(data.payload)), 'Save checksum does not match.');
         insist(numberIn(data.savedAt, 0, 1e15) && integerIn(data.revision, 0, 1e12), 'Invalid save timestamp.');
@@ -2699,19 +2807,17 @@ class SaveStore {
     capture() {
         const g = this.game, w = g.world;
         insist(w, 'No expedition to save.');
-        return { runId: g.runId, seed: w.seed, elapsed: w.elapsed, rngState: w.rng.state, currentPlayerId: w.player.id,
-            ended: !w.player.actual.life.alive, characters: w.registry.all().map(captureCharacter),
-            resources: w.resources.map(r => ({ id: r.id, quantity: r.quantity, respawn: r.respawn })),
-            pack: copyJSON(g.pack), progress: { gathered: g.progress.gathered, visited: [...g.progress.visited], complete: g.progress.complete },
+        return captureWorld(w,{runId:g.runId,
+            pack: g.pack, progress: { gathered: g.progress.gathered, visited: [...g.progress.visited], complete: g.progress.complete },
             gatherCooldown: g.gatherCooldown, warningLatch: copyJSON(g.warningLatch), effects: copyJSON(g.effects), messages: copyJSON(g.messages),
             notice: { text: $('notice').textContent, until: g.noticeUntil, hidden: $('notice').hidden },
-            family: w.family.exportState(), romance: w.romance.exportState(),
-            social: w.social ? w.social.exportState() : null };
+        });
     }
     encode(slot = 'manual') {
         const payload = this.capture();
-        return JSON.stringify({ format: SaveFormat.name, version: SaveFormat.version, worldVersion: SaveFormat.worldVersion,
+        const raw=JSON.stringify({ format: SaveFormat.name, version: SaveFormat.version, worldVersion: SaveFormat.worldVersion,
             savedAt: Date.now(), revision: this.revision + 1, slot, checksum: hash(JSON.stringify(payload)), payload });
+        insist(utf8Bytes(raw)<=SaveFormat.maxBytes,'Save exceeds the UTF-8 byte budget.');checkJSONTree(JSON.parse(raw));return raw;
     }
     parse(raw) { return SaveCodec.parse(raw); }
     decode(raw) { return SaveCodec.decode(raw); }
@@ -3453,6 +3559,7 @@ class Game {
         this.socialUI?.reset();
         this.input.clear();
         this.world = world; this.runId = saved.runId;
+        world.captureForValidation=()=>this.saves.capture();
         this.pack = copyJSON(saved.pack);
         this.progress = { ...saved.progress, visited: new Set(saved.progress.visited) };
         this.gatherCooldown = saved.gatherCooldown; this.warningLatch = copyJSON(saved.warningLatch);
@@ -3470,6 +3577,7 @@ class Game {
         this.socialUI?.reset();
         this.input.clear();
         this.world = new World(seed);
+        this.world.captureForValidation=()=>this.saves.capture();
         this.runId = `${Date.now().toString(36)}-${globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)}`;
         this.saves.newRun();
         this.pack = { food: 1, water: 1 };

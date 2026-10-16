@@ -12,6 +12,7 @@ function migrateSavePopulation(w, s, version) {
         case 3: // Marriage: same seeded population, with persistent pairs.
             restoreLegacyPopulation(w,s); break;
         case 4: // Dynamic individuals, full genomes, and playable observer ID.
+        case 5: // Lossless character archive plus private renewal state.
             restoreFamilyPopulation(w,s.characters,s.currentPlayerId ?? s.family?.playableIds?.at(-1)); break;
         default: throw new Error('No population migration for save version.');
     }
@@ -25,9 +26,12 @@ function migrateSaveSystems(w, s, version) {
         case 3:
             w.social.importState(s.social,3); w.romance.importState(s.romance); break;
         case 4:
+        case 5:
             w.social.importState(s.social,4); w.family.importState(s.family); w.romance.importState(s.romance,true); break;
         default: throw new Error('No system migration for save version.');
     }
+    if(version===5) w.renewal.importState(s.renewal);
+    else w.renewal.initializeLegacy();
 }
 function restoreFamilyPopulation(w, records, currentId) {
     const baseIds=w.registry.all().map(c=>c.id);

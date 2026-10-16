@@ -1,5 +1,25 @@
 // Stateless validators and character DTO conversion; no storage or DOM access.
 const copyJSON = value => JSON.parse(JSON.stringify(value));
+function utf8Bytes(text) {
+    let bytes=0;
+    for(let i=0;i<text.length;i++) {
+        const c=text.charCodeAt(i);
+        if(c<128) bytes++;
+        else if(c<2048) bytes+=2;
+        else if(c>=0xd800 && c<=0xdbff && i+1<text.length && text.charCodeAt(i+1)>=0xdc00 && text.charCodeAt(i+1)<=0xdfff) {bytes+=4;i++;}
+        else bytes+=3;
+    }
+    return bytes;
+}
+// Shared complete simulation snapshot, also usable without DOM/storage for
+// detached cohort validation. Browser callers supply their real UI/run fields.
+function captureWorld(w,extras={}) {
+    return {runId:'candidate',seed:w.seed,elapsed:w.elapsed,rngState:w.rng.state,currentPlayerId:w.player.id,
+        ended:!w.player.actual.life.alive,characters:w.registry.all().map(captureCharacter),
+        resources:w.resources.map(r=>({id:r.id,quantity:r.quantity,respawn:r.respawn})),
+        pack:{food:0,water:0},progress:{gathered:0,visited:[],complete:false},gatherCooldown:0,warningLatch:{},effects:[],messages:[],notice:{text:'',until:0,hidden:true},
+        family:w.family.exportState(),romance:w.romance.exportState(),social:w.social.exportState(),renewal:w.renewal.exportState(),...copyJSON(extras)};
+}
 function insist(ok, message) { if (!ok) throw new Error(message); }
 function numberIn(n, lo, hi) { return typeof n === 'number' && Number.isFinite(n) && n >= lo && n <= hi; }
 function integerIn(n, lo, hi) { return Number.isInteger(n) && numberIn(n, lo, hi); }

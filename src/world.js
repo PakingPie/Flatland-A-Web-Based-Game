@@ -25,6 +25,7 @@ class World {
         this.social = new SocialSystem(this);
         this.romance = new RomanceSystem(this);
         this.family = new FamilySystem(this);
+        this.renewal = new RenewalSystem(this);
         this.conversationId = null;
     }
     get player() { return this.registry.get(this.registry.currentId); }

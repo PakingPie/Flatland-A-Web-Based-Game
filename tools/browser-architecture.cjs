@@ -23,7 +23,7 @@ const profile=fs.mkdtempSync(path.join(output,'architecture-profile-'));
         await page.evaluate(raw=>localStorage.setItem('flatland.manual.v1',raw),raw); await page.reload();
         for(let cycle=0;cycle<3;cycle++) {
             await page.locator('#continueBtn').click(); await page.evaluate(()=>FlatlandDebug.manual());
-            assert.deepEqual(await payload(),fixture.payload);
+            const migrated=await payload();assert.equal(migrated.renewal.enabled,false);delete migrated.renewal;assert.deepEqual(migrated,fixture.payload);
             assert.equal(await page.evaluate(()=>FlatlandDebug.save()),true);
             if(cycle<2) {await context.close();context=null;await open();}
         }

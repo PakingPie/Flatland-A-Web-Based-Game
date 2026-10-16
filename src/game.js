@@ -86,6 +86,7 @@ class Game {
         this.socialUI?.reset();
         this.input.clear();
         this.world = world; this.runId = saved.runId;
+        world.captureForValidation=()=>this.saves.capture();
         this.pack = copyJSON(saved.pack);
         this.progress = { ...saved.progress, visited: new Set(saved.progress.visited) };
         this.gatherCooldown = saved.gatherCooldown; this.warningLatch = copyJSON(saved.warningLatch);
@@ -103,6 +104,7 @@ class Game {
         this.socialUI?.reset();
         this.input.clear();
         this.world = new World(seed);
+        this.world.captureForValidation=()=>this.saves.capture();
         this.runId = `${Date.now().toString(36)}-${globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)}`;
         this.saves.newRun();
         this.pack = { food: 1, water: 1 };

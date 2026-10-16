@@ -101,6 +101,7 @@ class RomanceSystem {
                 return finish('I am not ready. Let affection and trust grow through different shared experiences.');
             const m = { id: `marriage-${this.marriages.length + 1}`, ids: [a.id, b.id], at: time, endedAt: null, reason: null };
             this.marriages.push(m); pair.status = 'married'; this.syncBonds();
+            w.renewal?.registerMarriage(m);
             w.social.reputationEvent(1, 'marriage', b.id);
             return finish('Yes. Let us build a life together. Household support lowers food and water use by 12% and improves rest.', 'positive');
         }

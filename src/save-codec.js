@@ -7,7 +7,8 @@ class SaveCodec {
         try { data = JSON.parse(raw); } catch { throw new Error('Save contains damaged JSON.'); }
         checkJSONTree(data);
         insist(plain(data) && data.format === SaveFormat.name, 'This is not a Flatland save.');
-        insist([1, 2, 3, 4].includes(data.version), 'Save version is not supported by this build.');
+        insist([1, 2, 3, 4, 5].includes(data.version), 'Save version is not supported by this build.');
+        if(data.version===5) insist(utf8Bytes(raw)<=SaveFormat.maxBytes,'Save exceeds the UTF-8 byte budget.');
         insist(data.worldVersion === SaveFormat.worldVersion, 'World generator version is incompatible.');
         insist(plain(data.payload) && data.checksum === hash(JSON.stringify(data.payload)), 'Save checksum does not match.');
         insist(numberIn(data.savedAt, 0, 1e15) && integerIn(data.revision, 0, 1e12), 'Invalid save timestamp.');

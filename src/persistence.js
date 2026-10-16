@@ -35,19 +35,17 @@ class SaveStore {
     capture() {
         const g = this.game, w = g.world;
         insist(w, 'No expedition to save.');
-        return { runId: g.runId, seed: w.seed, elapsed: w.elapsed, rngState: w.rng.state, currentPlayerId: w.player.id,
-            ended: !w.player.actual.life.alive, characters: w.registry.all().map(captureCharacter),
-            resources: w.resources.map(r => ({ id: r.id, quantity: r.quantity, respawn: r.respawn })),
-            pack: copyJSON(g.pack), progress: { gathered: g.progress.gathered, visited: [...g.progress.visited], complete: g.progress.complete },
+        return captureWorld(w,{runId:g.runId,
+            pack: g.pack, progress: { gathered: g.progress.gathered, visited: [...g.progress.visited], complete: g.progress.complete },
             gatherCooldown: g.gatherCooldown, warningLatch: copyJSON(g.warningLatch), effects: copyJSON(g.effects), messages: copyJSON(g.messages),
             notice: { text: $('notice').textContent, until: g.noticeUntil, hidden: $('notice').hidden },
-            family: w.family.exportState(), romance: w.romance.exportState(),
-            social: w.social ? w.social.exportState() : null };
+        });
     }
     encode(slot = 'manual') {
         const payload = this.capture();
-        return JSON.stringify({ format: SaveFormat.name, version: SaveFormat.version, worldVersion: SaveFormat.worldVersion,
+        const raw=JSON.stringify({ format: SaveFormat.name, version: SaveFormat.version, worldVersion: SaveFormat.worldVersion,
             savedAt: Date.now(), revision: this.revision + 1, slot, checksum: hash(JSON.stringify(payload)), payload });
+        insist(utf8Bytes(raw)<=SaveFormat.maxBytes,'Save exceeds the UTF-8 byte budget.');checkJSONTree(JSON.parse(raw));return raw;
     }
     parse(raw) { return SaveCodec.parse(raw); }
     decode(raw) { return SaveCodec.decode(raw); }
