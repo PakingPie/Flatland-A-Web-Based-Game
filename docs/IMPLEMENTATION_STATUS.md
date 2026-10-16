@@ -1,5 +1,15 @@
 # Implementation checkpoints — Phase 2B / 3 / 3.5
 
+## Adopted renewal bundle; explicit-parent preparation — 2026-10-16
+
+The user approved bundle A–E. Froze [the parenthood-v4 fixture](../tools/fixtures/parenthood-v4.json) by executing `a54a872`
+source before changing saves. Cohort construction now plans explicit parents and
+an anchor with copied IDs/RNG before publishing; willingness accepts explicit
+relationship inputs with unchanged player results. Renewal remains disabled and
+schema remains v4 at this checkpoint. All 65 deterministic cases pass, including
+exact archived-record recovery and inheritance compared to the frozen checkpoint.
+All seven existing isolated Chromium suites and build/document checks pass.
+
 ## Renewal/archive decisions and Phase 4A proposal — 2026-10-16
 
 Started clean at `a54a872` on `codex/phase-2b-3-generations`, seven local commits

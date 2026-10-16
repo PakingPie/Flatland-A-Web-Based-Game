@@ -1,5 +1,11 @@
 # Autonomous NPC families — proposal for discussion
 
+**Adopted 2026-10-16:** the user approved decision bundle A–E below. It now governs
+the staged implementation. Earlier proposal text remains design history; where
+it is less specific, the adopted bundle takes precedence. Approval does not mean
+the scheduler or v5 format is already implemented. Compaction, immigration, larger
+budgets and indefinite renewal remain deferred.
+
 **Decision recorded 2026-10-15:** the user selected **design autonomous NPC families
 first**. This chooses the direction, not the rules below. No renewal behavior is
 implemented or enabled by Phase 3.5 architecture commits.

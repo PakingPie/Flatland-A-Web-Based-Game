@@ -16,8 +16,10 @@ class RomanceSystem {
     parenthoodReadiness(a,b) {
         // Derived from existing relationship state, never a permanent yes or a
         // reward for repeated requests. No new saved fields or RNG consumption.
-        const base=this.preferences(b).familyLife, pair=this.pairs[this.key(a,b)];
-        const trust=b.playerKnowledge.relationship.trust, affection=pair?.affection || 0;
+        const pair=this.pairs[this.key(a,b)];
+        return this.readinessFrom(this.preferences(b).familyLife,b.playerKnowledge.relationship.trust,pair?.affection || 0);
+    }
+    readinessFrom(base,trust,affection) {
         const trustSupport=.08*clamp((trust-30)/40,0,1), affectionSupport=.08*clamp((affection-50)/40,0,1);
         const willingness=clamp(base+trustSupport+affectionSupport,0,1);
         const reason=trust<ROMANCE.trustToMarry ? 'Build more trust together before raising children.'

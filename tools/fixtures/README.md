@@ -6,6 +6,10 @@
   `node tools/freeze-v4-fixture.cjs`. Controlled UI-rule courtship, marriage,
   births, aging, daughter succession, archived founder notebook and deaths.
   Timestamp fixed for reproducibility. No normal player data is used.
+- `parenthood-v4.json`: frozen `a54a872` source executed by
+  `node tools/freeze-parenthood-fixture.cjs`, before renewal/save-format edits.
+  Includes daughter succession, deceased records and an archived observer. Its
+  first cohort/RNG also fixes successful pre-renewal inheritance outcomes.
 
 The v1 case remains explicitly synthetic, derived from the v2 fixture. Keep these
 inputs frozen when production save code changes. The v4 fixture must round-trip

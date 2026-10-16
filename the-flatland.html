@@ -2098,8 +2098,10 @@ class RomanceSystem {
     parenthoodReadiness(a,b) {
         // Derived from existing relationship state, never a permanent yes or a
         // reward for repeated requests. No new saved fields or RNG consumption.
-        const base=this.preferences(b).familyLife, pair=this.pairs[this.key(a,b)];
-        const trust=b.playerKnowledge.relationship.trust, affection=pair?.affection || 0;
+        const pair=this.pairs[this.key(a,b)];
+        return this.readinessFrom(this.preferences(b).familyLife,b.playerKnowledge.relationship.trust,pair?.affection || 0);
+    }
+    readinessFrom(base,trust,affection) {
         const trustSupport=.08*clamp((trust-30)/40,0,1), affectionSupport=.08*clamp((affection-50)/40,0,1);
         const willingness=clamp(base+trustSupport+affectionSupport,0,1);
         const reason=trust<ROMANCE.trustToMarry ? 'Build more trust together before raising children.'
@@ -2322,23 +2324,43 @@ class FamilySystem {
     }
     birth() {
         const reason = this.birthEligibility(); if (reason) return {ok:false,text:reason};
-        const w=this.world, a=w.player, b=w.romance.spouse(a), mother=a.actual.identity.sex==='female'?a:b, father=a.actual.identity.sex==='male'?a:b;
-        const count=birthCohortSize(this.rng), ids=[], generation=Math.max(a.actual.lineage.generation,b.actual.lineage.generation)+1;
+        const w=this.world,a=w.player,b=w.romance.spouse(a);
+        const plan=this.planCohort(a.id,b.id,a.id,this.rng.state);
+        return this.commitCohort(plan,this.rng,true);
+    }
+    // Detached planning preserves IDs/RNG and observer state until the entire
+    // cohort is accepted. Explicit parents never require swapping world.player.
+    planCohort(aId,bId,anchorId,rngState) {
+        const w=this.world,a=this.character(aId),b=this.character(bId),anchor=this.character(anchorId);
+        insist(a && b && a!==b && [a,b].includes(anchor) && a.actual.life.alive && b.actual.life.alive && a.actual.identity.sex!==b.actual.identity.sex,'Invalid cohort parents.');
+        const mother=a.actual.identity.sex==='female'?a:b,father=a.actual.identity.sex==='male'?a:b;
+        const rng=new RNG(rngState),count=birthCohortSize(rng),ids=[],children=[],generation=Math.max(a.actual.lineage.generation,b.actual.lineage.generation)+1;
+        let nextId=this.nextId;
         for(let i=0;i<count;i++) {
-            const id=`descendant-${this.nextId++}`, sex=this.rng.next()<.5?'female':'male';
-            const genome=inheritGenome(a.actual.genome,father.actual.genome,mother.actual.genome,this.rng,{motherId:mother.id,fatherId:father.id},generation);
+            const id=`descendant-${nextId++}`, sex=rng.next()<.5?'female':'male';
+            insist(!this.character(id),'Duplicate child ID.');
+            const genome=inheritGenome(anchor.actual.genome,father.actual.genome,mother.actual.genome,rng,{motherId:mother.id,fatherId:father.id},generation);
             const spot=w.nav.free.map(index=>w.nav.point(index)).filter(p=>w.circleClear(p.x,p.y,24)).sort((p,q)=>dist2(p.x,p.y,a.x,a.y)-dist2(q.x,q.y,a.x,a.y))[i] || w.refuges[0];
-            const c=createCharacter(id,genome,sex==='female'?'line':'polygon',spot.x,spot.y,this.rng);
-            populateSocialIdentity(w,c,64+this.nextId);
+            const c=createCharacter(id,genome,sex==='female'?'line':'polygon',spot.x,spot.y,rng);
+            populateSocialIdentity(w,c,64+nextId);
             c.actual.identity.name=`${sex==='female'?'Lina':'Ari'} ${id.slice(11)}`; c.publicIdentity.displayName=c.actual.identity.name;
             c.actual.life={ageYears:0,alive:true}; c.actual.lineage={generation,motherId:mother.id,fatherId:father.id,childrenIds:[],ancestryKnownToSelf:false};
-            c.playerKnowledge.relationship=emptyRelationship(); w.social.learn(c,'name',c.actual.identity.name,'confirmed','player');
-            w.registry.add(c); mother.actual.lineage.childrenIds.push(id); father.actual.lineage.childrenIds.push(id); ids.push(id);
+            c.playerKnowledge.relationship=emptyRelationship();
+            children.push(c);ids.push(id);
         }
-        this.world.romance.pair(a,b).lastBirthYear=this.year;
         const record={id:`birth-${this.births.length+1}`,motherId:mother.id,fatherId:father.id,childIds:ids,at:w.elapsed};
-        this.births.push(record); this.history.push({kind:'birth',ids:[mother.id,father.id,...ids],at:w.elapsed});
-        return {ok:true,text:`You both choose family life. ${count} children are born; each has an individual inherited genome. Open Family to meet them.`,ids};
+        return {aId,bId,anchorId,children,ids,nextId,rngState:rng.state,record};
+    }
+    commitCohort(plan,rng,known) {
+        const w=this.world,{children,ids,record}=plan,a=this.character(plan.aId),b=this.character(plan.bId);
+        for(const c of children) {
+            if(known) w.social.learn(c,'name',c.actual.identity.name,'confirmed','player');
+            w.registry.add(c);a.actual.lineage.childrenIds.push(c.id);b.actual.lineage.childrenIds.push(c.id);
+        }
+        this.nextId=plan.nextId;rng.state=plan.rngState;
+        w.romance.pair(a,b).lastBirthYear=this.year;
+        this.births.push(record); this.history.push({kind:'birth',ids:[record.motherId,record.fatherId,...ids],at:w.elapsed});
+        return {ok:true,text:`You both choose family life. ${ids.length} children are born; each has an individual inherited genome. Open Family to meet them.`,ids};
     }
     deathAge(c) { return 78 + hash(`${this.world.seed}:lifespan:${c.id}`) % 15; }
     markDeath(c, cause='old age') {

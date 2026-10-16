@@ -22,6 +22,23 @@ test('seeded baseline and existing simulation state round-trip', () => {
     const a = new World('baseline'), b = new World('baseline'); assert.deepEqual(json(a.resources),json(b.resources)); assert.equal(a.rng.state,b.rng.state);
     const store=saveFor(a), raw=store.encode(), out=store.decode(raw); assert.deepEqual(json(out.world.player),json(a.player)); assert.equal(out.world.social.rng.state,a.social.rng.state);
 });
+
+test('parenthood checkpoint v4 retains every deceased record and observer notebook',()=>{
+    const original=JSON.parse(fs.readFileSync('tools/fixtures/parenthood-v4.json','utf8'));
+    const store=saveFor(new World('unused')),out=store.decode(JSON.stringify(original));
+    store.game={...gameFor(out.world),...out.saved,world:out.world,progress:{...out.saved.progress,visited:new Set(out.saved.progress.visited)},noticeUntil:out.saved.notice.until};
+    assert.deepEqual(json(store.capture()),original.payload);
+});
+
+test('detached explicit-parent planning preserves a54a872 inheritance and consumes no live state',()=>{
+    const {w,c}=familyWorld(),before=saveFor(w).capture(),plan=w.family.planCohort(w.player.id,c.id,w.player.id,w.family.rng.state);
+    assert.deepEqual(json(saveFor(w).capture()),json(before));
+    const released=JSON.parse(fs.readFileSync('tools/fixtures/parenthood-v4.json','utf8')).payload;
+    assert.deepEqual(json(plan.children.map(c=>c.actual.genome)),released.family.births[0].childIds.map(id=>released.characters.find(c=>c.id===id).actual.genome));
+    assert.equal(plan.rngState,released.family.rngState);assert.equal(plan.nextId,released.family.nextId);
+    const invalid=()=>w.family.planCohort(w.player.id,c.id,'missing',w.family.rng.state);
+    assert.throws(invalid,/Invalid cohort/);assert.deepEqual(json(saveFor(w).capture()),json(before));
+});
 test('frozen released v4 family, daughter observer and deceased ancestors round-trip exactly', () => {
     const raw=fs.readFileSync('tools/fixtures/released-v4.json','utf8'), original=JSON.parse(raw);
     const store=saveFor(new World('unused')), restored=store.decode(raw);
