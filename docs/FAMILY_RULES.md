@@ -1,4 +1,4 @@
-# Implemented family and inheritance rules (v0.3.4)
+# Implemented family and inheritance rules (v0.3.5)
 
 These adjustable gameplay defaults resolve Phase 2B/3 implementation questions.
 They are not statements about real genetics or moral worth.
@@ -221,3 +221,21 @@ while retaining the raw saved record. No discovery is taught by reading a bond.
 Succession restores personal notebooks as before, then derives the new observer's
 own known family roles; it does not copy a parent's private claims. Existing v1–v5
 save readers, frozen payloads and RNG streams are unchanged.
+
+
+## Four approved visual life stages
+
+The user approved four discrete sizes relative to the saved adult body outline:
+child (0–5 days) 45%, teenager (6–17) 70%, adult (18–64) 100%, elder (65+) 85%.
+Fractional ages cross stages exactly at 6, 18 and 65. Rendering and public size
+observations derive the stage from age; family rows show Child/Teenager/Adult/Elder.
+No stage or scaled body points are persisted. All existing saves acquire the
+correct appearance on load, without changing their raw payloads or RNG.
+
+Both polygons and line forms scale visible vertices. Stroke widths stay readable,
+including for tiny line children; halos and names use the visible radius. Female
+line size depends on age and the existing fixed public line body, never her hidden
+genome. Adult shapes/genes, side counts, irregularity, movement, physical collision,
+selection radius, interaction reach, adulthood, fertility and lifespan remain
+unchanged. In particular, a tiny child still uses the existing adult clearance for
+navigation and selection. This first pass has no size-based combat or aging debuff.

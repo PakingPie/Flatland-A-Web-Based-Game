@@ -8,7 +8,7 @@ const files = ['core','genetics','characters','registry','navigation','world','s
 const storage=new Map();
 const context = vm.createContext({ console, document: { getElementById: () => ({textContent:'', hidden:true}), querySelectorAll:()=>[] }, performance, structuredClone,
     localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}, confirm:()=>true });
-vm.runInContext(files.map(f => fs.readFileSync(`src/${f}.js`, 'utf8')).join('\n') + '\nglobalThis.rules = {World,RNG,SaveStore,SaveCodec,hash,ROMANCE,emptyRelationship,inheritGenome,normalizeGenome,validateGenome,GENETICS,FAMILY,CitizenApproach,briefReply};', context);
+vm.runInContext(files.map(f => fs.readFileSync(`src/${f}.js`, 'utf8')).join('\n') + '\nglobalThis.rules = {lifeStage,visualRadius,World,RNG,SaveStore,SaveCodec,hash,ROMANCE,emptyRelationship,inheritGenome,normalizeGenome,validateGenome,GENETICS,FAMILY,CitizenApproach,briefReply};', context);
 const { World, RNG, SaveStore, hash, emptyRelationship } = context.rules;
 const { inheritGenome, normalizeGenome, validateGenome } = context.rules;
 const json = x => JSON.parse(JSON.stringify(x));
@@ -24,6 +24,26 @@ function npcPair(w,sameSex=false) {
     assert.fail('No mutual NPC fixture');
 }
 function renewing(seed='renewal-test') {const w=new World(seed);w.renewal.setEnabled(true);return w;}
+
+test('visual growth switches only at 6, 18 and 65 days, including fractional ages',()=>{
+    for(const [age,label,scale] of [[0,'Child',.45],[5.999,'Child',.45],[6,'Teenager',.7],[17.999,'Teenager',.7],[18,'Adult',1],[64.999,'Adult',1],[65,'Elder',.85],[92,'Elder',.85]]) {
+        assert.deepEqual(json(context.rules.lifeStage(age)),{label,scale});
+    }
+    assert.equal(context.rules.FAMILY.adult,18);
+});
+
+test('growth is derived on load without changing genomes, body clearance, raw saves or RNG',()=>{
+    const w=new World('growth-contract'),female=w.npcs.filter(c=>c.body.form==='line').slice(0,2);
+    const male=w.npcs.find(c=>c.body.form==='polygon'),before=json(saveFor(w).capture()),geometry=json(w.registry.all().map(c=>c.body));
+    for(const c of [...female,male]) assert.equal(context.rules.visualRadius(c),c.body.radius*context.rules.lifeStage(c.actual.life.ageYears).scale);
+    assert.deepEqual(json(saveFor(w).capture()),before);assert.deepEqual(json(w.registry.all().map(c=>c.body)),geometry);
+    const restored=saveFor(w).decode(saveFor(w).encode()).world;
+    for(const c of [...female,male]) assert.equal(context.rules.visualRadius(restored.registry.get(c.id)),context.rules.visualRadius(c));
+    // Female visible size depends only on public line form and age, not heredity.
+    female[0].actual.life.ageYears=female[1].actual.life.ageYears=2;
+    female[0].actual.genome.size=.8;female[1].actual.genome.size=1.3;
+    assert.equal(context.rules.visualRadius(female[0]),context.rules.visualRadius(female[1]));
+});
 
 test('known children have an innate family bond without modifying saved relationships or revealing secrets',()=>{
     const {w}=familyWorld(),ids=w.family.birth().ids,child=w.registry.get(ids[0]);

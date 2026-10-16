@@ -1,5 +1,5 @@
 # The Flatland
-## Version 0.3.4 — Familiar family and one day clock
+## Version 0.3.5 — Growing children and smaller elders
 
 Phase 3.5 now includes bounded [autonomous NPC families](docs/POPULATION_RENEWAL_DESIGN.md),
 with mutual private relationships, daily marriages/births and stable household
@@ -96,6 +96,22 @@ Son, Sister and Brother. Known direct relatives have no romance choices. Persona
 experiences still strengthen or damage trust, and family membership reveals no
 private secrets. Bonds follow the current observer after succession and work in
 existing saves without migration.
+
+## Growth and aging
+
+Characters change visible size at four fixed stages; they do not resize every day:
+
+| Stage | Age in days | Adult outline size |
+|---|---|---|
+| Child | 0–5 | 45% |
+| Teenager | 6–17 | 70% |
+| Adult | 18–64 | 100% |
+| Elder | 65+ | 85% |
+
+Polygon outlines and line-form children both grow. Lines keep a readable stroke,
+and family halos/name positions follow the visible outline. These are visual
+stages: inherited geometry, movement, collision, selection reach and age rules stay
+the same. Existing saves show the correct stage immediately, without migration.
 
 ## Known family and time
 
@@ -217,6 +233,7 @@ node tools/browser-inspector.cjs
 node tools/browser-parenthood.cjs
 node tools/browser-renewal.cjs
 node tools/browser-family-presentation.cjs
+node tools/browser-growth.cjs
 ```
 
 The dependency-free `node tools/population-study.cjs` runs a separate 20-seed,

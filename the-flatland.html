@@ -1121,7 +1121,7 @@ button {
 <section class="overlay" id="pauseScreen" aria-label="Paused" hidden><div class="modal"><div class="eyebrow">The world can wait</div><h2>Expedition paused</h2><p id="pauseReason">Take a breath. Nothing advances while paused.</p><button class="primary" id="resumeBtn">Resume expedition</button><div class="secondary-row"><button class="small-btn" id="pauseFamilyBtn">Family &amp; succession</button><button class="small-btn" id="pauseHelpBtn">Controls & field guide</button><button class="small-btn" id="restartBtn">Restart same seed</button><button class="small-btn" id="newSeedBtn">New world seed</button></div><div class="secondary-row"><button class="small-btn" id="saveBtn">Save manually</button><button class="small-btn" id="loadBtn">Load manual save</button><button class="small-btn" id="exportSaveBtn">Export save file</button><button class="small-btn" id="importSaveBtn">Import save file</button></div><p class="save-status" data-save-status role="status"></p><p class="fine">Saves stay in this browser. Export a backup for safekeeping.</p><details><summary>Population &amp; families</summary><p id="renewalStatus"></p><p class="fine">Citizens may choose partners and children independently, including someone you are courting. The population remains finite. Turning this off keeps existing families and history. Export a backup using the button above before enabling it in an older expedition.</p><button class="small-btn" id="renewalToggleBtn">Enable NPC families</button></details><details><summary>Testing</summary><button class="small-btn" id="openInspectorBtn">All information · F8</button></details></div></section>
 <section class="overlay" id="helpScreen" aria-label="Controls and field guide" hidden><div class="modal"><div class="eyebrow">Field guide</div><h2>Your next move</h2>
 <dl class="instructions"><dt>WASD / arrows</dt><dd>Move. Shift to sprint. On touch, use the joystick.</dd><dt>E / Gather</dt><dd>Hold to collect nearby food or water.</dd><dt>F / R</dt><dd>Eat / drink from your pack.</dd><dt>Space / Rest</dt><dd>Rest. Refuges can heal you.</dd><dt>Click a citizen / T</dt><dd>Choose an action. You walk over automatically. Move or Cancel to stop.</dd><dt>P / Escape</dt><dd>Pause. Escape also closes a citizen menu.</dd></dl>
-<details><summary>Relationships &amp; family</summary><p>Vary your conversations. Friendship and attraction are separate. Marriage requires mutual interest. Same-sex spouses share household support; joint biological births currently require a male and female spouse.</p><p>At a refuge, advance days. Children mature at 18 days old. Retire at 40 days old or choose an adult descendant upon death. No adult heir means the playable lineage ends. Daughters can inherit too. Gold halos and gold minimap dots mark known family, including your spouse. Undiscovered relatives are not marked.</p></details>
+<details><summary>Relationships &amp; family</summary><p>Vary your conversations. Friendship and attraction are separate. Marriage requires mutual interest. Same-sex spouses share household support; joint biological births currently require a male and female spouse.</p><p>At a refuge, advance days. Children mature at 18 days old. Retire at 40 days old or choose an adult descendant upon death. No adult heir means the playable lineage ends. Daughters can inherit too. Children look tiny until day 6, teenagers are smaller until day 18, adults reach full size, and elders shrink slightly from day 65. These size stages are visual; movement and interaction reach stay the same. Gold halos and gold minimap dots mark known family, including your spouse. Undiscovered relatives are not marked.</p></details>
 <details><summary>Survival &amp; time</summary><p>Food and water fill your pack; use them to refill your meters. Empty meters cost health. Field rest restores stamina; refuge rest also heals when food and water exceed 30.</p><p>Citizen menus and Family pause the world. Walking and interactions resume it. One day lasts 120 simulated seconds and adds one day of age. Refuge day advances provide subsistence and process aging and deaths.</p></details>
 <details><summary>Notes &amp; saves</summary><p>Details holds your notebook. Unconfirmed claims and rumors can be wrong. Marriage does not reveal hidden ancestry or a daughter's latent geometry.</p><p>Pause to save, load or export a backup. Browser saves stay in this browser and origin. A new life preserves the manual slot. Import validates before replacing active progress.</p></details>
 <details><summary>Testing inspector</summary><p>F8 toggles a paused view of all character information, including private ancestry. Press F8 or Escape to return. This does not teach your character secrets or change saved knowledge. On touch: Pause → Testing → All information.</p></details>
@@ -1301,6 +1301,14 @@ function validateGenome(g) {
 }
 
 // ---- characters.js ----
+// Presentation only. Saved adult geometry and physical clearance never change.
+function lifeStage(age) {
+    if(age<6) return {label:'Child',scale:.45};
+    if(age<18) return {label:'Teenager',scale:.70};
+    if(age<65) return {label:'Adult',scale:1};
+    return {label:'Elder',scale:.85};
+}
+function visualRadius(c) { return c.body.radius*lifeStage(c.actual.life.ageYears).scale; }
 function createCharacter(id, genome, form, x, y, rng, isPlayer = false) {
     const legacyGenome = { sideCount: 3, regularity: .5, sharpness: .6, size: 1, mobility: 1, metabolism: 1, mutationTendency: .035, ...genome };
     const g = normalizeGenome(legacyGenome);
@@ -1360,7 +1368,7 @@ function createCharacter(id, genome, form, x, y, rng, isPlayer = false) {
 // actual identity, private genome, reputation, unverified claims, or lineage.
 function observeCitizen(c) {
     const visible = { form: c.body.visibleType, activity: c.ai?.activity || 'idle',
-        size: c.body.radius > 20 ? 'A large outline' : c.body.radius < 16 ? 'A small outline' : 'A medium-sized outline' };
+        size: visualRadius(c) > 20 ? 'A large outline' : visualRadius(c) < 16 ? 'A small outline' : 'A medium-sized outline' };
     visible.apparentClass = apparentStanding(c).label;
     c.playerKnowledge.observed = { ...visible };
     return visible;
@@ -2314,11 +2322,11 @@ function familyView(family) {
         undiscoveredHeirs:family.canSucceed() ? [...candidates].filter(id=>!knownIds.has(id)).map(id=>({id,label:'Continue as an adult descendant'})) : [],
         spouse:family.world.romance.spouse(family.world.player) ? family.name(family.world.romance.spouse(family.world.player)) : 'None',
         birthReason:family.birthEligibility(), members:known.map(c=>({id:c.id,name:family.name(c),age:Math.floor(c.actual.life.ageYears),sex:c.actual.identity.sex,role:family.world.social.familyBond(c).role,
-            form:c.body.visibleType,alive:c.actual.life.alive,generation:c.actual.lineage.generation,current:c.isPlayer,eligible:candidates.has(c.id),
+            form:c.body.visibleType,stage:lifeStage(c.actual.life.ageYears).label,alive:c.actual.life.alive,generation:c.actual.lineage.generation,current:c.isPlayer,eligible:candidates.has(c.id),
             parents:[c.actual.lineage.motherId,c.actual.lineage.fatherId].filter(id=>knownIds.has(id)).map(id=>family.name(family.character(id))),
             children:c.actual.lineage.childrenIds.filter(id=>knownIds.has(id)).map(id=>family.name(family.character(id))),
             siblings:known.filter(other=>other.id!==c.id && c.actual.lineage.motherId && other.actual.lineage.motherId===c.actual.lineage.motherId && other.actual.lineage.fatherId===c.actual.lineage.fatherId).map(other=>family.name(other)),
-            traits:family.births.some(b=>b.childIds.includes(c.id) && family.world.renewal.knowsBirth(b.id)) ? `Observed in family life: ${c.body.radius>20?'large':'medium'} outline, ${c.actual.genome.mobility>1.03?'brisk':c.actual.genome.mobility<.97?'measured':'steady'} pace, ${c.actual.genome.metabolism>1.03?'hearty':c.actual.genome.metabolism<.97?'light':'moderate'} appetite. ${c.body.form==='line'?'Latent geometry remains undiscovered.':'Visible geometry: '+c.body.visibleType+'.'}` : 'Private hereditary ancestry remains undiscovered.',
+            traits:family.births.some(b=>b.childIds.includes(c.id) && family.world.renewal.knowsBirth(b.id)) ? `Observed in family life: ${visualRadius(c)>20?'large':visualRadius(c)<16?'small':'medium'} outline, ${c.actual.genome.mobility>1.03?'brisk':c.actual.genome.mobility<.97?'measured':'steady'} pace, ${c.actual.genome.metabolism>1.03?'hearty':c.actual.genome.metabolism<.97?'light':'moderate'} appetite. ${c.body.form==='line'?'Latent geometry remains undiscovered.':'Visible geometry: '+c.body.visibleType+'.'}` : 'Private hereditary ancestry remains undiscovered.',
             death:c.actual.life.alive ? '' : `${c.actual.life.deathCause || 'death'} · day ${Math.floor((c.actual.life.deathAt||0)/C.DAY)+1}` })),
         marriages:family.world.romance.marriages.filter(m=>family.world.renewal.knowsMarriage(m.id) && m.ids.every(id=>knownIds.has(id))).map(m=>({names:m.ids.map(id=>family.name(family.character(id))),at:Math.floor(m.at/C.DAY),end:m.endedAt===null?'ongoing':`${m.reason} on day ${Math.floor(m.endedAt/C.DAY)+1}`})),
         events:family.history.filter(e=>e.ids.every(id=>knownIds.has(id)) && (e.kind!=='birth' || family.births.some(b=>b.at===e.at && b.childIds.every(id=>e.ids.includes(id)) && family.world.renewal.knowsBirth(b.id)))).map(e=>({kind:e.kind,names:e.ids.map(id=>family.name(family.character(id))),year:Math.floor(e.at/C.DAY)})) };
@@ -3537,31 +3545,33 @@ class Renderer {
     citizen(ctx, c, alpha, time, isPlayer, isRelative=false) {
         if (!c.actual.life.alive) return;
         const x = lerp(c.px, c.x, alpha), y = lerp(c.py, c.y, alpha), a = moveAngle(c.prevAngle, c.angle, alpha);
+        const scale=lifeStage(c.actual.life.ageYears).scale,radius=c.body.radius*scale;
+        const points=scale===1?c.body.points:c.body.points.map(([x,y])=>[x*scale,y*scale]);
         ctx.save();
         ctx.translate(x, y);
         if(isRelative) {
-            ctx.save();ctx.beginPath();ctx.arc(0,0,c.body.radius+13,0,TAU);
+            ctx.save();ctx.beginPath();ctx.arc(0,0,radius+13,0,TAU);
             ctx.fillStyle='#f1cd8810';ctx.fill();ctx.strokeStyle='#f1cd88';ctx.lineWidth=2;
             ctx.shadowColor='#f1cd88';ctx.shadowBlur=9;ctx.setLineDash([5,4]);ctx.stroke();ctx.restore();
         }
         const ui=this.game.socialUI;
         if(!isPlayer && (ui?.selectedId===c.id || ui?.controller?.pending?.id===c.id)) {
-            ctx.beginPath();ctx.arc(0,0,c.body.radius+8,0,TAU);ctx.strokeStyle='#a6cfaa';ctx.lineWidth=2;ctx.stroke();
+            ctx.beginPath();ctx.arc(0,0,radius+8,0,TAU);ctx.strokeStyle='#a6cfaa';ctx.lineWidth=2;ctx.stroke();
         }
         if (isPlayer) {
             ctx.beginPath();
-            ctx.arc(0, 0, c.body.radius + 8, 0, TAU);
+            ctx.arc(0, 0, radius + 8, 0, TAU);
             ctx.strokeStyle = c.runtime.resting ? '#a6cfaa80' : '#f1a38b35';
             ctx.lineWidth = 1;
             ctx.stroke();
             ctx.font = '9px ui-sans-serif, system-ui';
             ctx.textAlign = 'center';
             ctx.fillStyle = '#eac1ad';
-            ctx.fillText(c.runtime.resting ? 'RESTING' : 'YOU', 0, -c.body.radius - 16);
+            ctx.fillText(c.runtime.resting ? 'RESTING' : 'YOU', 0, -radius - 16);
         }
         ctx.save();
         ctx.rotate(a);
-        polygon(ctx, c.body.points);
+        polygon(ctx, points);
         ctx.fillStyle = isPlayer ? '#c57960' : c.body.form === 'line' ? '#bb929a' : '#293d3c';
         ctx.fill();
         ctx.strokeStyle = c.body.color;
@@ -3569,7 +3579,7 @@ class Renderer {
         ctx.lineJoin = 'round';
         ctx.stroke();
         if (c.body.form === 'polygon' && c.body.points.length >= 4) {
-            polygon(ctx, c.body.points.map(p => [p[0] * .68, p[1] * .68]));
+            polygon(ctx, points.map(p => [p[0] * .68, p[1] * .68]));
             ctx.strokeStyle = c.body.color + '40';
             ctx.lineWidth = .8;
             ctx.stroke();
@@ -3577,14 +3587,14 @@ class Renderer {
         ctx.restore();
         if (!isPlayer && c.playerKnowledge.discoveredFacts.name && dist2(c.x, c.y, this.game.world.player.x, this.game.world.player.y) < 340 ** 2) {
             ctx.textAlign = 'center'; ctx.font = '9px ui-sans-serif, system-ui'; ctx.fillStyle = '#c8d4c3';
-            ctx.fillText(c.playerKnowledge.discoveredFacts.name.value, 0, -c.body.radius - (isRelative?25:10));
+            ctx.fillText(c.playerKnowledge.discoveredFacts.name.value, 0, -radius - (isRelative?25:10));
         }
         if (c.ai?.activity === 'gathering') {
             ctx.fillStyle = '#afcaaf';
             for (let i = 0; i < 3; i++) {
                 ctx.globalAlpha = .4 + .6 * ((Math.sin(time * 5 + i) + 1) / 2);
                 ctx.beginPath();
-                ctx.arc(-5 + i * 5, -c.body.radius - 7, 1.4, 0, TAU);
+                ctx.arc(-5 + i * 5, -radius - 7, 1.4, 0, TAU);
                 ctx.fill();
             }
             ctx.globalAlpha = 1;
@@ -4280,7 +4290,7 @@ class FamilyUI {
         }
         const text=(el,value)=>{if(el.textContent!==value) el.textContent=value;};
         text(row.title,`${m.name}${m.current?' · You':''} · Generation ${m.generation}`);
-        text(row.details,`Age ${m.age} days · ${m.sex} · ${m.form} · ${m.alive ? (m.age<18?'Child':'Adult') : m.death}`);
+        text(row.details,`Age ${m.age} days · ${m.sex} · ${m.form} · ${m.alive ? m.stage : m.death}`);
         const status=m.current?'Current playable character':m.eligible?'Adult heir':!m.alive?'Deceased':m.age<18?`Adult in ${18-m.age} days`:'Family member';
         text(row.eligibility,`${m.role?m.role+' · ':''}${status}`);
         text(row.traits,m.traits);
@@ -4380,6 +4390,7 @@ class InformationInspector {
         const summary=[
             `${a.identity.name} · ${c.id} · ${a.identity.sex} · age ${a.life.ageYears.toFixed(2)} days · ${a.life.alive?'Living':a.life.deathCause || 'Deceased'}`,
             `Visible form: ${c.body.visibleType} · Generation ${a.lineage.generation}`,
+            `Life stage: ${lifeStage(a.life.ageYears).label} · Visual size ${Math.round(lifeStage(a.life.ageYears).scale*100)}% of adult outline · Physical radius unchanged`,
             `Hidden geometry: ${genome.sideCount} sides · ${genome.geometryStage} · regularity ${genome.regularity.toFixed(3)} · sharpness ${genome.sharpness.toFixed(3)}`,
             `Irregular-ancestry carrier: ${genome.latentIrregularAncestry?'Yes':'No'} · Mutation tendency: ${genome.mutationTendency.toFixed(3)}`,
             `Size ${genome.size.toFixed(3)} · Mobility ${genome.mobility.toFixed(3)} · Metabolism ${genome.metabolism.toFixed(3)}`,
@@ -4391,7 +4402,7 @@ class InformationInspector {
             `Trust ${relationship.trust.toFixed(1)} · Familiarity ${relationship.familiarity.toFixed(1)} · Affection ${pair?.affection.toFixed(1) || '0.0'}`
         ];
         $('inspectorSummary').textContent=summary.join('\n');
-        $('inspectorRecord').textContent=JSON.stringify({character:c,romanticPreferences:preferences,parenthoodReadiness:readiness,familyBond,effectiveRelationship:relationship,
+        $('inspectorRecord').textContent=JSON.stringify({character:c,visualStage:lifeStage(a.life.ageYears),romanticPreferences:preferences,parenthoodReadiness:readiness,familyBond,effectiveRelationship:relationship,
             compatibilityWithPlayer:c.id===w.player.id?null:w.romance.compatibility(w.player,c),
             closeKinToPlayer:w.romance.isCloseKin(w.player,c),
             pairs:Object.values(w.romance.pairs).filter(p=>p.ids.includes(c.id)),

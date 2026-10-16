@@ -1,5 +1,16 @@
 # Phase 3.5 renewal handoff
 
+**Growth follow-up, v0.3.5:** the user approved and the implementation now provides
+four visible stages: 0–5 days 45% adult outline, 6–17 70%, 18–64 100%, 65+ 85%.
+Both polygon and line-form children grow; elders shrink subtly. Readable strokes,
+family halos and names track visible size. The model is visual only: saved adult
+geometry, collision/navigation/picking, genetics, privacy, family bonds and RNG
+remain unchanged. Existing saves need no migration. Current validation passes
+82 deterministic cases and ten Chromium scripts, including real Canvas size and
+6/18/65 boundary checks plus native save/reload. Earlier proposal language below
+is historical and superseded. No further approval of these stages is needed.
+
+
 **Family-bond follow-up, v0.3.4:** approved initial bonds and parent/child/sibling
 labels now use known birth events and derived support over saved personal scores.
 Parents/children start at 48 familiarity / 20 trust support, siblings at 36/12;
@@ -71,7 +82,7 @@ birth RNG, cooldown and discoveries. No ancestry deletion or weakened kinship.
 
 ## Validation and limits
 
-The [QA report](QA_REPORT.md) records the deterministic suite, all nine isolated
+The [QA report](QA_REPORT.md) records the deterministic suite, all ten isolated
 Chromium scripts and the 20-seed / 100-year demographic study. Native v5 shutdown and
 Continue, original v1–v4 fields, dead records, notebooks, pending heirs, daughter
 anchors, policy controls, F8 and standalone opening are covered. Population and
@@ -108,7 +119,7 @@ soldiers, civilization, lethal attacks and lasting injuries stay outside 4A.
 > POPULATION_RENEWAL_DESIGN, FAMILY_RULES, QA_REPORT, IMPLEMENTATION_STATUS and
 > PHASE4A_PLAN. Bundle A–E is adopted and renewal is implemented; do not ask to
 > reapprove it. Preserve the tested preparation/archive/renewal milestones and
-> any parallel work. Rerun build/docs/rules and all nine Chromium suites before
+> any parallel work. Rerun build/docs/rules and all ten Chromium suites before
 > changing gameplay. Keep v1–v4 migration, v5 full deceased archives, stable IDs,
 > ancestry privacy, bubbles, succession, F8, playable willingness, original slot
 > keys and standalone HTML. New games enable renewal; legacy saves require explicit

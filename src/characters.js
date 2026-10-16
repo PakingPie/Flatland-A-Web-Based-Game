@@ -1,3 +1,11 @@
+// Presentation only. Saved adult geometry and physical clearance never change.
+function lifeStage(age) {
+    if(age<6) return {label:'Child',scale:.45};
+    if(age<18) return {label:'Teenager',scale:.70};
+    if(age<65) return {label:'Adult',scale:1};
+    return {label:'Elder',scale:.85};
+}
+function visualRadius(c) { return c.body.radius*lifeStage(c.actual.life.ageYears).scale; }
 function createCharacter(id, genome, form, x, y, rng, isPlayer = false) {
     const legacyGenome = { sideCount: 3, regularity: .5, sharpness: .6, size: 1, mobility: 1, metabolism: 1, mutationTendency: .035, ...genome };
     const g = normalizeGenome(legacyGenome);
@@ -57,7 +65,7 @@ function createCharacter(id, genome, form, x, y, rng, isPlayer = false) {
 // actual identity, private genome, reputation, unverified claims, or lineage.
 function observeCitizen(c) {
     const visible = { form: c.body.visibleType, activity: c.ai?.activity || 'idle',
-        size: c.body.radius > 20 ? 'A large outline' : c.body.radius < 16 ? 'A small outline' : 'A medium-sized outline' };
+        size: visualRadius(c) > 20 ? 'A large outline' : visualRadius(c) < 16 ? 'A small outline' : 'A medium-sized outline' };
     visible.apparentClass = apparentStanding(c).label;
     c.playerKnowledge.observed = { ...visible };
     return visible;

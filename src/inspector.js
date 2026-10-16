@@ -57,6 +57,7 @@ class InformationInspector {
         const summary=[
             `${a.identity.name} · ${c.id} · ${a.identity.sex} · age ${a.life.ageYears.toFixed(2)} days · ${a.life.alive?'Living':a.life.deathCause || 'Deceased'}`,
             `Visible form: ${c.body.visibleType} · Generation ${a.lineage.generation}`,
+            `Life stage: ${lifeStage(a.life.ageYears).label} · Visual size ${Math.round(lifeStage(a.life.ageYears).scale*100)}% of adult outline · Physical radius unchanged`,
             `Hidden geometry: ${genome.sideCount} sides · ${genome.geometryStage} · regularity ${genome.regularity.toFixed(3)} · sharpness ${genome.sharpness.toFixed(3)}`,
             `Irregular-ancestry carrier: ${genome.latentIrregularAncestry?'Yes':'No'} · Mutation tendency: ${genome.mutationTendency.toFixed(3)}`,
             `Size ${genome.size.toFixed(3)} · Mobility ${genome.mobility.toFixed(3)} · Metabolism ${genome.metabolism.toFixed(3)}`,
@@ -68,7 +69,7 @@ class InformationInspector {
             `Trust ${relationship.trust.toFixed(1)} · Familiarity ${relationship.familiarity.toFixed(1)} · Affection ${pair?.affection.toFixed(1) || '0.0'}`
         ];
         $('inspectorSummary').textContent=summary.join('\n');
-        $('inspectorRecord').textContent=JSON.stringify({character:c,romanticPreferences:preferences,parenthoodReadiness:readiness,familyBond,effectiveRelationship:relationship,
+        $('inspectorRecord').textContent=JSON.stringify({character:c,visualStage:lifeStage(a.life.ageYears),romanticPreferences:preferences,parenthoodReadiness:readiness,familyBond,effectiveRelationship:relationship,
             compatibilityWithPlayer:c.id===w.player.id?null:w.romance.compatibility(w.player,c),
             closeKinToPlayer:w.romance.isCloseKin(w.player,c),
             pairs:Object.values(w.romance.pairs).filter(p=>p.ids.includes(c.id)),

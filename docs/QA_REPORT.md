@@ -1,4 +1,31 @@
-# QA report — Phase 3.5 renewal (v0.3.4 / save v5)
+# QA report — Phase 3.5 renewal (v0.3.5 / save v5)
+
+## Approved visual growth stages — 2026-10-16
+
+V0.3.5 implements the user-approved child/teen/adult/elder stages: 0–5 days at
+45% adult outline, 6–17 at 70%, 18–64 at 100%, and 65+ at 85%. Stages are derived
+from age without daily resizing, stored flags or migration. Visible polygon/line
+vertices scale; stroke widths stay readable. Family halos/name offsets and public
+size observations follow the visible body; family rows and F8 identify the stage.
+Physical radius/points, navigation, movement, picking, genomes, side counts,
+female privacy, family bonds, mortality, succession and RNG remain unchanged.
+
+Baseline at `89a0246` was clean and passed build/docs and 80 deterministic cases
+before implementation. Current validation passes **82 deterministic cases, all ten
+Chromium scripts, build agreement and documentation checks**. The new
+[growth browser suite](../tools/browser-growth.cjs) measures actual Canvas polygon
+and line outlines at all four ratios, verifies readable 1.6px strokes and exact
+read-only payloads, advances through days 6/18/65 with the real Family day buttons,
+and reloads a native save with identical state and visual stages. Controlled ages
+and positions are synthetic test setup, not human play evidence. Desktop,
+portrait and landscape screenshots were inspected. Raw artifacts remain ignored
+and local; normal player profiles were untouched. Existing frozen saves stay exact.
+
+Growth changes are intentionally visual: small children retain adult movement,
+collision and selection clearance. No combat, law, guards or civilization is added.
+The human balance playtest gate before combat is still uncompleted and unwaived.
+Earlier proposed stages below are historical and superseded by this adoption.
+
 
 ## Known family bonds — 2026-10-16
 
