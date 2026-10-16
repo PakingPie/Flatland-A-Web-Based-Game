@@ -1,6 +1,23 @@
 # Phase 3.5 architecture handoff
 
-## Current checkpoint — 2026-10-15
+## Current checkpoint — 2026-10-16
+
+Gameplay remains at `a54a872` (parenthood willingness), with a clean checkout and
+seven unpushed commits at session start. PR #1's remote head is still `87feb3c`.
+The 2026-10-16 baseline rerun passes build/docs, all 63 deterministic cases and all
+seven Chromium scripts. Design documentation is a separate local milestone.
+
+The user confirmed **resolve renewal and archive design first**. Review the
+[recommended decision bundle A–E](POPULATION_RENEWAL_DESIGN.md#recommended-decision-bundle--2026-10-16-pending-adoption)
+before implementing renewal. It proposes full deceased snapshots in v5, unchanged
+caps, explicit activation for legacy saves, mutual private NPC consent, stable
+lineage-aware anchors and bounded yearly events. Only the sequence is selected;
+the numerical rules, anchor policy and new-game defaults still await adoption.
+The [Phase 4A plan](PHASE4A_PLAN.md) gives completion/deferral gates and proposes
+voluntary nonlethal sparring after renewal, excluding law, guards and civilization.
+No renewal, compaction, save-format change or combat has been implemented.
+
+## Architecture implementation history
 
 Core architecture hardening is implemented on `codex/phase-2b-3-generations`,
 continuing PR #1 from clean checkpoint `87feb3c`. Tested commits:
@@ -75,9 +92,11 @@ adopt the separate autonomous NPC-family proposal. See [current rules](FAMILY_RU
 
 1. Adopt population rules before implementing NPC households. Generalize parent
    commands and consent without borrowing the current observer's relationships.
-2. Design and verify a recoverable archive schema before increasing population
-   churn. No death-history/notebook deletion or compaction has been shipped.
-   Existing limits remain 256 total records and a 2 MB envelope.
+2. Adopt and verify the proposed lossless archive contract before increasing
+   population churn. Full deceased snapshots stay in each export; compaction and
+   larger budgets are recommended explicit deferrals. Existing limits remain 256
+   total records and a nominal 2 MB envelope; the current parser checks string
+   units, so v5 byte accounting needs an explicit compatibility-preserving change.
 3. Complete an unassisted human survival/courtship/travel playthrough. Controlled
    browser integration is not evidence of natural partner discovery/balance.
 4. Expand to Firefox/Safari, physical mobile rotation, assistive technology,
@@ -95,13 +114,16 @@ optional debug API. Use it for inspection, not as evidence of natural discovery.
 ## Ready-to-copy next-session prompt
 
 > Continue The Flatland Phase 3.5 on `codex/phase-2b-3-generations`, PR #1. Inspect
-> Git status and recent commits first and preserve existing work. Read the root README and the Phase 3.5 handoff, ROADMAP, FAMILY_RULES,
-> QA_REPORT, IMPLEMENTATION_STATUS and POPULATION_RENEWAL_DESIGN under docs. Core registry,
-> save-codec/migration, observer/family/household boundaries and keyed family rows
-> are implemented. Start by rerunning the deterministic build/docs/rule checks and
-> the seven browser scripts. Preserve action bubbles, stable IDs, hidden ancestry,
-> original slots, v1–v4 compatibility and standalone HTML. The user chose to design
-> autonomous NPC families first; discuss unresolved rules in the proposal before
-> implementing them. Do not assume population tuning or archive deletion is
-> approved. Keep combat, law and civilization out. Commit tested milestones and
-> document evidence and remaining gaps.
+> Git status and recent commits first and preserve existing work. Read README and
+> docs/PHASE35_HANDOFF, ROADMAP, FAMILY_RULES, QA_REPORT, IMPLEMENTATION_STATUS,
+> POPULATION_RENEWAL_DESIGN and PHASE4A_PLAN. Gameplay checkpoint `a54a872` passed
+> 63 deterministic cases and all seven Chromium scripts on 2026-10-16. Later design
+> documents are not implemented rules. The user selected renewal/archive design
+> first: check for adoption/amendments to bundle A–E in conversation before
+> implementing its staged milestones. Rerun build/docs/rules/browser baseline.
+> Preserve saves, stable IDs, hidden ancestry, bubbles, succession, F8, current
+> relationship-dependent parenthood, original slots and standalone HTML. No
+> archive deletion, kinship relaxation or unlimited-population promise. Finish
+> renewal and record all Phase 4A entry gates before combat; 4A is proposed as
+> nonlethal sparring only. Keep law, guards and civilization outside that milestone.
+> Commit tested milestones, retain raw evidence locally, and document limits.

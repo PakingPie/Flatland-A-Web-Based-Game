@@ -6,6 +6,9 @@ living actors from deceased records; save validation/migration runs independentl
 of browser storage; family views, observer notebooks and household support have
 explicit boundaries. Population rules remain unchanged. The selected next design
 direction is [autonomous NPC families](docs/POPULATION_RENEWAL_DESIGN.md).
+The next sequence is to resolve renewal and archive design first, then implement
+and validate renewal before the proposed [Phase 4A sparring milestone](docs/PHASE4A_PLAN.md).
+The detailed rule bundle and combat scope remain proposals; gameplay is unchanged.
 
 A lightweight offline Canvas survival and society simulation inspired by Edwin
 Abbott's *Flatland*. Survive as an irregular triangle, meet citizens, court a

@@ -5,6 +5,35 @@ Executed 2026-10-15 on Windows with Node 24.12.0, Python 3.14.2 and real Chromiu
 [historical Phase 1.1/2A report](QA_PHASE2A_HISTORICAL.md) remains separately
 preserved; its old counts are **not** added to current results.
 
+## Baseline refreshed before Phase 4 planning — 2026-10-16
+
+Reran the unchanged gameplay checkpoint `a54a872` before implementation. Build
+agreement, documentation references and **63/63** deterministic cases pass. All
+seven existing Chromium scripts pass again: native smoke, generations (8 groups),
+bubbles (5), preservation (9), architecture (7), inspector (6) and parenthood (4).
+Six suite result JSON files report no page exceptions; native smoke also asserts
+no page errors. Node 24.12.0, Python 3.14.2 and Chromium 149.0.7827.55 were used.
+
+The first sandboxed browser launch failed with Windows access denial
+(`3221225506`); the same isolated smoke test and remaining suites passed outside
+the sandbox. Existing scripts use test-owned profiles/contexts and ephemeral
+localhost servers; no normal player slots or profiles were used. Evidence remains
+under ignored output. Mobile family and desktop inspector captures were inspected.
+This refresh does not add natural human play, other browsers or physical-device
+coverage, and validates no proposed population or combat mechanics.
+
+A static size audit of the frozen released-v4 fixture finds 67 total records,
+63 living and four deceased. The compact envelope is 157,048 UTF-8 bytes / 157,031
+string units and 8,430 JSON tree nodes; full deceased records occupy 8,776 bytes
+as an array and archived notebooks 849 bytes. These measurements describe one
+small fixture, not capacity/performance headroom for arbitrary dynasties. Current
+`maxBytes` parsing is a string-length check; proposed v5 byte accounting and
+large-notebook preflight remain implementation work.
+
+The design-only [renewal bundle](POPULATION_RENEWAL_DESIGN.md) and
+[Phase 4A plan](PHASE4A_PLAN.md) distinguish recommendations from adopted rules.
+No implementation or save-format change accompanies this planning checkpoint.
+
 ## Current executed results
 
 | Suite | Result | Scope |

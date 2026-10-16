@@ -17,8 +17,9 @@
 | **2A — Living Society** | **Implemented in [the-flatland.html](../the-flatland.html), v0.2.0; [QA evidence and limits](QA_REPORT.md)** | Citizen identities, conversation, trust, rumors and partial knowledge | Introduce yourself, discover limited information, and retain relationship progress |
 | 2B — Courtship & Marriage | **Implemented, v0.3.1** | Preferences, attraction, courtship, consent, same-sex marriage and household support | Marriage persists through save/load |
 | 3 — Family, Inheritance & Evolution | **Implemented, v0.3.1** | Multiple offspring, strict genetics, aging, genealogy and playable succession | Verified daughter control in Generation 2 and Generation 3 births |
-| 3.5 — Architecture hardening | **Core boundaries implemented; renewal design pending** | Stable registry, storage-independent migrations, family/observer/household seams, incremental rows | Current gameplay and v1–v4 fixtures pass; discuss [NPC families](POPULATION_RENEWAL_DESIGN.md) before rules change; see [handoff](PHASE35_HANDOFF.md) |
-| 4 — Combat & Law | Planned | Shape-specific attacks, danger, guards, injuries, crimes | Combat and legal reactions follow geometry and social context |
+| 3.5 — Architecture hardening | **Core boundaries implemented; renewal/archive design first** | Stable registry, migrations, family/observer/household seams, incremental rows; bounded NPC renewal next | Adopt [renewal decisions](POPULATION_RENEWAL_DESIGN.md), verify lossless archive and population evidence before combat; see [handoff](PHASE35_HANDOFF.md) |
+| 4A — Combat foundations | **Proposed after 3.5; no combat implemented** | One voluntary nonlethal melee encounter, visible geometry, defense, retreat | [Bounded plan and entry gates](PHASE4A_PLAN.md); persistence, survival and generations preserved |
+| 4 later — Combat & Law | Planned separately | Lethal danger, lasting injuries, witnesses, guards, crimes | Combat and legal reactions follow geometry and social context |
 | 5 — Civilization | Planned | Trade, property, class mobility, politics, institutions and reform | Multiple viable long-term paths beyond becoming a circle |
 
 **Milestone strategy:** Courtship/marriage was tested and committed before genetics; births/genetics and then aging/succession received separate commits. Native Chromium persistence passed before family implementation and after generational transitions. Finish architecture hardening and sustainable population design before combat.
@@ -122,6 +123,16 @@ Square → Pentagon → Hexagon → ... → higher regular polygon
 **Accept when:** Two suitable parents can produce multiple individually simulated children, rules are enforced in deterministic tests, and the player successfully continues as a chosen successor with persistent genealogy.
 
 ## Phase 4 — Combat & Law
+
+**2026-10-16 sequencing proposal:** the user selected resolving population and
+archive design first. Complete/adopt the Phase 3.5 work or record any explicit
+deferral against the [entry checklist](PHASE4A_PLAN.md) before combat begins.
+The proposed first milestone is **4A: voluntary nonlethal sparring**, with one
+opponent, geometry-based strikes, defense and retreat. It excludes law, guards,
+soldiers, civilization, lethal assaults and persistent injuries. Its completion
+does not satisfy the full phase's legal-aftermath criterion below.
+
+The following remains the broader **later-phase** scope:
 
 - Shape-driven attacks/defense: narrow triangle tips have piercing reach but other costs; blunt/regular bodies play differently.
 - Soldiers, threats, retreat, injuries, recovery and optional permadeath risk.

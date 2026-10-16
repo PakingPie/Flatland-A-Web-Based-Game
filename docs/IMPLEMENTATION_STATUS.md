@@ -1,5 +1,25 @@
 # Implementation checkpoints — Phase 2B / 3 / 3.5
 
+## Renewal/archive decisions and Phase 4A proposal — 2026-10-16
+
+Started clean at `a54a872` on `codex/phase-2b-3-generations`, seven local commits
+ahead of PR #1's `87feb3c`. Baseline build/docs, all 63 deterministic tests and all
+seven existing Chromium suites pass again before any implementation change.
+
+The user selected resolving renewal and archive design first. The
+[population proposal](POPULATION_RENEWAL_DESIGN.md) now supplies a concrete
+recommended bundle for activation, pacing/consent, lineage-aware household anchors,
+lossless archives and deterministic scheduling/discovery. Rules remain pending
+adoption. Complete dead records and existing budgets are retained; compaction,
+immigration and unlimited renewal are explicitly proposed deferrals.
+
+The [bounded Phase 4A plan](PHASE4A_PLAN.md) specifies the preceding completion and
+deferral gates, proposes voluntary nonlethal melee sparring, and splits its future
+implementation into three tested commits. Law, guards and civilization stay out.
+No gameplay code, fixtures, save fields, generated HTML or population policy was
+changed. The checkpoint is documentation and baseline evidence, not Phase 3.5
+renewal completion or combat implementation. No new commits have been pushed.
+
 ## Parenthood willingness follow-up
 
 The user selected allowing hesitant spouses to reconsider. Baseline family-life
