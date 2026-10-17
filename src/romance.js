@@ -58,13 +58,20 @@ class RomanceSystem {
         if (!w.social.nearby(b)) return result('Come closer to speak.', 'out-of-range');
         if (a.actual.life.ageYears < 18 || b.actual.life.ageYears < 18 || this.isCloseKin(a, b)) return result('Courtship requires unrelated adults.');
         const r = b.playerKnowledge.relationship, pair = this.pair(a, b), time = w.elapsed, day = Math.floor(time / C.DAY);
+        const finish = (text, outcome = 'refused') => { pair.lastOutcome = text; return result(text, outcome); };
+        // Ending an existing marriage is not courtship and needs no conversation budget.
+        if (topic === 'separate') {
+            const m = this.marriages.find(m => m.endedAt === null && m.ids.includes(a.id) && m.ids.includes(b.id));
+            if (!m) return finish('You are not married to one another.');
+            this.endMarriage(m, 'separation');
+            return finish('The marriage ends. Your family history and children remain part of both lives.', 'positive');
+        }
         if (time - Math.max(r.lastAt, pair.lastAt) < SOCIAL.cooldown) return result('Give them time to respond. Repeated clicks do not build affection.', 'cooldown');
         if (!b.playerKnowledge.discoveredFacts.name) return result('Introduce yourself first.');
         if (r.day !== day) { r.day = day; r.today = 0; r.topics = {}; }
         if (pair.day !== day) { pair.day = day; pair.today = 0; pair.topics = {}; }
         if (r.today >= SOCIAL.dailyLimit || pair.today >= 3) return result('Let us leave room for tomorrow.', 'daily-limit');
         r.lastAt = pair.lastAt = time; r.today++; pair.today++;
-        const finish = (text, outcome = 'refused') => { pair.lastOutcome = text; return result(text, outcome); };
         if(topic==='children') {
             // An informational check uses the shared budget but creates no new
             // saved topic counter and gives no affection/trust/willingness gains.
@@ -83,12 +90,6 @@ class RomanceSystem {
         if (topic === 'preferences') {
             if (!pair.knownBy.includes(a.id)) pair.knownBy.push(a.id);
             return finish(this.preferenceText(b), 'positive');
-        }
-        if (topic === 'separate') {
-            const m = this.marriages.find(m => m.endedAt === null && m.ids.includes(a.id) && m.ids.includes(b.id));
-            if (!m) return finish('You are not married to one another.');
-            this.endMarriage(m, 'separation'); pair.status = 'separated';
-            return finish('The marriage ends. Your family history and children remain part of both lives.', 'positive');
         }
         if (b.vitals.hunger < 20 || b.vitals.thirst < 20) return finish('I need supplies before I can think about this.');
         if (this.spouse(a)?.id !== b.id && (this.spouse(a) || this.spouse(b))) return finish('An existing marriage must be resolved first.');

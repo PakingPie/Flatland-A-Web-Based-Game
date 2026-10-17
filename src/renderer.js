@@ -159,11 +159,11 @@ class Renderer {
         for (const r of world.resources)
             if (visible(r.x, r.y, 30))
                 this.resource(ctx, r, world.elapsed, r === nearest);
-        const relatives=this.familyHighlights();
+        const relatives=this.familyHighlights(),courting=this.courtshipHighlights();
         this.game.spar?.draw(ctx);
         for (const c of world.npcs)
             if (visible(c.x, c.y, 40))
-                this.citizen(ctx, c, alpha, world.elapsed, false,relatives.has(c.id));
+                this.citizen(ctx, c, alpha, world.elapsed, false,relatives.has(c.id),courting.has(c.id));
         this.citizen(ctx, p, alpha, world.elapsed, true);
         // Day/night is atmospheric only in this phase; it never conceals vital UI.
         const phase = (world.elapsed % C.DAY) / C.DAY, night = Math.max(0, Math.sin((phase - .50) * TAU)) * .13;
@@ -283,7 +283,17 @@ class Renderer {
         const w=this.game.world;
         return new Set(w.family.knownFamily().filter(c=>c.actual.life.alive && c.id!==w.player.id).map(c=>c.id));
     }
-    citizen(ctx, c, alpha, time, isPlayer, isRelative=false) {
+    courtshipHighlights() {
+        const w=this.game.world,r=w.romance,ids=new Set();
+        if(r.spouse(w.player)) return ids;
+        for(const pair of Object.values(r.pairs)) {
+            if(pair.status!=='courting' || !pair.ids.includes(w.player.id)) continue;
+            const c=w.registry.get(pair.ids.find(id=>id!==w.player.id));
+            if(c?.actual.life.alive && c.playerKnowledge.discoveredFacts.name && !r.spouse(c)) ids.add(c.id);
+        }
+        return ids;
+    }
+    citizen(ctx, c, alpha, time, isPlayer, isRelative=false, isCourting=false) {
         if (!c.actual.life.alive) return;
         const x = lerp(c.px, c.x, alpha), y = lerp(c.py, c.y, alpha), a = moveAngle(c.prevAngle, c.angle, alpha);
         const scale=lifeStage(c.actual.life.ageYears).scale,radius=c.body.radius*scale;
@@ -294,6 +304,11 @@ class Renderer {
             ctx.save();ctx.beginPath();ctx.arc(0,0,radius+13,0,TAU);
             ctx.fillStyle='#f1cd8810';ctx.fill();ctx.strokeStyle='#f1cd88';ctx.lineWidth=2;
             ctx.shadowColor='#f1cd88';ctx.shadowBlur=9;ctx.setLineDash([5,4]);ctx.stroke();ctx.restore();
+        }
+        if(isCourting) {
+            ctx.save();ctx.beginPath();ctx.arc(0,0,radius+13,0,TAU);
+            ctx.fillStyle='#e7a5c418';ctx.fill();ctx.strokeStyle='#e7a5c4';ctx.lineWidth=2;
+            ctx.shadowColor='#e7a5c4';ctx.shadowBlur=8;ctx.stroke();ctx.restore();
         }
         const ui=this.game.socialUI;
         if(!isPlayer && (ui?.selectedId===c.id || ui?.controller?.pending?.id===c.id)) {
@@ -326,9 +341,9 @@ class Renderer {
             ctx.stroke();
         }
         ctx.restore();
-        if (!isPlayer && c.playerKnowledge.discoveredFacts.name && dist2(c.x, c.y, this.game.world.player.x, this.game.world.player.y) < 340 ** 2) {
-            ctx.textAlign = 'center'; ctx.font = '9px ui-sans-serif, system-ui'; ctx.fillStyle = '#c8d4c3';
-            ctx.fillText(c.playerKnowledge.discoveredFacts.name.value, 0, -radius - (isRelative?25:10));
+        if (!isPlayer && c.playerKnowledge.discoveredFacts.name && (isCourting || dist2(c.x, c.y, this.game.world.player.x, this.game.world.player.y) < 340 ** 2)) {
+            ctx.textAlign = 'center'; ctx.font = '9px ui-sans-serif, system-ui'; ctx.fillStyle = isCourting?'#e7a5c4':'#c8d4c3';
+            ctx.fillText(`${isCourting?'♥ ':''}${c.playerKnowledge.discoveredFacts.name.value}`, 0, -radius - (isRelative || isCourting?25:10));
         }
         if (c.ai?.activity === 'gathering') {
             ctx.fillStyle = '#afcaaf';
@@ -390,6 +405,14 @@ class Renderer {
             ctx.beginPath();
             ctx.arc(c.x, c.y, relative?19:9, 0, TAU);
             ctx.fill();
+        }
+        // Keep courtship markers readable in CSS pixels on compact maps.
+        const markerScale=C.W/(c.clientWidth || 168),courting=this.courtshipHighlights();
+        for(const id of courting) {
+            const target=world.registry.get(id);
+            ctx.beginPath();ctx.arc(target.x,target.y,4*markerScale,0,TAU);
+            ctx.fillStyle='#122328';ctx.fill();ctx.strokeStyle='#e7a5c4';ctx.lineWidth=1.5*markerScale;ctx.stroke();
+            ctx.beginPath();ctx.arc(target.x,target.y,2*markerScale,0,TAU);ctx.fillStyle='#e7a5c4';ctx.fill();
         }
         const p = world.player;
         ctx.save();

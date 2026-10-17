@@ -273,8 +273,9 @@ button:hover:not(:disabled) {
 .map-foot {
   font-size:9px;
   color:var(--muted);
-  display:flex;
-  justify-content:space-between;
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:4px 6px;
   margin-top:7px
 }
 .map-foot span:first-child {
@@ -781,7 +782,7 @@ button:hover:not(:disabled) {
     font-size:8px
   }
   .map-foot span:last-child {
-    display:none
+    display:inline
   }
   #location {
     top:342px;
@@ -909,6 +910,11 @@ button:hover:not(:disabled) {
 }
 @media(max-height:500px) {
   .map-panel {
+    display:block;
+    top:68px;
+    bottom:auto
+  }
+  .map-foot {
     display:none
   }
   .identity {
@@ -954,6 +960,17 @@ button:hover:not(:disabled) {
   .control-tip {
     display:none
   }
+}
+@media(max-height:360px) {
+  .map-panel { top:58px; right:14px; width:100px; padding:6px; }
+  #minimap { width:86px; height:57px; }
+  .map-head { font-size:7px; margin-bottom:4px; }
+  .map-foot { display:none; }
+}
+@media(max-height:360px) and (min-width:500px) {
+  .touch .map-panel { left:172px; right:auto; width:96px; }
+  .touch #minimap { width:82px; height:55px; }
+  .touch .bottom-center { max-width:282px; }
 }
 @media(prefers-reduced-motion:reduce) {
   .fill,#notice {

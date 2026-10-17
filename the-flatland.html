@@ -281,8 +281,9 @@ button:hover:not(:disabled) {
 .map-foot {
   font-size:9px;
   color:var(--muted);
-  display:flex;
-  justify-content:space-between;
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:4px 6px;
   margin-top:7px
 }
 .map-foot span:first-child {
@@ -789,7 +790,7 @@ button:hover:not(:disabled) {
     font-size:8px
   }
   .map-foot span:last-child {
-    display:none
+    display:inline
   }
   #location {
     top:342px;
@@ -917,6 +918,11 @@ button:hover:not(:disabled) {
 }
 @media(max-height:500px) {
   .map-panel {
+    display:block;
+    top:68px;
+    bottom:auto
+  }
+  .map-foot {
     display:none
   }
   .identity {
@@ -962,6 +968,17 @@ button:hover:not(:disabled) {
   .control-tip {
     display:none
   }
+}
+@media(max-height:360px) {
+  .map-panel { top:58px; right:14px; width:100px; padding:6px; }
+  #minimap { width:86px; height:57px; }
+  .map-head { font-size:7px; margin-bottom:4px; }
+  .map-foot { display:none; }
+}
+@media(max-height:360px) and (min-width:500px) {
+  .touch .map-panel { left:172px; right:auto; width:96px; }
+  .touch #minimap { width:82px; height:55px; }
+  .touch .bottom-center { max-width:282px; }
 }
 @media(prefers-reduced-motion:reduce) {
   .fill,#notice {
@@ -1107,7 +1124,7 @@ button {
     <button class="action" id="talkBtn" title="T: speak to a nearby citizen"><kbd>T</kbd><span>Talk</span></button>
     <button class="action" id="sprintBtn" title="Hold Shift, or hold this button, while moving"><kbd>Shift</kbd><span>Sprint</span></button>
   </div><div class="control-tip">WASD / arrows to move · T to talk · Hover / click to inspect · P to pause & save</div></section>
-  <section class="panel map-panel" aria-label="World map"><div class="map-head"><span>FIELD MAP</span><span>N ↑</span></div><canvas id="minimap" width="336" height="224" aria-label="Map with your location, known family and refuge markers"></canvas><div class="map-foot"><span>▲ You</span><span style="color:#f1cd88">● Family</span><span>◇ Refuge</span></div></section>
+  <section class="panel map-panel" aria-label="World map"><div class="map-head"><span>FIELD MAP</span><span>N ↑</span></div><canvas id="minimap" width="336" height="224" aria-label="Map with your location, active courtships, known family and refuge markers"></canvas><div class="map-foot"><span>▲ You</span><span style="color:#e7a5c4">♥ Courting</span><span style="color:#f1cd88">● Family</span><span>◇ Refuge</span></div></section>
   <div id="joystick" role="group" aria-label="Touch movement joystick"><div id="stick"></div></div>
   <aside class="panel" id="tooltip" hidden></aside>
 
@@ -1127,7 +1144,7 @@ button {
 <section class="overlay" id="pauseScreen" aria-label="Paused" hidden><div class="modal"><div class="eyebrow">The world can wait</div><h2>Expedition paused</h2><p id="pauseReason">Take a breath. Nothing advances while paused.</p><button class="primary" id="resumeBtn">Resume expedition</button><button class="small-btn" data-end-spar hidden>End spar</button><div class="secondary-row"><button class="small-btn" id="pauseFamilyBtn">Family &amp; succession</button><button class="small-btn" id="pauseHelpBtn">Controls & field guide</button><button class="small-btn" id="restartBtn">Restart same seed</button><button class="small-btn" id="newSeedBtn">New world seed</button></div><div class="secondary-row"><button class="small-btn" id="saveBtn">Save manually</button><button class="small-btn" id="loadBtn">Load manual save</button><button class="small-btn" id="exportSaveBtn">Export save file</button><button class="small-btn" id="importSaveBtn">Import save file</button></div><p class="save-status" data-save-status role="status"></p><p class="fine">Saves stay in this browser. Export a backup for safekeeping.</p><details><summary>Population &amp; families</summary><p id="renewalStatus"></p><p class="fine">Citizens may choose partners and children independently, including someone you are courting. The population remains finite. Turning this off keeps existing families and history. Export a backup using the button above before enabling it in an older expedition.</p><button class="small-btn" id="renewalToggleBtn">Enable NPC families</button></details><details><summary>Testing</summary><button class="small-btn" id="openInspectorBtn">All information · F8</button></details></div></section>
 <section class="overlay" id="helpScreen" aria-label="Controls and field guide" hidden><div class="modal"><div class="eyebrow">Field guide</div><h2>Your next move</h2>
 <dl class="instructions"><dt>WASD / arrows</dt><dd>Move. Shift to sprint. On touch, use the joystick.</dd><dt>E / Gather</dt><dd>Hold to collect nearby food or water.</dd><dt>F / R</dt><dd>Eat / drink from your pack.</dd><dt>Space / Rest</dt><dd>Rest. Refuges can heal you.</dd><dt>Click a citizen / T</dt><dd>Choose an action. You walk over automatically. Move or Cancel to stop.</dd><dt>P / Escape</dt><dd>Pause. Escape also closes a citizen menu.</dd></dl>
-<details><summary>Relationships &amp; family</summary><p>Vary your conversations. Friendship and attraction are separate. Marriage requires mutual interest. Same-sex spouses share household support; joint biological births currently require a male and female spouse.</p><p>At a refuge, advance days. Children mature at 18 days old. Retire at 40 days old or choose an adult descendant upon death. No adult heir means the playable lineage ends. Daughters can inherit too. Children look tiny until day 6, teenagers are smaller until day 18, adults reach full size, and elders shrink slightly from day 65. These size stages are visual; movement and interaction reach stay the same. Gold halos and gold minimap dots mark known family, including your spouse. Undiscovered relatives are not marked.</p></details>
+<details><summary>Relationships &amp; family</summary><p>Vary your conversations. Friendship and attraction are separate. Marriage requires mutual interest. After introductions, use Talk → Personal → Ask age before proposing; Details keeps their answer and the day you asked. Biological parents must both be aged 18–60 days. Same-sex spouses share household support; joint biological births currently require a male and female spouse.</p><p>At a refuge, advance days. Children mature at 18 days old. Retire at 40 days old or choose an adult descendant upon death. No adult heir means the playable lineage ends. Daughters can inherit too. Children look tiny until day 6, teenagers are smaller until day 18, adults reach full size, and elders shrink slightly from day 65. These size stages are visual; movement and interaction reach stay the same. Pink rings, heart-marked names and pink minimap markers identify active courtships. Gold halos and gold minimap dots mark known family, including your spouse. Undiscovered relatives are not marked.</p></details>
 <details><summary>Survival &amp; time</summary><p>Food and water fill your pack; use them to refill your meters. Empty meters cost health. Field rest restores stamina; refuge rest also heals when food and water exceed 30.</p><p>Citizen menus and Family pause the world. Walking and interactions resume it. One day lasts 120 simulated seconds and adds one day of age. Refuge day advances provide subsistence and process aging and deaths.</p></details>
 <details><summary>Notes &amp; saves</summary><p>Details holds your notebook. Unconfirmed claims and rumors can be wrong. Marriage does not reveal hidden ancestry or a daughter's latent geometry.</p><p>Pause to save, load or export a backup. Browser saves stay in this browser and origin. A new life preserves the manual slot. Import validates before replacing active progress.</p></details>
 <details><summary>Testing inspector</summary><p>F8 toggles a paused view of all character information, including private ancestry. Press F8 or Escape to return. This does not teach your character secrets or change saved knowledge. On touch: Pause → Testing → All information.</p></details>
@@ -1903,9 +1920,9 @@ class World {
 // a multiplier for intelligence, virtue, metabolism, mobility or hereditary fitness.
 const SOCIAL = Object.freeze({ reach: 108, cooldown: 3, dailyLimit: 6, historyLimit: 24,
     stages: ['Stranger', 'Acquaintance', 'Familiar', 'Trusted', 'Deeply trusted'],
-    topics: { introduce: 'Introduce yourself', chat: 'Casual conversation', occupation: 'Ask about work',
+    topics: { introduce: 'Introduce yourself', chat: 'Casual conversation', age: 'Ask about age', occupation: 'Ask about work',
         district: 'Discuss local society', interests: 'Ask about interests', family: 'Ask about family', rumor: 'Exchange a rumor' },
-    factLabels: { name: 'Name', occupation: 'Occupation', reputation: 'Public reputation', interests: 'Interests',
+    factLabels: { name: 'Name', age: 'Age when asked', occupation: 'Occupation', reputation: 'Public reputation', interests: 'Interests',
         dislikes: 'Dislikes', personality: 'Your impression', family: 'Family background', ambition: 'Ambition',
         concern: 'Private concern', privateHistory: 'Sensitive history', publicRelationships: 'Public relationships' } });
 function apparentStanding(c) {
@@ -2070,6 +2087,11 @@ class SocialSystem {
                 const lines = p.personality.warmth > .6 ? ['“It is good to have company on an ordinary day.”', '“A kind conversation is worth more than a perfect outline.”'] : p.personality.reserve > .6 ? ['“The days pass. The roads still need walking.”', '“I prefer small conversations to grand declarations.”'] : ['“There is more to a district than its official map.”', '“People hurry so much they forget to notice one another.”'];
                 return this.response(c, topic, this.rng.pick(lines) + (stage >= 2 ? ' They seem more at ease with a familiar face.' : ''), 6 * factor, 4 * trustGain, .3, 'positive');
             }
+            case 'age': {
+                const age = Math.floor(c.actual.life.ageYears);
+                this.learn(c, 'age', `${age} days old on day ${day + 1}`);
+                return this.response(c, topic, `“I’m ${age} days old.”`, 2 * factor, trustGain, 0, 'positive');
+            }
             case 'occupation':
                 this.learn(c, 'occupation', c.publicIdentity.claimedOccupation);
                 return this.response(c, topic, `“I work as ${/^[aeiou]/i.test(c.publicIdentity.claimedOccupation) ? 'an' : 'a'} ${c.publicIdentity.claimedOccupation.toLowerCase()}.” This is their account, not independent verification.`, 4 * factor, 2 * trustGain, 0, 'positive');
@@ -2212,13 +2234,20 @@ class RomanceSystem {
         if (!w.social.nearby(b)) return result('Come closer to speak.', 'out-of-range');
         if (a.actual.life.ageYears < 18 || b.actual.life.ageYears < 18 || this.isCloseKin(a, b)) return result('Courtship requires unrelated adults.');
         const r = b.playerKnowledge.relationship, pair = this.pair(a, b), time = w.elapsed, day = Math.floor(time / C.DAY);
+        const finish = (text, outcome = 'refused') => { pair.lastOutcome = text; return result(text, outcome); };
+        // Ending an existing marriage is not courtship and needs no conversation budget.
+        if (topic === 'separate') {
+            const m = this.marriages.find(m => m.endedAt === null && m.ids.includes(a.id) && m.ids.includes(b.id));
+            if (!m) return finish('You are not married to one another.');
+            this.endMarriage(m, 'separation');
+            return finish('The marriage ends. Your family history and children remain part of both lives.', 'positive');
+        }
         if (time - Math.max(r.lastAt, pair.lastAt) < SOCIAL.cooldown) return result('Give them time to respond. Repeated clicks do not build affection.', 'cooldown');
         if (!b.playerKnowledge.discoveredFacts.name) return result('Introduce yourself first.');
         if (r.day !== day) { r.day = day; r.today = 0; r.topics = {}; }
         if (pair.day !== day) { pair.day = day; pair.today = 0; pair.topics = {}; }
         if (r.today >= SOCIAL.dailyLimit || pair.today >= 3) return result('Let us leave room for tomorrow.', 'daily-limit');
         r.lastAt = pair.lastAt = time; r.today++; pair.today++;
-        const finish = (text, outcome = 'refused') => { pair.lastOutcome = text; return result(text, outcome); };
         if(topic==='children') {
             // An informational check uses the shared budget but creates no new
             // saved topic counter and gives no affection/trust/willingness gains.
@@ -2237,12 +2266,6 @@ class RomanceSystem {
         if (topic === 'preferences') {
             if (!pair.knownBy.includes(a.id)) pair.knownBy.push(a.id);
             return finish(this.preferenceText(b), 'positive');
-        }
-        if (topic === 'separate') {
-            const m = this.marriages.find(m => m.endedAt === null && m.ids.includes(a.id) && m.ids.includes(b.id));
-            if (!m) return finish('You are not married to one another.');
-            this.endMarriage(m, 'separation'); pair.status = 'separated';
-            return finish('The marriage ends. Your family history and children remain part of both lives.', 'positive');
         }
         if (b.vitals.hunger < 20 || b.vitals.thirst < 20) return finish('I need supplies before I can think about this.');
         if (this.spouse(a)?.id !== b.id && (this.spouse(a) || this.spouse(b))) return finish('An existing marriage must be resolved first.');
@@ -2772,7 +2795,7 @@ class CitizenApproach {
         if(w.social.nearby(c)) {
             w.conversationId=c.id;
             const last=Math.max(c.playerKnowledge.relationship.lastAt,w.romance.pair(p,c).lastAt);
-            if(w.elapsed-last<SOCIAL.cooldown) return still;
+            if(!(q.action.kind==='romance' && q.action.topic==='separate') && w.elapsed-last<SOCIAL.cooldown) return still;
             const action=q.action; this.cancel(); this.arrive(c.id,action); return still;
         }
         w.conversationId=null; q.replan-=dt;
@@ -3576,11 +3599,11 @@ class Renderer {
         for (const r of world.resources)
             if (visible(r.x, r.y, 30))
                 this.resource(ctx, r, world.elapsed, r === nearest);
-        const relatives=this.familyHighlights();
+        const relatives=this.familyHighlights(),courting=this.courtshipHighlights();
         this.game.spar?.draw(ctx);
         for (const c of world.npcs)
             if (visible(c.x, c.y, 40))
-                this.citizen(ctx, c, alpha, world.elapsed, false,relatives.has(c.id));
+                this.citizen(ctx, c, alpha, world.elapsed, false,relatives.has(c.id),courting.has(c.id));
         this.citizen(ctx, p, alpha, world.elapsed, true);
         // Day/night is atmospheric only in this phase; it never conceals vital UI.
         const phase = (world.elapsed % C.DAY) / C.DAY, night = Math.max(0, Math.sin((phase - .50) * TAU)) * .13;
@@ -3700,7 +3723,17 @@ class Renderer {
         const w=this.game.world;
         return new Set(w.family.knownFamily().filter(c=>c.actual.life.alive && c.id!==w.player.id).map(c=>c.id));
     }
-    citizen(ctx, c, alpha, time, isPlayer, isRelative=false) {
+    courtshipHighlights() {
+        const w=this.game.world,r=w.romance,ids=new Set();
+        if(r.spouse(w.player)) return ids;
+        for(const pair of Object.values(r.pairs)) {
+            if(pair.status!=='courting' || !pair.ids.includes(w.player.id)) continue;
+            const c=w.registry.get(pair.ids.find(id=>id!==w.player.id));
+            if(c?.actual.life.alive && c.playerKnowledge.discoveredFacts.name && !r.spouse(c)) ids.add(c.id);
+        }
+        return ids;
+    }
+    citizen(ctx, c, alpha, time, isPlayer, isRelative=false, isCourting=false) {
         if (!c.actual.life.alive) return;
         const x = lerp(c.px, c.x, alpha), y = lerp(c.py, c.y, alpha), a = moveAngle(c.prevAngle, c.angle, alpha);
         const scale=lifeStage(c.actual.life.ageYears).scale,radius=c.body.radius*scale;
@@ -3711,6 +3744,11 @@ class Renderer {
             ctx.save();ctx.beginPath();ctx.arc(0,0,radius+13,0,TAU);
             ctx.fillStyle='#f1cd8810';ctx.fill();ctx.strokeStyle='#f1cd88';ctx.lineWidth=2;
             ctx.shadowColor='#f1cd88';ctx.shadowBlur=9;ctx.setLineDash([5,4]);ctx.stroke();ctx.restore();
+        }
+        if(isCourting) {
+            ctx.save();ctx.beginPath();ctx.arc(0,0,radius+13,0,TAU);
+            ctx.fillStyle='#e7a5c418';ctx.fill();ctx.strokeStyle='#e7a5c4';ctx.lineWidth=2;
+            ctx.shadowColor='#e7a5c4';ctx.shadowBlur=8;ctx.stroke();ctx.restore();
         }
         const ui=this.game.socialUI;
         if(!isPlayer && (ui?.selectedId===c.id || ui?.controller?.pending?.id===c.id)) {
@@ -3743,9 +3781,9 @@ class Renderer {
             ctx.stroke();
         }
         ctx.restore();
-        if (!isPlayer && c.playerKnowledge.discoveredFacts.name && dist2(c.x, c.y, this.game.world.player.x, this.game.world.player.y) < 340 ** 2) {
-            ctx.textAlign = 'center'; ctx.font = '9px ui-sans-serif, system-ui'; ctx.fillStyle = '#c8d4c3';
-            ctx.fillText(c.playerKnowledge.discoveredFacts.name.value, 0, -radius - (isRelative?25:10));
+        if (!isPlayer && c.playerKnowledge.discoveredFacts.name && (isCourting || dist2(c.x, c.y, this.game.world.player.x, this.game.world.player.y) < 340 ** 2)) {
+            ctx.textAlign = 'center'; ctx.font = '9px ui-sans-serif, system-ui'; ctx.fillStyle = isCourting?'#e7a5c4':'#c8d4c3';
+            ctx.fillText(`${isCourting?'♥ ':''}${c.playerKnowledge.discoveredFacts.name.value}`, 0, -radius - (isRelative || isCourting?25:10));
         }
         if (c.ai?.activity === 'gathering') {
             ctx.fillStyle = '#afcaaf';
@@ -3807,6 +3845,14 @@ class Renderer {
             ctx.beginPath();
             ctx.arc(c.x, c.y, relative?19:9, 0, TAU);
             ctx.fill();
+        }
+        // Keep courtship markers readable in CSS pixels on compact maps.
+        const markerScale=C.W/(c.clientWidth || 168),courting=this.courtshipHighlights();
+        for(const id of courting) {
+            const target=world.registry.get(id);
+            ctx.beginPath();ctx.arc(target.x,target.y,4*markerScale,0,TAU);
+            ctx.fillStyle='#122328';ctx.fill();ctx.strokeStyle='#e7a5c4';ctx.lineWidth=1.5*markerScale;ctx.stroke();
+            ctx.beginPath();ctx.arc(target.x,target.y,2*markerScale,0,TAU);ctx.fillStyle='#e7a5c4';ctx.fill();
         }
         const p = world.player;
         ctx.save();
@@ -4287,7 +4333,7 @@ class SocialUI {
         this.game=game; this.selectedId=null; this.group='root'; this.reply=null; this.signature=''; this.controller=null;
         $('talkBtn').addEventListener('click',()=>this.openNearest());
         $('closeCitizenBtn').addEventListener('click',()=>this.close());
-        $('bubbleBackBtn').addEventListener('click',()=>this.showGroup(this.group==='stories'?'talk':this.group==='commitment'?'romance':'root'));
+        $('bubbleBackBtn').addEventListener('click',()=>this.showGroup(['stories','personal'].includes(this.group)?'talk':this.group==='commitment'?'romance':'root'));
         game.canvas.addEventListener('click',e=>{
             if(game.state!=='running') return;
             const r=game.canvas.getBoundingClientRect(),c=game.citizenAtScreen(e.clientX-r.left,e.clientY-r.top);
@@ -4337,7 +4383,7 @@ class SocialUI {
         const w=this.game.world;
         const result=action.kind==='spar'?this.game.spar.invite(id):action.kind==='social'?w.social.interact(id,action.topic):w.romance.interact(id,action.topic);
         const changes=result.changes;
-        const cue=action.topic==='children'?'Family plans':action.topic==='propose' && result.ok?'♥ Married':changes?.trust>0?'Trust ↑':changes?.trust<0?'Trust ↓':action.kind==='romance'&&result.ok?'♥ Affection ↑':'';
+        const cue=action.topic==='children'?'Family plans':action.topic==='separate' && result.ok?'Separated':action.topic==='propose' && result.ok?'♥ Married':changes?.trust>0?'Trust ↑':changes?.trust<0?'Trust ↓':action.kind==='romance'&&result.ok?'♥ Affection ↑':'';
         const reply=action.topic==='introduce'&&result.ok?`“I’m ${w.social.view(w.social.citizen(id)).name}.”`:
             result.ok?({compliment:'“That’s kind of you.”',outing:'“A walk sounds lovely.”',commitment:'“I can imagine a life together.”'}[action.topic] || briefReply(result,action.topic)):briefReply(result,action.topic);
         this.say(id,reply,cue,result.outcome);
@@ -4353,7 +4399,8 @@ class SocialUI {
         const love=(label,topic,icon='♡')=>({label,icon,action:{kind:'romance',topic}});
         const group=(label,next,icon='⋯')=>({label,icon,group:next});
         const details=group('Details','details','◇');
-        if(this.group==='talk') return [social('Chat','chat'),social('Interests','interests'),group('More topics','stories'),...(v.introduced && v.adult && this.game.world.player.actual.life.ageYears>=18?[{label:'Invite to spar',icon:'◇',action:{kind:'spar',topic:'spar'}}]:[])];
+        if(this.group==='talk') return [social('Chat','chat'),group('Personal','personal'),group('More topics','stories'),...(v.introduced && v.adult && this.game.world.player.actual.life.ageYears>=18?[{label:'Invite to spar',icon:'◇',action:{kind:'spar',topic:'spar'}}]:[])];
+        if(this.group==='personal') return [social('Ask age','age'),social('Interests','interests')];
         if(this.group==='stories') return [social('Work','occupation'),social('Society','district'),social('Family stories','family'),social('Rumors','rumor')];
         if(this.group==='romance') return [love('Compliment','compliment'),love('Invite out','outing'),love('Our future','commitment'),group('Commitment','commitment')];
         if(this.group==='commitment') return [love('Preferences','preferences','◇'),love('Discuss children','children'),love('Propose','propose'),...(romance.status==='married'?[love('Separate','separate','↗')]:[])];

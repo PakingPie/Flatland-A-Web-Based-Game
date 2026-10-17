@@ -325,6 +325,45 @@ test('population budget counts deceased records and refuses births without consu
     const restored=saveFor(w).decode(saveFor(w).encode()).world;
     assert.equal(restored.registry.all().length,count);assert.equal(restored.npcs.length,1);
 });
+test('age is learned by conversation, dated in the notebook and preserved through save and succession', () => {
+    const {w}=familyWorld(), c=w.npcs[0]; prepare(w,c);
+    c.actual.life.ageYears=70.75;
+    assert.equal(w.social.view(c).facts.find(f=>f.key==='age').locked,true);
+    assert.equal(c.playerKnowledge.discoveredFacts.age,undefined);
+    w.elapsed+=120;
+    const result=w.social.interact(c.id,'age');
+    assert.equal(result.ok,true); assert.match(result.text,/I’m 70 days old/);
+    const fact=json(c.playerKnowledge.discoveredFacts.age);
+    assert.equal(fact.value,`70 days old on day ${Math.floor(w.elapsed/120)+1}`);
+    assert.equal(fact.kind,'claim'); assert.equal(fact.sourceId,c.id);
+    assert.equal(c.playerKnowledge.discoveredFacts.privateHistory,undefined);
+    w.elapsed+=120; c.actual.life.ageYears+=1;
+    assert.deepEqual(json(w.social.view(c).facts.find(f=>f.key==='age')), {key:'age',label:'Age when asked',...fact});
+    const restored=saveFor(w).decode(saveFor(w).encode()).world;
+    assert.deepEqual(json(restored.registry.get(c.id).playerKnowledge.discoveredFacts.age),fact);
+    c.actual.life.ageYears=40; // Keep a possible spouse eligible in this isolated succession fixture.
+    const child=w.registry.get(w.family.birth().ids[0]); child.actual.life.ageYears=18; w.player.actual.life.ageYears=40;
+    const founder=w.player.id; assert.equal(w.family.succeed(child.id).ok,true);
+    assert.equal(c.playerKnowledge.discoveredFacts.age,undefined);
+    assert.deepEqual(json(w.family.notebooks[founder].knowledge[c.id].discoveredFacts.age),fact);
+    saveFor(w).decode(saveFor(w).encode());
+});
+test('asking age respects introductions, cooldown, repetition and daily conversation limits', () => {
+    const w=new World('age-conversation'),c=w.npcs[0];
+    c.x=c.px=w.player.x+40; c.y=c.py=w.player.y;
+    assert.equal(w.social.interact(c.id,'age').ok,false);
+    assert.equal(c.playerKnowledge.discoveredFacts.age,undefined);
+    w.elapsed+=4; prepare(w,c);
+    assert.equal(w.social.interact(c.id,'age').ok,false); // Same topic already asked today.
+    w.elapsed+=120;
+    assert.equal(w.social.interact(c.id,'age').ok,true);
+    const fact=json(c.playerKnowledge.discoveredFacts.age);
+    assert.equal(w.social.interact(c.id,'age').outcome,'cooldown');
+    w.elapsed+=4; assert.equal(w.social.interact(c.id,'age').outcome,'negative');
+    c.playerKnowledge.relationship.today=6; w.elapsed+=4;
+    assert.equal(w.social.interact(c.id,'age').outcome,'daily-limit');
+    assert.deepEqual(json(c.playerKnowledge.discoveredFacts.age),fact);
+});
 test('excellent trust does not guarantee attraction; proposals can fail', () => {
     const w=new World('romance'); const c=w.npcs.find(c=>!w.romance.preferences(c).sexes.includes('male')); prepare(w,c); c.playerKnowledge.relationship.trust=100;
     assert.equal(action(w,c,'compliment').ok,false); assert.equal(w.romance.pair(w.player,c).affection,0);
@@ -345,6 +384,29 @@ for(const sex of ['female','male']) test(`consensual ${sex==='male'?'same-sex':'
     const view=w.romance.view(c); assert.ok(!JSON.stringify(view).includes('genome')); assert.ok(!c.playerKnowledge.discoveredFacts.privateHistory);
     const restored=saveFor(w).decode(saveFor(w).encode()).world; assert.equal(restored.romance.spouse(restored.player).id,c.id);
     w.elapsed+=120; assert.equal(action(w,c,'separate').ok,true); assert.equal(w.romance.spouse(w.player),null);
+});
+test('separation bypasses exhausted budgets, cooldown and repeated topics, preserves children and permits remarriage',()=>{
+    const {w,c}=familyWorld(),children=json(w.family.birth().ids),pair=w.romance.pair(w.player,c),r=c.playerKnowledge.relationship;
+    r.day=pair.day=Math.floor(w.elapsed/120);r.today=6;pair.today=3;r.lastAt=pair.lastAt=w.elapsed;pair.topics.separate=1;
+    const before=json({r,affection:pair.affection,today:pair.today,lastAt:pair.lastAt,topics:pair.topics});
+    assert.equal(w.romance.interact(c.id,'separate').ok,true);
+    assert.equal(w.romance.spouse(w.player),null);assert.equal(w.romance.spouse(c),null);assert.equal(pair.status,'separated');
+    assert.deepEqual(json(w.player.actual.bonds.partnerIds),[]);assert.deepEqual(json(c.actual.bonds.partnerIds),[]);
+    assert.equal(w.romance.household(w.player),1);
+    assert.deepEqual(json(w.player.actual.lineage.childrenIds),children);assert.deepEqual(json(c.actual.lineage.childrenIds),children);
+    assert.equal(w.romance.marriages[0].endedAt,w.elapsed);assert.equal(w.romance.marriages[0].reason,'separation');
+    assert.deepEqual(json({r,affection:pair.affection,today:pair.today,lastAt:pair.lastAt,topics:pair.topics}),before);
+    assert.equal(w.romance.interact(c.id,'separate').ok,false);assert.equal(w.romance.marriages.length,1);
+    const restored=saveFor(w).decode(saveFor(w).encode()).world;assert.equal(restored.romance.spouse(restored.player),null);
+    const partner=compatible(w,'male');marry(w,partner);assert.equal(w.romance.spouse(w.player).id,partner.id);
+    assert.deepEqual(json(w.player.actual.lineage.childrenIds),children);saveFor(w).decode(saveFor(w).encode());
+});
+test('separation still requires proximity and its queued approach skips only the courtship cooldown',()=>{
+    const {w,c}=familyWorld();c.playerKnowledge.relationship.lastAt=w.romance.pair(w.player,c).lastAt=w.elapsed;
+    const q=new context.rules.CitizenApproach(w,(id,action)=>assert.equal(w.romance.interact(id,action.topic).ok,true),()=>assert.fail('Approach failed'));
+    const x=c.x;c.x=w.player.x+500;assert.equal(w.romance.interact(c.id,'separate').outcome,'out-of-range');assert.equal(w.romance.spouse(w.player).id,c.id);
+    c.x=x;q.start(c.id,{kind:'romance',topic:'separate'});q.movement(.1);
+    assert.equal(q.pending,null);assert.equal(w.romance.spouse(w.player),null);
 });
 test('malformed marriage rejected before installation', () => { const w=new World('romance'), c=compatible(w,'female'); marry(w,c); const s=saveFor(w), data=JSON.parse(s.encode()); data.payload.romance.marriages[0].ids[1]='missing'; data.checksum=hash(JSON.stringify(data.payload)); assert.throws(()=>s.decode(JSON.stringify(data))); });
 test('genuine Phase 2A snapshot migrates without losing progress', () => {

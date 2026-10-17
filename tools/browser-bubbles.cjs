@@ -26,6 +26,22 @@ const out=path.resolve('output/playwright');fs.mkdirSync(out,{recursive:true});
         await page.locator('[data-group="details"]').click();assert.equal(await page.locator('#bubbleDetails').isVisible(),true);assert.ok(!(await page.locator('#bubbleDetails').innerText()).includes('sideCount'));
         await page.keyboard.press('Escape');assert.equal(await page.locator('#citizenPanel').isVisible(),false);
         results.push('PASS optional notebook, privacy and Escape');
+        await page.evaluate(()=>FlatlandDebug.advance(4));
+        assert.equal((await page.evaluate(id=>FlatlandDebug.socialView(id),id)).facts.find(f=>f.key==='age').locked,true);
+        await page.evaluate(id=>FlatlandDebug.openCitizen(id),id);
+        await page.locator('[data-group="talk"]').click();await page.locator('[data-group="personal"]').click();
+        assert.ok(await page.locator('#bubbleOptions button').count()<=4);
+        await page.locator('#bubbleBackBtn').click();assert.equal(await page.locator('[data-group="personal"]').isVisible(),true);
+        await page.locator('[data-group="personal"]').click();await page.locator('[data-topic="age"]').click();
+        await page.evaluate(()=>FlatlandDebug.advance(4));
+        assert.match(await page.locator('#dialogueText').innerText(),/I’m \d+ days old/);
+        const ageFact=(await page.evaluate(id=>FlatlandDebug.socialView(id),id)).facts.find(f=>f.key==='age');
+        assert.match(ageFact.value,/\d+ days old on day \d+/);
+        await page.evaluate(id=>FlatlandDebug.openCitizen(id),id);await page.locator('[data-group="details"]').click();
+        assert.match(await page.locator('#knownFacts').innerText(),/Age when asked/);
+        assert.ok((await page.locator('#knownFacts').innerText()).includes(ageFact.value));
+        await page.screenshot({path:path.join(out,'bubble-age-notebook.png')});await page.keyboard.press('Escape');
+        results.push('PASS Ask age conversation, dated notebook discovery and Personal back navigation');
         // Move to an open road well away from the citizen, queue then cancel via keyboard.
         await page.evaluate(id=>{FlatlandDebug.teleport(1728,1500);FlatlandDebug.openCitizen(id);},id);
         await page.locator('[data-group="talk"]').click();await page.locator('[data-topic="chat"]').click();
@@ -35,11 +51,13 @@ const out=path.resolve('output/playwright');fs.mkdirSync(out,{recursive:true});
         results.push('PASS manual movement and Cancel interrupt queued actions');
         for(const [width,height] of [[390,844],[844,390],[1280,800]]){
             await page.setViewportSize({width,height});await page.evaluate(id=>FlatlandDebug.openCitizen(id),id);
-            for(const group of ['root','details']){
+            for(const group of ['root','personal','details']){
+                if(group==='personal') {await page.locator('[data-group="talk"]').click();await page.locator('[data-group="personal"]').click();}
                 if(group==='details')await page.locator('[data-group="details"]').click();
                 const box=await page.locator('#citizenPanel').boundingBox();assert.ok(box.x>=0 && box.y>=0 && box.x+box.width<=width+1 && box.y+box.height<=height+1);
                 assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
                 if(group==='details')await page.locator('#bubbleBackBtn').click();
+                if(group==='personal') {await page.locator('#bubbleBackBtn').click();await page.locator('#bubbleBackBtn').click();}
             }
             await page.screenshot({path:path.join(out,`bubble-${width}x${height}.png`)});await page.keyboard.press('Escape');
         }

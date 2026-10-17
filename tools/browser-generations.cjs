@@ -33,7 +33,7 @@ const profile=fs.mkdtempSync(path.join(output,'generation-profile-'));
     const reply=async(selector)=>{
         await page.evaluate(id=>FlatlandDebug.openCitizen(id),speakingId);
         const social=selector.match(/data-topic="([^"]+)/),romance=selector.match(/data-romance="([^"]+)/);
-        if(social && social[1]!=='introduce') { await page.locator('[data-group="talk"]').click(); if(!['chat','interests'].includes(social[1])) await page.locator('[data-group="stories"]').click(); }
+        if(social && social[1]!=='introduce') { await page.locator('[data-group="talk"]').click(); if(['age','interests'].includes(social[1])) await page.locator('[data-group="personal"]').click(); else if(social[1]!=='chat') await page.locator('[data-group="stories"]').click(); }
         if(romance) { await page.locator('[data-group="romance"]').click(); if(['preferences','propose','separate'].includes(romance[1])) await page.locator('[data-group="commitment"]').click(); }
         const b=page.locator(selector);if(await b.isEnabled()){await b.click();await page.evaluate(()=>FlatlandDebug.advance(4));return true;} return false;
     };
@@ -63,6 +63,31 @@ const profile=fs.mkdtempSync(path.join(output,'generation-profile-'));
         await page.evaluate(()=>FlatlandDebug.closeCitizen());await page.locator('#familyBtn').click();await page.locator('#familyBirthBtn').click();await page.locator('#closeFamilyBtn').click();
         let s=await snapshot(), children=s.player.actual.lineage.childrenIds;assert.ok(children.length>=2);
         assert.equal(new Set(children.map(id=>JSON.stringify(s.npcs.find(c=>c.id===id).actual.genome))).size,children.length);
+        // Isolated copy of the real UI marriage with exhausted conversation budgets.
+        const beforeSeparation=await page.evaluate(()=>FlatlandDebug.exportSave());
+        await page.evaluate(id=>{
+            const data=JSON.parse(FlatlandDebug.exportSave()),s=data.payload;
+            const r=s.characters.find(c=>c.id===id).playerKnowledge.relationship;
+            const pair=Object.values(s.romance.pairs).find(p=>p.ids.includes(s.currentPlayerId) && p.ids.includes(id));
+            r.day=pair.day=Math.floor(s.elapsed/120);r.today=6;pair.today=3;r.lastAt=pair.lastAt=s.elapsed;pair.topics.separate=1;
+            const text=JSON.stringify(s);let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619);}data.checksum=h>>>0;
+            if(!FlatlandDebug.importSave(JSON.stringify(data)))throw Error('Invalid separation fixture');
+        },spouse);
+        await page.locator('#resumeBtn').click();await meet(spouse);
+        await page.locator('[data-group="romance"]').click();await page.locator('[data-group="commitment"]').click();await page.locator('[data-romance="separate"]').click();
+        await page.evaluate(()=>FlatlandDebug.advance(.1));
+        assert.match(await page.locator('#dialogueText').innerText(),/The marriage ends/);
+        assert.equal(await page.locator('#socialOutcome').innerText(),'Separated');
+        assert.deepEqual((await snapshot()).player.actual.bonds.partnerIds,[]);
+        assert.deepEqual((await snapshot()).player.actual.lineage.childrenIds,children);
+        await page.locator('#familyBtn').click();assert.match(await page.locator('#familySummary').innerText(),/Spouse: None/);
+        assert.match(await page.locator('#familyMarriages').textContent(),/separation on day/);await page.locator('#closeFamilyBtn').click();
+        assert.equal(await page.evaluate(()=>FlatlandDebug.save()),true);
+        await context.close();context=null;await open();await page.locator('#continueBtn').click();await page.evaluate(()=>FlatlandDebug.manual());
+        assert.deepEqual((await snapshot()).player.actual.bonds.partnerIds,[]);
+        assert.deepEqual((await snapshot()).player.actual.lineage.childrenIds,children);
+        assert.equal(await page.evaluate(raw=>FlatlandDebug.importSave(raw),beforeSeparation),true);await page.locator('#resumeBtn').click();
+        results.push('PASS Separate bypasses exhausted conversation and cooldown, shows the ended marriage and retains children after browser restart');
         await page.evaluate(()=>{FlatlandDebug.closeCitizen();FlatlandDebug.teleport(1728,1280);FlatlandDebug.vitals({health:100,hunger:100,thirst:100});});
         await page.locator('#familyBtn').click();assert.ok((await page.locator('#familyMembers').innerText()).includes('Generation 2'));
         for(let i=0;i<4;i++) await page.locator('#advance5Btn').click();

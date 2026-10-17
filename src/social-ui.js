@@ -4,7 +4,7 @@ class SocialUI {
         this.game=game; this.selectedId=null; this.group='root'; this.reply=null; this.signature=''; this.controller=null;
         $('talkBtn').addEventListener('click',()=>this.openNearest());
         $('closeCitizenBtn').addEventListener('click',()=>this.close());
-        $('bubbleBackBtn').addEventListener('click',()=>this.showGroup(this.group==='stories'?'talk':this.group==='commitment'?'romance':'root'));
+        $('bubbleBackBtn').addEventListener('click',()=>this.showGroup(['stories','personal'].includes(this.group)?'talk':this.group==='commitment'?'romance':'root'));
         game.canvas.addEventListener('click',e=>{
             if(game.state!=='running') return;
             const r=game.canvas.getBoundingClientRect(),c=game.citizenAtScreen(e.clientX-r.left,e.clientY-r.top);
@@ -54,7 +54,7 @@ class SocialUI {
         const w=this.game.world;
         const result=action.kind==='spar'?this.game.spar.invite(id):action.kind==='social'?w.social.interact(id,action.topic):w.romance.interact(id,action.topic);
         const changes=result.changes;
-        const cue=action.topic==='children'?'Family plans':action.topic==='propose' && result.ok?'♥ Married':changes?.trust>0?'Trust ↑':changes?.trust<0?'Trust ↓':action.kind==='romance'&&result.ok?'♥ Affection ↑':'';
+        const cue=action.topic==='children'?'Family plans':action.topic==='separate' && result.ok?'Separated':action.topic==='propose' && result.ok?'♥ Married':changes?.trust>0?'Trust ↑':changes?.trust<0?'Trust ↓':action.kind==='romance'&&result.ok?'♥ Affection ↑':'';
         const reply=action.topic==='introduce'&&result.ok?`“I’m ${w.social.view(w.social.citizen(id)).name}.”`:
             result.ok?({compliment:'“That’s kind of you.”',outing:'“A walk sounds lovely.”',commitment:'“I can imagine a life together.”'}[action.topic] || briefReply(result,action.topic)):briefReply(result,action.topic);
         this.say(id,reply,cue,result.outcome);
@@ -70,7 +70,8 @@ class SocialUI {
         const love=(label,topic,icon='♡')=>({label,icon,action:{kind:'romance',topic}});
         const group=(label,next,icon='⋯')=>({label,icon,group:next});
         const details=group('Details','details','◇');
-        if(this.group==='talk') return [social('Chat','chat'),social('Interests','interests'),group('More topics','stories'),...(v.introduced && v.adult && this.game.world.player.actual.life.ageYears>=18?[{label:'Invite to spar',icon:'◇',action:{kind:'spar',topic:'spar'}}]:[])];
+        if(this.group==='talk') return [social('Chat','chat'),group('Personal','personal'),group('More topics','stories'),...(v.introduced && v.adult && this.game.world.player.actual.life.ageYears>=18?[{label:'Invite to spar',icon:'◇',action:{kind:'spar',topic:'spar'}}]:[])];
+        if(this.group==='personal') return [social('Ask age','age'),social('Interests','interests')];
         if(this.group==='stories') return [social('Work','occupation'),social('Society','district'),social('Family stories','family'),social('Rumors','rumor')];
         if(this.group==='romance') return [love('Compliment','compliment'),love('Invite out','outing'),love('Our future','commitment'),group('Commitment','commitment')];
         if(this.group==='commitment') return [love('Preferences','preferences','◇'),love('Discuss children','children'),love('Propose','propose'),...(romance.status==='married'?[love('Separate','separate','↗')]:[])];
