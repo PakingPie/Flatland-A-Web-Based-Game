@@ -2,9 +2,9 @@
 // a multiplier for intelligence, virtue, metabolism, mobility or hereditary fitness.
 const SOCIAL = Object.freeze({ reach: 108, cooldown: 3, dailyLimit: 6, historyLimit: 24,
     stages: ['Stranger', 'Acquaintance', 'Familiar', 'Trusted', 'Deeply trusted'],
-    topics: { introduce: 'Introduce yourself', chat: 'Casual conversation', occupation: 'Ask about work',
+    topics: { introduce: 'Introduce yourself', chat: 'Casual conversation', age: 'Ask about age', occupation: 'Ask about work',
         district: 'Discuss local society', interests: 'Ask about interests', family: 'Ask about family', rumor: 'Exchange a rumor' },
-    factLabels: { name: 'Name', occupation: 'Occupation', reputation: 'Public reputation', interests: 'Interests',
+    factLabels: { name: 'Name', age: 'Age when asked', occupation: 'Occupation', reputation: 'Public reputation', interests: 'Interests',
         dislikes: 'Dislikes', personality: 'Your impression', family: 'Family background', ambition: 'Ambition',
         concern: 'Private concern', privateHistory: 'Sensitive history', publicRelationships: 'Public relationships' } });
 function apparentStanding(c) {
@@ -168,6 +168,11 @@ class SocialSystem {
             case 'chat': {
                 const lines = p.personality.warmth > .6 ? ['“It is good to have company on an ordinary day.”', '“A kind conversation is worth more than a perfect outline.”'] : p.personality.reserve > .6 ? ['“The days pass. The roads still need walking.”', '“I prefer small conversations to grand declarations.”'] : ['“There is more to a district than its official map.”', '“People hurry so much they forget to notice one another.”'];
                 return this.response(c, topic, this.rng.pick(lines) + (stage >= 2 ? ' They seem more at ease with a familiar face.' : ''), 6 * factor, 4 * trustGain, .3, 'positive');
+            }
+            case 'age': {
+                const age = Math.floor(c.actual.life.ageYears);
+                this.learn(c, 'age', `${age} days old on day ${day + 1}`);
+                return this.response(c, topic, `“I’m ${age} days old.”`, 2 * factor, trustGain, 0, 'positive');
             }
             case 'occupation':
                 this.learn(c, 'occupation', c.publicIdentity.claimedOccupation);

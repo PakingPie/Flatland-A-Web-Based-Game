@@ -82,6 +82,8 @@ remains finite; see [current limits](#current-limits) and the
 
 1. Gather food and water, eat/drink from your pack, and rest at refuges to heal.
 2. Click or tap a citizen and choose Greet. You walk over automatically.
+   **Talk → Personal → Ask age** lets you learn their age before proposing.
+   Details records their answer and the day you asked; biological parents must both be aged 18–60 days.
 3. Discuss partnership preferences and try different courtship activities in the Romance bubble. Trust
    and attraction are separate; an excellent friend can decline romance.
 4. Propose once affection, trust and mutual interest are established. Marriage
@@ -89,6 +91,7 @@ remains finite; see [current limits](#current-limits) and the
    Under Affection → Commitment, **Discuss children** explains current readiness.
    A hesitant spouse can reconsider as trust and affection grow; asking repeatedly
    does not increase willingness.
+   **Affection → Commitment → Separate** ends a marriage even when conversation energy is spent.
 5. Open **Family & succession** from your condition panel or Pause. Eligible,
    consenting spouses can have two to four individually inherited children.
 6. At a refuge use **Live 1 / 5 days**. Community subsistence covers needs
@@ -106,6 +109,11 @@ an explicit recovery option.
 Same-sex couples can court, marry, receive the same household benefits and retain
 existing biological children as potential heirs. Joint biological births currently
 require a male and female spouse. Marriage and biological parentage are separate.
+
+Active courtships have pink rings and heart-marked names in the world, plus pink
+markers on the minimap. Each person you are courting is marked until that courtship
+ends or you marry. Known family keeps its gold markers. The compact minimap stays
+visible on phones in portrait and landscape.
 
 ## Controls
 
@@ -311,6 +319,7 @@ node tools/browser-inspector.cjs
 node tools/browser-parenthood.cjs
 node tools/browser-renewal.cjs
 node tools/browser-family-presentation.cjs
+node tools/browser-courtship-map.cjs
 node tools/browser-growth.cjs
 node tools/browser-sparring.cjs
 node tools/browser-sparring-persistence.cjs

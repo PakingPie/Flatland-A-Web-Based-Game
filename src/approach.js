@@ -13,7 +13,7 @@ class CitizenApproach {
         if(w.social.nearby(c)) {
             w.conversationId=c.id;
             const last=Math.max(c.playerKnowledge.relationship.lastAt,w.romance.pair(p,c).lastAt);
-            if(w.elapsed-last<SOCIAL.cooldown) return still;
+            if(!(q.action.kind==='romance' && q.action.topic==='separate') && w.elapsed-last<SOCIAL.cooldown) return still;
             const action=q.action; this.cancel(); this.arrive(c.id,action); return still;
         }
         w.conversationId=null; q.replan-=dt;
