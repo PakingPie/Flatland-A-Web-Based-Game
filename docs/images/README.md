@@ -3,7 +3,9 @@
 The banner is a hand-authored SVG illustration using the game's palette and
 geometric visual language. It is not a gameplay screenshot.
 
-The four PNGs are curated captures of the current standalone game:
+The four PNGs are curated captures of the standalone game before the 2026-10-17
+UI simplification. Current play uses contextual Gather/Talk, automatic supplies
+and a touch-only Sprint button; these gallery captures retain the earlier HUD.
 
 - `explore.png`: the ordinary world/HUD at the start of a demo expedition.
 - `relationships.png`: the actual paused courtship action bubble.

@@ -15,6 +15,9 @@ class Game {
         this.accumulator = 0;
         this.lastTime = null;
         this.debugManual = false;
+        this.autoSupplies = true;
+        try { this.autoSupplies = localStorage.getItem('flatland.autoSupplies.v1') !== 'false'; } catch { /* Play with defaults when storage is unavailable. */ }
+        this.contextAction = null;
         this.renderer = new Renderer(this);
         this.input = new Input(this);
         this.saves = new SaveStore(this);
@@ -42,7 +45,6 @@ class Game {
         });
         bind('newSeedBtn', () => { this.setScreen('menu'); this.saves.refreshMenu(); });
         bind('pauseBtn', () => this.pause());
-        bind('helpBtn', () => this.showHelp());
         bind('resumeBtn', () => this.resume());
         bind('pauseHelpBtn', () => this.showHelp());
         bind('closeHelpBtn', () => this.closeHelp());
@@ -52,6 +54,15 @@ class Game {
         bind('eatBtn', () => this.consume('food'));
         bind('drinkBtn', () => this.consume('water'));
         bind('restBtn', () => this.toggleRest());
+        $('autoSuppliesToggle').checked = this.autoSupplies;
+        $('autoSuppliesToggle').addEventListener('change', e => {
+            this.autoSupplies = e.target.checked;
+            try {
+                localStorage.setItem('flatland.autoSupplies.v1', String(this.autoSupplies));
+                $('settingsStatus').textContent = 'Preference saved for this browser.';
+            } catch { $('settingsStatus').textContent = 'Applied for this visit. Browser storage is unavailable.'; }
+            this.refreshUI();
+        });
         bind('cancelApproachBtn', () => this.socialUI.controller?.cancel());
         bind('renewalToggleBtn',()=>{
             if(this.state!=='paused' || !this.world.player.actual.life.alive) return;
@@ -118,6 +129,7 @@ class Game {
         this.progress = { gathered: 0, visited: new Set(), complete: false };
         this.gatherCooldown = 0;
         this.warningLatch = {};
+        this.sprintTaught = false;
         this.accumulator = 0;
         this.uiClock = 0;
         this.mapClock = 0;
@@ -166,11 +178,19 @@ class Game {
             best = r;
         }
     } return best; }
-    gather() {
+    actionTarget() {
+        const r = this.nearestResource(), c = this.world.social.nearest(), p = this.world.player;
+        // Prefer the nearest usable target. A full pack must not block conversation.
+        if (r && this.pack[r.kind] < C.PACK && (!c || dist2(p.x,p.y,r.x,r.y) <= dist2(p.x,p.y,c.x,c.y)))
+            return { kind: 'gather', target: r };
+        if (c) return { kind: 'talk', target: c };
+        return r ? { kind: 'gather', target: r } : null;
+    }
+    gather(r = this.nearestResource()) {
         if (this.state !== 'running' || this.gatherCooldown > 0)
             return;
-        const r = this.nearestResource();
-        if (!r)
+        const p = this.world.player;
+        if (!r || !r.quantity || dist2(p.x,p.y,r.x,r.y) > C.GATHER_REACH ** 2 || !this.world.segmentClear(p.x,p.y,r.x,r.y,3))
             return;
         if (this.pack[r.kind] >= C.PACK) {
             this.gatherCooldown = .8;
@@ -185,7 +205,7 @@ class Game {
             this.refreshUI();
         }
     }
-    consume(kind) {
+    consume(kind, automatic = false) {
         if (this.state !== 'running')
             return;
         if (this.pack[kind] <= 0) {
@@ -200,7 +220,7 @@ class Game {
         const before = v[key];
         v[key] = Math.min(100, v[key] + (kind === 'food' ? 38 : 45));
         this.pack[kind]--;
-        this.log(`${kind === 'food' ? 'Ate one provision' : 'Drank one flask'} · +${Math.round(v[key] - before)} ${kind}.`);
+        this.log(`${automatic ? 'Auto · ' : ''}${kind === 'food' ? 'Ate food' : 'Drank water'} · +${Math.round(v[key] - before)} · ${this.pack[kind]} left.`);
         this.refreshUI();
     }
     toggleRest() {
@@ -243,6 +263,10 @@ class Game {
         const metabolism = p.actual.genome.metabolism * this.world.romance.household(p);
         v.hunger = Math.max(0, v.hunger - .30 * metabolism * dt * (sprint ? 1.65 : run.resting ? .65 : 1));
         v.thirst = Math.max(0, v.thirst - .46 * metabolism * dt * (sprint ? 1.8 : run.resting ? .72 : 1));
+        if (this.autoSupplies) {
+            if (v.hunger < 50 && this.pack.food > 0) this.consume('food', true);
+            if (v.thirst < 50 && this.pack.water > 0) this.consume('water', true);
+        }
         if (v.hunger <= 0)
             v.health -= 2.8 * dt;
         if (v.thirst <= 0)
@@ -292,7 +316,7 @@ class Game {
             return;
         w.family.flushRenewal();
         if (this.input.gather)
-            this.gather();
+            this.gather(this.input.hold.gather ? this.input.gatherTarget : undefined);
         for (const c of w.npcs)
             w.updateNPC(c, dt);
         w.separateCitizens();
@@ -367,23 +391,36 @@ class Game {
         $('waterCount').textContent = this.pack.water + '/' + C.PACK;
         $('eatBtn').disabled = this.pack.food === 0;
         $('drinkBtn').disabled = this.pack.water === 0;
+        $('supplyMode').textContent = this.autoSupplies ? 'Auto supplies on · below 50' : 'Auto supplies off · tap pack to use';
         $('restBtn').classList.toggle('active', p.runtime.resting);
         $('restBtn').querySelector('span').textContent = p.runtime.resting ? 'Get up' : 'Rest';
         $('sprintBtn').classList.toggle('active', p.runtime.sprinting);
         $('sprintBtn').querySelector('span').textContent = p.runtime.exhausted ? 'Recover' : 'Sprint';
-        const r = this.nearestResource(), f = w.refugeAt(p.x, p.y);
-        $('gatherBtn').disabled = !r || this.pack[r.kind] >= C.PACK;
-        let context = 'Explore · collect food and water · keep your meters filled';
+        const r = this.nearestResource(), f = w.refugeAt(p.x, p.y), touch = document.body.classList.contains('touch');
+        // Keep a held resource fixed until release, even after depletion or nearby movement.
+        this.contextAction = this.input.hold.gather && this.input.gatherTarget
+            ? {kind:'gather',target:this.input.gatherTarget} : this.actionTarget();
+        const action = this.contextAction, b = $('interactBtn');
+        const label = action?.kind === 'gather' ? (action.target.quantity === 0 ? 'Depleted' : this.pack[action.target.kind] >= C.PACK ? 'Pack full' : action.target.kind === 'food' ? 'Gather berries' : 'Collect water')
+            : action?.kind === 'talk' ? `Talk to ${w.social.knownName(action.target)}` : 'Explore';
+        b.disabled = !action || (action.kind === 'gather' && (!action.target.quantity || this.pack[action.target.kind] >= C.PACK));
+        $('interactLabel').textContent = label;
+        $('interactKey').textContent = action?.kind === 'talk' ? 'T' : 'E';
+        b.title = action?.kind === 'gather' ? 'Hold to gather from the marked resource. E also gathers nearby supplies.' : action?.kind === 'talk' ? `${label}. T also opens a citizen menu.` : 'Move near a resource or citizen';
+        let context = '';
         if (p.runtime.resting)
             context = f ? (p.vitals.hunger > 30 && p.vitals.thirst > 30 ? 'Refuge rest · healing' : 'Refuge rest · eat and drink to heal') : 'Field rest · no healing';
-        else if (r)
-            context = this.pack[r.kind] >= C.PACK ? `${r.kind === 'food' ? 'Food' : 'Water'} pack full · use supplies first` : `Hold E to gather ${r.kind} · ${r.quantity} remaining`;
+        else if (action?.kind === 'gather')
+            context = this.pack[action.target.kind] >= C.PACK ? 'Pack full · supplies are beside your meters' : `${touch ? 'Hold to gather' : 'Hold E to gather'} · ${action.target.quantity} remaining`;
         else if (f)
-            context = 'Safe refuge · Space to rest and recover health';
-        if(w.elapsed<8 && !this.progress.gathered && !r && !p.runtime.resting) context=document.body.classList.contains('touch')?'Drag the joystick to move.':'WASD / arrows · Move';
-        if(r && !p.runtime.resting) context=`${document.body.classList.contains('touch')?'Hold Gather':'Hold E'} · ${r.kind} (${r.quantity})`;
-        if(p.vitals.hunger<45 && this.pack.food) context=document.body.classList.contains('touch')?'Tap Eat · Use packed food':'F · Eat packed food';
-        else if(p.vitals.thirst<45 && this.pack.water) context=document.body.classList.contains('touch')?'Tap Drink · Use packed water':'R · Drink packed water';
+            context = touch ? 'Safe refuge · Rest to recover health' : 'Safe refuge · Space to rest and recover health';
+        if (p.runtime.sprinting) this.sprintTaught = true;
+        if(w.elapsed<8 && !this.progress.gathered && !r && !p.runtime.resting) context=touch?'Drag the joystick to move · hold Sprint to run':'WASD / arrows · move · hold Shift to sprint';
+        else if (!context && !action && !this.sprintTaught && w.elapsed < 25) context=touch?'Hold Sprint while moving to run':'Hold Shift while moving to sprint';
+        if(p.vitals.hunger<45 && !this.pack.food) context='Food low · find a berry patch';
+        else if(p.vitals.thirst<45 && !this.pack.water) context='Water low · find a spring';
+        else if(!this.autoSupplies && p.vitals.hunger<45 && this.pack.food) context=touch?'Tap the food pack beside your meter':'F · eat packed food';
+        else if(!this.autoSupplies && p.vitals.thirst<45 && this.pack.water) context=touch?'Tap the water pack beside your meter':'R · drink packed water';
         const pending=this.socialUI?.controller?.pending;
         if(pending) context=w.social.nearby(w.social.citizen(pending.id))?'Waiting for a reply…':'Walking over…';
         $('cancelApproachBtn').hidden=!pending;
@@ -391,10 +428,7 @@ class Game {
         $('restDetails').hidden = true;
         $('restDetails').textContent = `Stamina +27/s · food use −35% · water use −28%${f ? ' · eligible healing +1.8/s' : ''}`;
         $('location').textContent = w.districtAt(p.x, p.y);
-        const nearby = w.social.nearest();
-        $('talkBtn').disabled = !nearby;
         $('reputationSummary').textContent = w.social.reputationLabel();
-        if (!pending && !p.runtime.resting && !r && nearby) $('context').textContent = 'Click a citizen · Choose an action';
         this.socialUI?.refresh();
         const days = Math.min(3, Math.floor(w.elapsed / C.DAY));
         $('daysCount').textContent = days + ' / 3';

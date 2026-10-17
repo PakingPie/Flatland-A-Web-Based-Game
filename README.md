@@ -80,7 +80,7 @@ remains finite; see [current limits](#current-limits) and the
 
 ## Playing a generation
 
-1. Gather food and water, eat/drink from your pack, and rest at refuges to heal.
+1. Gather food and water; packed supplies are used automatically below 50. Rest at refuges to heal.
 2. Click or tap a citizen and choose Greet. You walk over automatically.
 3. Discuss partnership preferences and try different courtship activities in the Romance bubble. Trust
    and attraction are separate; an excellent friend can decline romance.
@@ -112,28 +112,35 @@ require a male and female spouse. Marriage and biological parentage are separate
 | Action | Desktop | Touch |
 |---|---|---|
 | Move / sprint | WASD or arrows / hold Shift | Joystick / hold Sprint |
-| Gather | Hold E | Hold Gather |
-| Eat / drink | F / R | Eat / Drink |
+| Gather | Hold E or the contextual action | Hold Gather berries / Collect water |
+| Eat / drink | Automatic below 50; F / R for manual use | Automatic; tap the pack beside its meter for manual use |
 | Rest / stand | Space | Rest |
-| Talk / inspect | T / click citizen | Talk / tap citizen |
+| Talk / inspect | T / click citizen / contextual Talk | Contextual Talk / tap citizen |
 | Conversation | Action bubble; 1–4 select visible choices | Tap an action |
 | Courtship / proposal | Romance → actions / Commitment | Same bubble choices |
 | Family, days, heir selection | Condition panel or Pause → Family | Same buttons |
 | Close citizen / family panel | Escape or close button | Close button |
-| Pause / help | P / H | Pause / Help |
+| Pause / help | P / H | Pause → Controls & field guide |
 | Save, load, export, import | Pause menu | Pause menu |
 
 Citizen menus and Family **pause the world while choosing**. Selecting an action
 resumes time and walks over automatically; brief replies fade on their own.
 Manual movement, Escape or Cancel stops a queued approach. Details opens the
-optional notebook. Gathering fills your pack without automatically eating/drinking. Each pack
+optional notebook. Gathering fills your pack. Auto supplies use one item whenever
+its meter falls below 50, with a brief notice showing stock remaining. Disable
+**Auto eat & drink** under **Pause → Settings** to use supplies manually. This
+preference stays in this browser; save files keep their existing format. Each pack
 holds eight. Food restores up to 38, water 45, capped at 100. Field rest restores
 stamina and reduces consumption; refuge rest heals when food/water both exceed 30.
 
 ## A small menu, a brief reply
 
 New lives start without an instruction wall. Context prompts teach movement,
-gathering and using supplies. Citizen bubbles show at most four choices, with
+gathering and sprinting, then disappear. Two main actions remain on desktop:
+the nearest usable resource/citizen action and Rest. Touch adds a Sprint button.
+The contextual action marks its target; holding Gather stays with that resource
+until release. Packed supplies and manual use sit beside their meters, and Help
+lives in Pause. Citizen bubbles show at most four choices, with
 more topics one level deeper. Greet, Talk, Romance and Family use existing rules;
 Details holds discovered facts and unconfirmed rumors. Short speech bubbles
 replace mechanical explanations after actions. Family traits and histories expand
@@ -289,6 +296,7 @@ node tools/browser-parenthood.cjs
 node tools/browser-renewal.cjs
 node tools/browser-family-presentation.cjs
 node tools/browser-growth.cjs
+node tools/browser-ui.cjs
 ```
 
 The dependency-free `node tools/population-study.cjs` runs a separate 20-seed,

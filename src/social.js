@@ -213,12 +213,14 @@ class SocialSystem {
             }
         }
     }
-    // The only social DTO consumed by UI. It includes observations and the player's
-    // notebook, never profile truth, hidden genomes, private ancestry or truth flags.
+    // HUD captions must not record observations just to display a known name.
+    knownName(c) { return c.playerKnowledge.discoveredFacts.name?.value || 'Unknown citizen'; }
+    // The social DTO includes observations and the player's notebook, never profile
+    // truth, hidden genomes, private ancestry or truth flags.
     view(c) {
         const observed = observeCitizen(c), k = c.playerKnowledge, stage = this.stage(c);
         const facts = Object.entries(SOCIAL.factLabels).map(([key, label]) => ({ key, label, ...(k.discoveredFacts[key] ? copyJSON(k.discoveredFacts[key]) : { locked: true }) }));
-        return { adult: c.actual.life.ageYears >= 18, id: c.id, name: k.discoveredFacts.name?.value || 'Unknown citizen', observed, facts,
+        return { adult: c.actual.life.ageYears >= 18, id: c.id, name: this.knownName(c), observed, facts,
             relationship: { familiarity: this.relationship(c).familiarity, trust: this.relationship(c).trust, stage, label: SOCIAL.stages[stage],familyRole:this.familyBond(c).role },
             rumors: copyJSON(k.rumors), inRange: this.nearby(c), cooldown: Math.max(0, SOCIAL.cooldown - (this.world.elapsed - k.relationship.lastAt)),
             remaining: k.relationship.day === Math.floor(this.world.elapsed / C.DAY) ? Math.max(0, SOCIAL.dailyLimit - k.relationship.today) : SOCIAL.dailyLimit,

@@ -1,5 +1,16 @@
 # Implementation checkpoints — Phase 2B / 3 / 3.5
 
+## UI subtraction — 2026-10-17
+
+Implemented the approved contextual Gather/Talk action, retained Rest and touch
+Sprint, moved manual supplies beside their meters, and moved Help into Pause.
+Automatic food/water use below 50 is enabled by default with a browser-persisted
+opt-out in Pause → Settings. Existing saves retain their schema and migrations;
+HUD name captions do not add observations. Tutorial prompts replace the permanent
+shortcut line, and short landscape/narrow portrait layouts avoid control overlap.
+The [QA report](QA_REPORT.md) records 82 deterministic cases, all eleven browser
+suites, inspected screenshots and the physical-device/balance limitations.
+
 ## Approved visual growth stages — 2026-10-16
 
 V0.3.5 implements the user-approved child/teen/adult/elder stages: 0–5 days at

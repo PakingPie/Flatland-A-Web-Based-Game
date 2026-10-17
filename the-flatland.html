@@ -173,8 +173,27 @@ button:hover:not(:disabled) {
   justify-content:space-between;
   font-size:11px;
   color:var(--muted);
-  margin-bottom:6px
+  margin-bottom:6px;
+  align-items:center;
+  gap:6px
 }
+.supply-btn {
+  margin-left:auto;
+  border:1px solid var(--line);
+  border-radius:4px;
+  background:transparent;
+  color:var(--green);
+  font-size:10px;
+  padding:4px 6px;
+  min-height:28px;
+}
+#drinkBtn { color:var(--water); }
+#supplyMode { font-size:9px; color:var(--muted); line-height:1.4; margin:8px 0 0; }
+.setting-toggle { display:flex; gap:10px; align-items:center; min-height:44px; cursor:pointer; }
+.setting-toggle input { width:20px; height:20px; accent-color:var(--green); }
+#sprintBtn { display:none; }
+.touch #sprintBtn { display:flex; }
+.touch .supply-btn { min-height:36px; }
 .stat-label span:last-child {
   font-variant-numeric:tabular-nums;
   color:var(--ink)
@@ -341,6 +360,8 @@ button:hover:not(:disabled) {
   gap:6px;
   pointer-events:auto
 }
+#interactBtn { min-width:0; }
+#interactLabel { white-space:normal; overflow-wrap:anywhere; }
 .action {
   border:1px solid var(--line);
   border-radius:7px;
@@ -366,20 +387,6 @@ button:hover:not(:disabled) {
   border-radius:3px;
   padding:2px 4px;
   min-width:18px;
-  text-align:center
-}
-.action .qty {
-  color:var(--green);
-  font-size:11px;
-  font-variant-numeric:tabular-nums
-}
-.action.water .qty {
-  color:var(--water)
-}
-.control-tip {
-  font-size:10px;
-  color:#9aadae;
-  letter-spacing:.025em;
   text-align:center
 }
 #log {
@@ -609,9 +616,6 @@ button:hover:not(:disabled) {
   bottom:149px;
   width:190px
 }
-.touch .control-tip {
-  display:none
-}
 .touch .bottom-center {
   bottom:24px
 }
@@ -804,9 +808,6 @@ button:hover:not(:disabled) {
     padding:10px 11px;
     font-size:11px
   }
-  .control-tip {
-    font-size:9px
-  }
   #context {
     font-size:10px
   }
@@ -851,7 +852,7 @@ button:hover:not(:disabled) {
   .touch .actionbar {
     width:100%;
     display:grid;
-    grid-template-columns:repeat(3,1fr);
+    grid-template-columns:repeat(2,minmax(0,1fr));
     gap:5px
   }
   .touch .action {
@@ -860,9 +861,8 @@ button:hover:not(:disabled) {
     min-height:42px;
     gap:4px
   }
-  .touch .action:nth-child(4) {
-    grid-column:span 2
-  }
+  .touch #interactBtn { grid-column:span 2; }
+  .touch .action { white-space:normal; overflow-wrap:anywhere; }
   .touch #context {
     width:100%;
     padding:7px
@@ -926,11 +926,21 @@ button:hover:not(:disabled) {
     display:none
   }
   .vitals {
-    width:154px;
-    padding:10px
+    width:270px;
+    padding:10px;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    column-gap:12px
   }
+  .vitals .panel-head { grid-column:1/-1; margin-bottom:0; }
+  .vitals .panel-head strong { font-size:11px; }
+  .vitals .tag { font-size:8px; letter-spacing:.05em; }
+  .vitals #supplyMode { grid-column:1/-1; margin-top:4px; }
+  .vitals .stat-label { font-size:10px; min-height:36px; gap:4px; }
+  .vitals .supply-btn { padding:4px; font-size:9px; }
+  .vitals #staminaStat { grid-column:2; grid-row:2; }
   .stat {
-    margin:9px 0
+    margin:4px 0
   }
   .bottom-center {
     max-width:calc(100% - 210px);
@@ -959,14 +969,16 @@ button:hover:not(:disabled) {
   .modal {
     margin:auto 0
   }
-  .control-tip {
-    display:none
-  }
 }
 @media(prefers-reduced-motion:reduce) {
   .fill,#notice {
     transition:none
   }
+}
+@media(max-width:360px) and (min-height:501px) {
+  .vitals,.objectives { width:calc(50% - 20px); }
+  .supply-btn { min-width:36px; }
+  .supply-verb { display:none; }
 }
 /* Compact layouts retain the latest message and keep world space readable. */ html {
   -webkit-text-size-adjust:100%;
@@ -1075,14 +1087,15 @@ button {
 <div id="hud" hidden>
   <header class="topbar">
     <div class="brand"><div class="wordmark"><span class="mark"></span>THE FLATLAND</div><div class="eyebrow">Phase 3 / A life carried forward</div></div>
-    <div class="topright"><div class="timebox"><strong id="dayText">Day 1 · Dawn</strong><small id="seedText"></small></div><button class="small-btn" id="helpBtn" aria-label="Help and controls">Help</button><button class="small-btn" id="pauseBtn" aria-label="Pause game">Pause</button></div>
+    <div class="topright"><div class="timebox"><strong id="dayText">Day 1 · Dawn</strong><small id="seedText"></small></div><button class="small-btn" id="pauseBtn" aria-label="Pause game">Pause</button></div>
   </header>
   <section class="panel vitals" aria-label="Survival status">
     <div class="panel-head"><strong>Your condition</strong><span class="tag" id="generationTag">Generation 1</span></div>
     <div class="stat" id="healthStat"><div class="stat-label"><span>Health</span><span id="healthText">100</span></div><div class="track" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" id="healthBar"><div class="fill" id="healthFill" style="background:var(--coral)"></div></div></div>
-    <div class="stat" id="hungerStat"><div class="stat-label"><span>Food</span><span id="hungerText">84</span></div><div class="track" role="progressbar" aria-label="Food" aria-valuemin="0" aria-valuemax="100" id="hungerBar"><div class="fill" id="hungerFill" style="background:var(--green)"></div></div></div>
-    <div class="stat" id="thirstStat"><div class="stat-label"><span>Water</span><span id="thirstText">78</span></div><div class="track" role="progressbar" aria-label="Water" aria-valuemin="0" aria-valuemax="100" id="thirstBar"><div class="fill" id="thirstFill" style="background:var(--water)"></div></div></div>
+    <div class="stat" id="hungerStat"><div class="stat-label"><span>Food</span><button class="supply-btn" id="eatBtn" title="Eat one packed supply" aria-label="Eat from pack"><span id="foodCount">1/8</span><span class="supply-verb"> · Eat</span></button><span id="hungerText">84</span></div><div class="track" role="progressbar" aria-label="Food" aria-valuemin="0" aria-valuemax="100" id="hungerBar"><div class="fill" id="hungerFill" style="background:var(--green)"></div></div></div>
+    <div class="stat" id="thirstStat"><div class="stat-label"><span>Water</span><button class="supply-btn" id="drinkBtn" title="Drink one packed supply" aria-label="Drink from pack"><span id="waterCount">1/8</span><span class="supply-verb"> · Drink</span></button><span id="thirstText">78</span></div><div class="track" role="progressbar" aria-label="Water" aria-valuemin="0" aria-valuemax="100" id="thirstBar"><div class="fill" id="thirstFill" style="background:var(--water)"></div></div></div>
     <div class="stat" id="staminaStat"><div class="stat-label"><span>Stamina</span><span id="staminaText">100</span></div><div class="track" role="progressbar" aria-label="Stamina" aria-valuemin="0" aria-valuemax="100" id="staminaBar"><div class="fill" id="staminaFill" style="background:var(--gold)"></div></div></div>
+    <p id="supplyMode">Auto supplies on · below 50</p>
     <div class="identity"><span id="playerIdentity">Irregular triangle · age 19 days</span><br><span id="reputationSummary">Little known locally</span><br><button class="small-btn" id="familyBtn">Family &amp; succession</button></div>
   </section>
   <section class="panel objectives" aria-label="Expedition goals"><div class="eyebrow" id="objectiveTitle">Your first expedition</div>
@@ -1094,13 +1107,10 @@ button {
   <div id="location"></div><div id="notice" class="panel" hidden></div>
   <div id="log" role="status" aria-live="polite" aria-atomic="false"></div>
   <section class="bottom-center" aria-label="Actions"><div id="context"></div><button id="cancelApproachBtn" class="small-btn" hidden>Cancel walk</button><div id="restDetails" hidden></div><div class="actionbar">
-    <button class="action" id="gatherBtn" title="Hold E, or hold this button, to gather"><kbd>E</kbd><span>Gather</span></button>
-    <button class="action" id="eatBtn" title="F: eat one provision"><kbd>F</kbd><span>Eat</span><span class="qty" id="foodCount">1</span></button>
-    <button class="action water" id="drinkBtn" title="R: drink one flask"><kbd>R</kbd><span>Drink</span><span class="qty" id="waterCount">1</span></button>
+    <button class="action" id="interactBtn" title="Move near a resource or citizen" disabled><kbd id="interactKey">E</kbd><span id="interactLabel">Explore</span></button>
     <button class="action" id="restBtn" title="Space: toggle rest. Move to stop resting."><kbd>Space</kbd><span>Rest</span></button>
-    <button class="action" id="talkBtn" title="T: speak to a nearby citizen"><kbd>T</kbd><span>Talk</span></button>
     <button class="action" id="sprintBtn" title="Hold Shift, or hold this button, while moving"><kbd>Shift</kbd><span>Sprint</span></button>
-  </div><div class="control-tip">WASD / arrows to move · T to talk · Hover / click to inspect · P to pause & save</div></section>
+  </div></section>
   <section class="panel map-panel" aria-label="World map"><div class="map-head"><span>FIELD MAP</span><span>N ↑</span></div><canvas id="minimap" width="336" height="224" aria-label="Map with your location, known family and refuge markers"></canvas><div class="map-foot"><span>▲ You</span><span style="color:#f1cd88">● Family</span><span>◇ Refuge</span></div></section>
   <div id="joystick" role="group" aria-label="Touch movement joystick"><div id="stick"></div></div>
   <aside class="panel" id="tooltip" hidden></aside>
@@ -1116,13 +1126,13 @@ button {
   <div class="motif" aria-hidden="true"><i></i><i></i><i></i></div><div class="eyebrow">A small life in a living world</div><h1>THE FLATLAND</h1>
   <p class="lede">A small shape. A life to carry forward.</p>
   <div class="seedrow"><label for="seedInput">World seed</label><input id="seedInput" value="abbott-1884" maxlength="48" spellcheck="false" autocomplete="off" aria-label="World seed"></div>
-  <button class="primary" id="continueBtn" disabled>Continue →</button><p class="save-status" data-save-status role="status"></p><button class="small-btn" id="startBtn">New life →</button><button class="small-btn" id="startImportBtn">Import save file</button><p class="fine">Move, gather, meet your neighbors. Help is always available.</p>
+  <button class="primary" id="continueBtn" disabled>Continue →</button><p class="save-status" data-save-status role="status"></p><button class="small-btn" id="startBtn">New life →</button><button class="small-btn" id="startImportBtn">Import save file</button><p class="fine">Move, gather, meet your neighbors. Find controls and Help in Pause.</p>
 </div></section>
-<section class="overlay" id="pauseScreen" aria-label="Paused" hidden><div class="modal"><div class="eyebrow">The world can wait</div><h2>Expedition paused</h2><p id="pauseReason">Take a breath. Nothing advances while paused.</p><button class="primary" id="resumeBtn">Resume expedition</button><div class="secondary-row"><button class="small-btn" id="pauseFamilyBtn">Family &amp; succession</button><button class="small-btn" id="pauseHelpBtn">Controls & field guide</button><button class="small-btn" id="restartBtn">Restart same seed</button><button class="small-btn" id="newSeedBtn">New world seed</button></div><div class="secondary-row"><button class="small-btn" id="saveBtn">Save manually</button><button class="small-btn" id="loadBtn">Load manual save</button><button class="small-btn" id="exportSaveBtn">Export save file</button><button class="small-btn" id="importSaveBtn">Import save file</button></div><p class="save-status" data-save-status role="status"></p><p class="fine">Saves stay in this browser. Export a backup for safekeeping.</p><details><summary>Population &amp; families</summary><p id="renewalStatus"></p><p class="fine">Citizens may choose partners and children independently, including someone you are courting. The population remains finite. Turning this off keeps existing families and history. Export a backup using the button above before enabling it in an older expedition.</p><button class="small-btn" id="renewalToggleBtn">Enable NPC families</button></details><details><summary>Testing</summary><button class="small-btn" id="openInspectorBtn">All information · F8</button></details></div></section>
+<section class="overlay" id="pauseScreen" aria-label="Paused" hidden><div class="modal"><div class="eyebrow">The world can wait</div><h2>Expedition paused</h2><p id="pauseReason">Take a breath. Nothing advances while paused.</p><button class="primary" id="resumeBtn">Resume expedition</button><div class="secondary-row"><button class="small-btn" id="pauseFamilyBtn">Family &amp; succession</button><button class="small-btn" id="pauseHelpBtn">Controls & field guide</button><button class="small-btn" id="restartBtn">Restart same seed</button><button class="small-btn" id="newSeedBtn">New world seed</button></div><div class="secondary-row"><button class="small-btn" id="saveBtn">Save manually</button><button class="small-btn" id="loadBtn">Load manual save</button><button class="small-btn" id="exportSaveBtn">Export save file</button><button class="small-btn" id="importSaveBtn">Import save file</button></div><p class="save-status" data-save-status role="status"></p><p class="fine">Saves stay in this browser. Export a backup for safekeeping.</p><details><summary>Settings</summary><label class="setting-toggle"><input type="checkbox" id="autoSuppliesToggle" checked> Auto eat &amp; drink</label><p class="fine">Use one packed supply when its meter falls below 50. You can also tap the food or water pack beside its meter, or press F / R.</p><p id="settingsStatus" class="fine" role="status"></p></details><details><summary>Population &amp; families</summary><p id="renewalStatus"></p><p class="fine">Citizens may choose partners and children independently, including someone you are courting. The population remains finite. Turning this off keeps existing families and history. Export a backup using the button above before enabling it in an older expedition.</p><button class="small-btn" id="renewalToggleBtn">Enable NPC families</button></details><details><summary>Testing</summary><button class="small-btn" id="openInspectorBtn">All information · F8</button></details></div></section>
 <section class="overlay" id="helpScreen" aria-label="Controls and field guide" hidden><div class="modal"><div class="eyebrow">Field guide</div><h2>Your next move</h2>
-<dl class="instructions"><dt>WASD / arrows</dt><dd>Move. Shift to sprint. On touch, use the joystick.</dd><dt>E / Gather</dt><dd>Hold to collect nearby food or water.</dd><dt>F / R</dt><dd>Eat / drink from your pack.</dd><dt>Space / Rest</dt><dd>Rest. Refuges can heal you.</dd><dt>Click a citizen / T</dt><dd>Choose an action. You walk over automatically. Move or Cancel to stop.</dd><dt>P / Escape</dt><dd>Pause. Escape also closes a citizen menu.</dd></dl>
+<dl class="instructions"><dt>WASD / arrows</dt><dd>Move. Hold Shift to sprint. On touch, use the joystick and hold Sprint while moving.</dd><dt>E / Gather</dt><dd>Hold to collect nearby food or water. The contextual action button marks its target and changes to Talk near a citizen.</dd><dt>F / R</dt><dd>Manually eat / drink from your pack. Auto supplies are on by default; change this in Pause → Settings.</dd><dt>Space / Rest</dt><dd>Rest. Refuges can heal you.</dd><dt>Click a citizen / T</dt><dd>Choose an action. You walk over automatically. Move or Cancel to stop.</dd><dt>P / Escape</dt><dd>Pause. Escape also closes a citizen menu.</dd></dl>
 <details><summary>Relationships &amp; family</summary><p>Vary your conversations. Friendship and attraction are separate. Marriage requires mutual interest. Same-sex spouses share household support; joint biological births currently require a male and female spouse.</p><p>At a refuge, advance days. Children mature at 18 days old. Retire at 40 days old or choose an adult descendant upon death. No adult heir means the playable lineage ends. Daughters can inherit too. Children look tiny until day 6, teenagers are smaller until day 18, adults reach full size, and elders shrink slightly from day 65. These size stages are visual; movement and interaction reach stay the same. Gold halos and gold minimap dots mark known family, including your spouse. Undiscovered relatives are not marked.</p></details>
-<details><summary>Survival &amp; time</summary><p>Food and water fill your pack; use them to refill your meters. Empty meters cost health. Field rest restores stamina; refuge rest also heals when food and water exceed 30.</p><p>Citizen menus and Family pause the world. Walking and interactions resume it. One day lasts 120 simulated seconds and adds one day of age. Refuge day advances provide subsistence and process aging and deaths.</p></details>
+<details><summary>Survival &amp; time</summary><p>Gathered food and water fill your pack. Auto supplies use one item when its meter drops below 50. Tap a pack beside its meter for manual use. If disabled in Pause → Settings, use supplies manually. Empty meters cost health. Field rest restores stamina; refuge rest also heals when food and water exceed 30.</p><p>Citizen menus and Family pause the world. Walking and interactions resume it. One day lasts 120 simulated seconds and adds one day of age. Refuge day advances provide subsistence and process aging and deaths.</p></details>
 <details><summary>Notes &amp; saves</summary><p>Details holds your notebook. Unconfirmed claims and rumors can be wrong. Marriage does not reveal hidden ancestry or a daughter's latent geometry.</p><p>Pause to save, load or export a backup. Browser saves stay in this browser and origin. A new life preserves the manual slot. Import validates before replacing active progress.</p></details>
 <details><summary>Testing inspector</summary><p>F8 toggles a paused view of all character information, including private ancestry. Press F8 or Escape to return. This does not teach your character secrets or change saved knowledge. On touch: Pause → Testing → All information.</p></details>
 <button class="primary" id="closeHelpBtn">Back to game</button></div></section>
@@ -2074,12 +2084,14 @@ class SocialSystem {
             }
         }
     }
-    // The only social DTO consumed by UI. It includes observations and the player's
-    // notebook, never profile truth, hidden genomes, private ancestry or truth flags.
+    // HUD captions must not record observations just to display a known name.
+    knownName(c) { return c.playerKnowledge.discoveredFacts.name?.value || 'Unknown citizen'; }
+    // The social DTO includes observations and the player's notebook, never profile
+    // truth, hidden genomes, private ancestry or truth flags.
     view(c) {
         const observed = observeCitizen(c), k = c.playerKnowledge, stage = this.stage(c);
         const facts = Object.entries(SOCIAL.factLabels).map(([key, label]) => ({ key, label, ...(k.discoveredFacts[key] ? copyJSON(k.discoveredFacts[key]) : { locked: true }) }));
-        return { adult: c.actual.life.ageYears >= 18, id: c.id, name: k.discoveredFacts.name?.value || 'Unknown citizen', observed, facts,
+        return { adult: c.actual.life.ageYears >= 18, id: c.id, name: this.knownName(c), observed, facts,
             relationship: { familiarity: this.relationship(c).familiarity, trust: this.relationship(c).trust, stage, label: SOCIAL.stages[stage],familyRole:this.familyBond(c).role },
             rumors: copyJSON(k.rumors), inRange: this.nearby(c), cooldown: Math.max(0, SOCIAL.cooldown - (this.world.elapsed - k.relationship.lastAt)),
             remaining: k.relationship.day === Math.floor(this.world.elapsed / C.DAY) ? Math.max(0, SOCIAL.dailyLimit - k.relationship.today) : SOCIAL.dailyLimit,
@@ -3109,6 +3121,7 @@ class Input {
         this.keys = new Set();
         this.touch = { x: 0, y: 0 };
         this.hold = { gather: false, sprint: false };
+        this.gatherTarget = null;
         this.mouse = { x: 0, y: 0, inside: false };
         this.joyPointer = null;
         window.addEventListener('keydown', e => this.keyDown(e));
@@ -3125,7 +3138,7 @@ class Input {
             document.body.classList.add('touch'); }, { passive: true });
         if (matchMedia('(pointer:coarse)').matches)
             document.body.classList.add('touch');
-        this.bindHold('gatherBtn', 'gather', () => game.gather());
+        this.bindContextAction();
         this.bindHold('sprintBtn', 'sprint');
         const joy = $('joystick');
         joy.addEventListener('pointerdown', e => { if (this.joyPointer !== null || game.state !== 'running')
@@ -3138,6 +3151,29 @@ class Input {
                 this.touch = { x: 0, y: 0 };
                 $('stick').style.transform = '';
             } });
+    }
+    bindContextAction() {
+        const b = $('interactBtn');
+        const activate = held => {
+            if (this.game.state !== 'running' || b.disabled) return;
+            const action = this.game.contextAction;
+            if (action?.kind === 'gather') {
+                if (held) { this.gatherTarget = action.target; this.hold.gather = true; }
+                this.game.gather(action.target);
+            } else if (action?.kind === 'talk' && this.game.world.social.nearby(action.target)) {
+                this.game.socialUI.open(action.target.id);
+            }
+        };
+        b.addEventListener('pointerdown', e => {
+            if (b.disabled || this.game.state !== 'running' || e.button !== 0) return;
+            b.setPointerCapture(e.pointerId); activate(true); e.preventDefault();
+        });
+        for (const event of ['pointerup', 'pointercancel', 'lostpointercapture'])
+            b.addEventListener(event, () => { this.hold.gather = false; this.gatherTarget = null; });
+        b.addEventListener('click', e => {
+            if (e.detail === 0) activate(false);
+            if (!this.game.socialUI.isOpen) this.game.canvas.focus({ preventScroll: true });
+        });
     }
     bindHold(id, key, onStart) {
         const b = $(id);
@@ -3161,7 +3197,7 @@ class Input {
             this.touch = { x: 0, y: 0 };
         $('stick').style.transform = `translate(${x}px,${y}px)`;
     }
-    clear() { this.keys.clear(); this.hold.gather = this.hold.sprint = false; this.touch = { x: 0, y: 0 }; this.joyPointer = null; this.mouse.inside = false; $('stick').style.transform = ''; }
+    clear() { this.keys.clear(); this.hold.gather = this.hold.sprint = false; this.gatherTarget = null; this.touch = { x: 0, y: 0 }; this.joyPointer = null; this.mouse.inside = false; $('stick').style.transform = ''; }
     keyDown(e) {
         if (e.code === 'Tab' && (this.game.state !== 'running' || this.game.socialUI?.isOpen)) {
             const dialog = this.game.socialUI?.isOpen ? $('citizenPanel') : document.querySelector('.overlay:not([hidden])');
@@ -3415,7 +3451,8 @@ class Renderer {
             else if (visible(o.x, o.y, o.r + 8))
                 this.nature(ctx, o);
         }
-        const nearest = this.game.nearestResource();
+        const action = this.game.contextAction;
+        const nearest = action?.kind === 'gather' ? action.target : null;
         for (const r of world.resources)
             if (visible(r.x, r.y, 30))
                 this.resource(ctx, r, world.elapsed, r === nearest);
@@ -3555,7 +3592,7 @@ class Renderer {
             ctx.shadowColor='#f1cd88';ctx.shadowBlur=9;ctx.setLineDash([5,4]);ctx.stroke();ctx.restore();
         }
         const ui=this.game.socialUI;
-        if(!isPlayer && (ui?.selectedId===c.id || ui?.controller?.pending?.id===c.id)) {
+        if(!isPlayer && (ui?.selectedId===c.id || ui?.controller?.pending?.id===c.id || (this.game.contextAction?.kind==='talk' && this.game.contextAction.target===c))) {
             ctx.beginPath();ctx.arc(0,0,radius+8,0,TAU);ctx.strokeStyle='#a6cfaa';ctx.lineWidth=2;ctx.stroke();
         }
         if (isPlayer) {
@@ -3686,6 +3723,9 @@ class Game {
         this.accumulator = 0;
         this.lastTime = null;
         this.debugManual = false;
+        this.autoSupplies = true;
+        try { this.autoSupplies = localStorage.getItem('flatland.autoSupplies.v1') !== 'false'; } catch { /* Play with defaults when storage is unavailable. */ }
+        this.contextAction = null;
         this.renderer = new Renderer(this);
         this.input = new Input(this);
         this.saves = new SaveStore(this);
@@ -3713,7 +3753,6 @@ class Game {
         });
         bind('newSeedBtn', () => { this.setScreen('menu'); this.saves.refreshMenu(); });
         bind('pauseBtn', () => this.pause());
-        bind('helpBtn', () => this.showHelp());
         bind('resumeBtn', () => this.resume());
         bind('pauseHelpBtn', () => this.showHelp());
         bind('closeHelpBtn', () => this.closeHelp());
@@ -3723,6 +3762,15 @@ class Game {
         bind('eatBtn', () => this.consume('food'));
         bind('drinkBtn', () => this.consume('water'));
         bind('restBtn', () => this.toggleRest());
+        $('autoSuppliesToggle').checked = this.autoSupplies;
+        $('autoSuppliesToggle').addEventListener('change', e => {
+            this.autoSupplies = e.target.checked;
+            try {
+                localStorage.setItem('flatland.autoSupplies.v1', String(this.autoSupplies));
+                $('settingsStatus').textContent = 'Preference saved for this browser.';
+            } catch { $('settingsStatus').textContent = 'Applied for this visit. Browser storage is unavailable.'; }
+            this.refreshUI();
+        });
         bind('cancelApproachBtn', () => this.socialUI.controller?.cancel());
         bind('renewalToggleBtn',()=>{
             if(this.state!=='paused' || !this.world.player.actual.life.alive) return;
@@ -3789,6 +3837,7 @@ class Game {
         this.progress = { gathered: 0, visited: new Set(), complete: false };
         this.gatherCooldown = 0;
         this.warningLatch = {};
+        this.sprintTaught = false;
         this.accumulator = 0;
         this.uiClock = 0;
         this.mapClock = 0;
@@ -3837,11 +3886,19 @@ class Game {
             best = r;
         }
     } return best; }
-    gather() {
+    actionTarget() {
+        const r = this.nearestResource(), c = this.world.social.nearest(), p = this.world.player;
+        // Prefer the nearest usable target. A full pack must not block conversation.
+        if (r && this.pack[r.kind] < C.PACK && (!c || dist2(p.x,p.y,r.x,r.y) <= dist2(p.x,p.y,c.x,c.y)))
+            return { kind: 'gather', target: r };
+        if (c) return { kind: 'talk', target: c };
+        return r ? { kind: 'gather', target: r } : null;
+    }
+    gather(r = this.nearestResource()) {
         if (this.state !== 'running' || this.gatherCooldown > 0)
             return;
-        const r = this.nearestResource();
-        if (!r)
+        const p = this.world.player;
+        if (!r || !r.quantity || dist2(p.x,p.y,r.x,r.y) > C.GATHER_REACH ** 2 || !this.world.segmentClear(p.x,p.y,r.x,r.y,3))
             return;
         if (this.pack[r.kind] >= C.PACK) {
             this.gatherCooldown = .8;
@@ -3856,7 +3913,7 @@ class Game {
             this.refreshUI();
         }
     }
-    consume(kind) {
+    consume(kind, automatic = false) {
         if (this.state !== 'running')
             return;
         if (this.pack[kind] <= 0) {
@@ -3871,7 +3928,7 @@ class Game {
         const before = v[key];
         v[key] = Math.min(100, v[key] + (kind === 'food' ? 38 : 45));
         this.pack[kind]--;
-        this.log(`${kind === 'food' ? 'Ate one provision' : 'Drank one flask'} · +${Math.round(v[key] - before)} ${kind}.`);
+        this.log(`${automatic ? 'Auto · ' : ''}${kind === 'food' ? 'Ate food' : 'Drank water'} · +${Math.round(v[key] - before)} · ${this.pack[kind]} left.`);
         this.refreshUI();
     }
     toggleRest() {
@@ -3914,6 +3971,10 @@ class Game {
         const metabolism = p.actual.genome.metabolism * this.world.romance.household(p);
         v.hunger = Math.max(0, v.hunger - .30 * metabolism * dt * (sprint ? 1.65 : run.resting ? .65 : 1));
         v.thirst = Math.max(0, v.thirst - .46 * metabolism * dt * (sprint ? 1.8 : run.resting ? .72 : 1));
+        if (this.autoSupplies) {
+            if (v.hunger < 50 && this.pack.food > 0) this.consume('food', true);
+            if (v.thirst < 50 && this.pack.water > 0) this.consume('water', true);
+        }
         if (v.hunger <= 0)
             v.health -= 2.8 * dt;
         if (v.thirst <= 0)
@@ -3963,7 +4024,7 @@ class Game {
             return;
         w.family.flushRenewal();
         if (this.input.gather)
-            this.gather();
+            this.gather(this.input.hold.gather ? this.input.gatherTarget : undefined);
         for (const c of w.npcs)
             w.updateNPC(c, dt);
         w.separateCitizens();
@@ -4038,23 +4099,36 @@ class Game {
         $('waterCount').textContent = this.pack.water + '/' + C.PACK;
         $('eatBtn').disabled = this.pack.food === 0;
         $('drinkBtn').disabled = this.pack.water === 0;
+        $('supplyMode').textContent = this.autoSupplies ? 'Auto supplies on · below 50' : 'Auto supplies off · tap pack to use';
         $('restBtn').classList.toggle('active', p.runtime.resting);
         $('restBtn').querySelector('span').textContent = p.runtime.resting ? 'Get up' : 'Rest';
         $('sprintBtn').classList.toggle('active', p.runtime.sprinting);
         $('sprintBtn').querySelector('span').textContent = p.runtime.exhausted ? 'Recover' : 'Sprint';
-        const r = this.nearestResource(), f = w.refugeAt(p.x, p.y);
-        $('gatherBtn').disabled = !r || this.pack[r.kind] >= C.PACK;
-        let context = 'Explore · collect food and water · keep your meters filled';
+        const r = this.nearestResource(), f = w.refugeAt(p.x, p.y), touch = document.body.classList.contains('touch');
+        // Keep a held resource fixed until release, even after depletion or nearby movement.
+        this.contextAction = this.input.hold.gather && this.input.gatherTarget
+            ? {kind:'gather',target:this.input.gatherTarget} : this.actionTarget();
+        const action = this.contextAction, b = $('interactBtn');
+        const label = action?.kind === 'gather' ? (action.target.quantity === 0 ? 'Depleted' : this.pack[action.target.kind] >= C.PACK ? 'Pack full' : action.target.kind === 'food' ? 'Gather berries' : 'Collect water')
+            : action?.kind === 'talk' ? `Talk to ${w.social.knownName(action.target)}` : 'Explore';
+        b.disabled = !action || (action.kind === 'gather' && (!action.target.quantity || this.pack[action.target.kind] >= C.PACK));
+        $('interactLabel').textContent = label;
+        $('interactKey').textContent = action?.kind === 'talk' ? 'T' : 'E';
+        b.title = action?.kind === 'gather' ? 'Hold to gather from the marked resource. E also gathers nearby supplies.' : action?.kind === 'talk' ? `${label}. T also opens a citizen menu.` : 'Move near a resource or citizen';
+        let context = '';
         if (p.runtime.resting)
             context = f ? (p.vitals.hunger > 30 && p.vitals.thirst > 30 ? 'Refuge rest · healing' : 'Refuge rest · eat and drink to heal') : 'Field rest · no healing';
-        else if (r)
-            context = this.pack[r.kind] >= C.PACK ? `${r.kind === 'food' ? 'Food' : 'Water'} pack full · use supplies first` : `Hold E to gather ${r.kind} · ${r.quantity} remaining`;
+        else if (action?.kind === 'gather')
+            context = this.pack[action.target.kind] >= C.PACK ? 'Pack full · supplies are beside your meters' : `${touch ? 'Hold to gather' : 'Hold E to gather'} · ${action.target.quantity} remaining`;
         else if (f)
-            context = 'Safe refuge · Space to rest and recover health';
-        if(w.elapsed<8 && !this.progress.gathered && !r && !p.runtime.resting) context=document.body.classList.contains('touch')?'Drag the joystick to move.':'WASD / arrows · Move';
-        if(r && !p.runtime.resting) context=`${document.body.classList.contains('touch')?'Hold Gather':'Hold E'} · ${r.kind} (${r.quantity})`;
-        if(p.vitals.hunger<45 && this.pack.food) context=document.body.classList.contains('touch')?'Tap Eat · Use packed food':'F · Eat packed food';
-        else if(p.vitals.thirst<45 && this.pack.water) context=document.body.classList.contains('touch')?'Tap Drink · Use packed water':'R · Drink packed water';
+            context = touch ? 'Safe refuge · Rest to recover health' : 'Safe refuge · Space to rest and recover health';
+        if (p.runtime.sprinting) this.sprintTaught = true;
+        if(w.elapsed<8 && !this.progress.gathered && !r && !p.runtime.resting) context=touch?'Drag the joystick to move · hold Sprint to run':'WASD / arrows · move · hold Shift to sprint';
+        else if (!context && !action && !this.sprintTaught && w.elapsed < 25) context=touch?'Hold Sprint while moving to run':'Hold Shift while moving to sprint';
+        if(p.vitals.hunger<45 && !this.pack.food) context='Food low · find a berry patch';
+        else if(p.vitals.thirst<45 && !this.pack.water) context='Water low · find a spring';
+        else if(!this.autoSupplies && p.vitals.hunger<45 && this.pack.food) context=touch?'Tap the food pack beside your meter':'F · eat packed food';
+        else if(!this.autoSupplies && p.vitals.thirst<45 && this.pack.water) context=touch?'Tap the water pack beside your meter':'R · drink packed water';
         const pending=this.socialUI?.controller?.pending;
         if(pending) context=w.social.nearby(w.social.citizen(pending.id))?'Waiting for a reply…':'Walking over…';
         $('cancelApproachBtn').hidden=!pending;
@@ -4062,10 +4136,7 @@ class Game {
         $('restDetails').hidden = true;
         $('restDetails').textContent = `Stamina +27/s · food use −35% · water use −28%${f ? ' · eligible healing +1.8/s' : ''}`;
         $('location').textContent = w.districtAt(p.x, p.y);
-        const nearby = w.social.nearest();
-        $('talkBtn').disabled = !nearby;
         $('reputationSummary').textContent = w.social.reputationLabel();
-        if (!pending && !p.runtime.resting && !r && nearby) $('context').textContent = 'Click a citizen · Choose an action';
         this.socialUI?.refresh();
         const days = Math.min(3, Math.floor(w.elapsed / C.DAY));
         $('daysCount').textContent = days + ' / 3';
@@ -4113,7 +4184,6 @@ class Game {
 class SocialUI {
     constructor(game) {
         this.game=game; this.selectedId=null; this.group='root'; this.reply=null; this.signature=''; this.controller=null;
-        $('talkBtn').addEventListener('click',()=>this.openNearest());
         $('closeCitizenBtn').addEventListener('click',()=>this.close());
         $('bubbleBackBtn').addEventListener('click',()=>this.showGroup(this.group==='stories'?'talk':this.group==='commitment'?'romance':'root'));
         game.canvas.addEventListener('click',e=>{

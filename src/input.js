@@ -4,6 +4,7 @@ class Input {
         this.keys = new Set();
         this.touch = { x: 0, y: 0 };
         this.hold = { gather: false, sprint: false };
+        this.gatherTarget = null;
         this.mouse = { x: 0, y: 0, inside: false };
         this.joyPointer = null;
         window.addEventListener('keydown', e => this.keyDown(e));
@@ -20,7 +21,7 @@ class Input {
             document.body.classList.add('touch'); }, { passive: true });
         if (matchMedia('(pointer:coarse)').matches)
             document.body.classList.add('touch');
-        this.bindHold('gatherBtn', 'gather', () => game.gather());
+        this.bindContextAction();
         this.bindHold('sprintBtn', 'sprint');
         const joy = $('joystick');
         joy.addEventListener('pointerdown', e => { if (this.joyPointer !== null || game.state !== 'running')
@@ -33,6 +34,29 @@ class Input {
                 this.touch = { x: 0, y: 0 };
                 $('stick').style.transform = '';
             } });
+    }
+    bindContextAction() {
+        const b = $('interactBtn');
+        const activate = held => {
+            if (this.game.state !== 'running' || b.disabled) return;
+            const action = this.game.contextAction;
+            if (action?.kind === 'gather') {
+                if (held) { this.gatherTarget = action.target; this.hold.gather = true; }
+                this.game.gather(action.target);
+            } else if (action?.kind === 'talk' && this.game.world.social.nearby(action.target)) {
+                this.game.socialUI.open(action.target.id);
+            }
+        };
+        b.addEventListener('pointerdown', e => {
+            if (b.disabled || this.game.state !== 'running' || e.button !== 0) return;
+            b.setPointerCapture(e.pointerId); activate(true); e.preventDefault();
+        });
+        for (const event of ['pointerup', 'pointercancel', 'lostpointercapture'])
+            b.addEventListener(event, () => { this.hold.gather = false; this.gatherTarget = null; });
+        b.addEventListener('click', e => {
+            if (e.detail === 0) activate(false);
+            if (!this.game.socialUI.isOpen) this.game.canvas.focus({ preventScroll: true });
+        });
     }
     bindHold(id, key, onStart) {
         const b = $(id);
@@ -56,7 +80,7 @@ class Input {
             this.touch = { x: 0, y: 0 };
         $('stick').style.transform = `translate(${x}px,${y}px)`;
     }
-    clear() { this.keys.clear(); this.hold.gather = this.hold.sprint = false; this.touch = { x: 0, y: 0 }; this.joyPointer = null; this.mouse.inside = false; $('stick').style.transform = ''; }
+    clear() { this.keys.clear(); this.hold.gather = this.hold.sprint = false; this.gatherTarget = null; this.touch = { x: 0, y: 0 }; this.joyPointer = null; this.mouse.inside = false; $('stick').style.transform = ''; }
     keyDown(e) {
         if (e.code === 'Tab' && (this.game.state !== 'running' || this.game.socialUI?.isOpen)) {
             const dialog = this.game.socialUI?.isOpen ? $('citizenPanel') : document.querySelector('.overlay:not([hidden])');

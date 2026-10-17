@@ -155,7 +155,8 @@ class Renderer {
             else if (visible(o.x, o.y, o.r + 8))
                 this.nature(ctx, o);
         }
-        const nearest = this.game.nearestResource();
+        const action = this.game.contextAction;
+        const nearest = action?.kind === 'gather' ? action.target : null;
         for (const r of world.resources)
             if (visible(r.x, r.y, 30))
                 this.resource(ctx, r, world.elapsed, r === nearest);
@@ -295,7 +296,7 @@ class Renderer {
             ctx.shadowColor='#f1cd88';ctx.shadowBlur=9;ctx.setLineDash([5,4]);ctx.stroke();ctx.restore();
         }
         const ui=this.game.socialUI;
-        if(!isPlayer && (ui?.selectedId===c.id || ui?.controller?.pending?.id===c.id)) {
+        if(!isPlayer && (ui?.selectedId===c.id || ui?.controller?.pending?.id===c.id || (this.game.contextAction?.kind==='talk' && this.game.contextAction.target===c))) {
             ctx.beginPath();ctx.arc(0,0,radius+8,0,TAU);ctx.strokeStyle='#a6cfaa';ctx.lineWidth=2;ctx.stroke();
         }
         if (isPlayer) {

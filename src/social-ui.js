@@ -2,7 +2,6 @@
 class SocialUI {
     constructor(game) {
         this.game=game; this.selectedId=null; this.group='root'; this.reply=null; this.signature=''; this.controller=null;
-        $('talkBtn').addEventListener('click',()=>this.openNearest());
         $('closeCitizenBtn').addEventListener('click',()=>this.close());
         $('bubbleBackBtn').addEventListener('click',()=>this.showGroup(this.group==='stories'?'talk':this.group==='commitment'?'romance':'root'));
         game.canvas.addEventListener('click',e=>{

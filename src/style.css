@@ -165,8 +165,27 @@ button:hover:not(:disabled) {
   justify-content:space-between;
   font-size:11px;
   color:var(--muted);
-  margin-bottom:6px
+  margin-bottom:6px;
+  align-items:center;
+  gap:6px
 }
+.supply-btn {
+  margin-left:auto;
+  border:1px solid var(--line);
+  border-radius:4px;
+  background:transparent;
+  color:var(--green);
+  font-size:10px;
+  padding:4px 6px;
+  min-height:28px;
+}
+#drinkBtn { color:var(--water); }
+#supplyMode { font-size:9px; color:var(--muted); line-height:1.4; margin:8px 0 0; }
+.setting-toggle { display:flex; gap:10px; align-items:center; min-height:44px; cursor:pointer; }
+.setting-toggle input { width:20px; height:20px; accent-color:var(--green); }
+#sprintBtn { display:none; }
+.touch #sprintBtn { display:flex; }
+.touch .supply-btn { min-height:36px; }
 .stat-label span:last-child {
   font-variant-numeric:tabular-nums;
   color:var(--ink)
@@ -333,6 +352,8 @@ button:hover:not(:disabled) {
   gap:6px;
   pointer-events:auto
 }
+#interactBtn { min-width:0; }
+#interactLabel { white-space:normal; overflow-wrap:anywhere; }
 .action {
   border:1px solid var(--line);
   border-radius:7px;
@@ -358,20 +379,6 @@ button:hover:not(:disabled) {
   border-radius:3px;
   padding:2px 4px;
   min-width:18px;
-  text-align:center
-}
-.action .qty {
-  color:var(--green);
-  font-size:11px;
-  font-variant-numeric:tabular-nums
-}
-.action.water .qty {
-  color:var(--water)
-}
-.control-tip {
-  font-size:10px;
-  color:#9aadae;
-  letter-spacing:.025em;
   text-align:center
 }
 #log {
@@ -601,9 +608,6 @@ button:hover:not(:disabled) {
   bottom:149px;
   width:190px
 }
-.touch .control-tip {
-  display:none
-}
 .touch .bottom-center {
   bottom:24px
 }
@@ -796,9 +800,6 @@ button:hover:not(:disabled) {
     padding:10px 11px;
     font-size:11px
   }
-  .control-tip {
-    font-size:9px
-  }
   #context {
     font-size:10px
   }
@@ -843,7 +844,7 @@ button:hover:not(:disabled) {
   .touch .actionbar {
     width:100%;
     display:grid;
-    grid-template-columns:repeat(3,1fr);
+    grid-template-columns:repeat(2,minmax(0,1fr));
     gap:5px
   }
   .touch .action {
@@ -852,9 +853,8 @@ button:hover:not(:disabled) {
     min-height:42px;
     gap:4px
   }
-  .touch .action:nth-child(4) {
-    grid-column:span 2
-  }
+  .touch #interactBtn { grid-column:span 2; }
+  .touch .action { white-space:normal; overflow-wrap:anywhere; }
   .touch #context {
     width:100%;
     padding:7px
@@ -918,11 +918,21 @@ button:hover:not(:disabled) {
     display:none
   }
   .vitals {
-    width:154px;
-    padding:10px
+    width:270px;
+    padding:10px;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    column-gap:12px
   }
+  .vitals .panel-head { grid-column:1/-1; margin-bottom:0; }
+  .vitals .panel-head strong { font-size:11px; }
+  .vitals .tag { font-size:8px; letter-spacing:.05em; }
+  .vitals #supplyMode { grid-column:1/-1; margin-top:4px; }
+  .vitals .stat-label { font-size:10px; min-height:36px; gap:4px; }
+  .vitals .supply-btn { padding:4px; font-size:9px; }
+  .vitals #staminaStat { grid-column:2; grid-row:2; }
   .stat {
-    margin:9px 0
+    margin:4px 0
   }
   .bottom-center {
     max-width:calc(100% - 210px);
@@ -951,14 +961,16 @@ button:hover:not(:disabled) {
   .modal {
     margin:auto 0
   }
-  .control-tip {
-    display:none
-  }
 }
 @media(prefers-reduced-motion:reduce) {
   .fill,#notice {
     transition:none
   }
+}
+@media(max-width:360px) and (min-height:501px) {
+  .vitals,.objectives { width:calc(50% - 20px); }
+  .supply-btn { min-width:36px; }
+  .supply-verb { display:none; }
 }
 /* Compact layouts retain the latest message and keep world space readable. */ html {
   -webkit-text-size-adjust:100%;

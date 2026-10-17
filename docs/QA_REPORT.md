@@ -1,5 +1,31 @@
 # QA report — Phase 3.5 renewal (v0.3.5 / save v5)
 
+## UI subtraction — 2026-10-17
+
+The approved UI now has two main action buttons for keyboard play (contextual
+Gather/Talk and Rest), plus Sprint for touch. Targets are marked in the world;
+holding Gather stays on the displayed resource until release. Help is under
+Pause with H retained. Brief movement/sprint prompts replace the permanent
+shortcut line. Food/water pack counts and manual controls sit beside their meters.
+
+Auto supplies default on and consume one packed item when its meter drops below
+50 during active simulation, before starvation/dehydration damage. Pause →
+Settings can disable both; the preference uses a separate browser key, with a
+visit-only fallback on storage failure. Save v5 and legacy migrations are unchanged.
+Contextual name captions read existing knowledge without recording observations.
+
+Validation: **82 deterministic cases and all eleven Chromium browser suites pass**,
+including the new [UI suite](../tools/browser-ui.cjs). It checks automatic use,
+empty stock, pause boundaries, opt-out persistence, exact save round trips,
+read-only HUD refreshes, manual use, held-target depletion/full-pack release,
+keyboard focus, Help and storage denial. Native emulated multitouch verifies
+simultaneous joystick/sprint and release. Controls fit and receive taps at
+390×844, 320×568 and 844×390; meters clear the joystick and objectives. Screenshots
+were visually inspected. Build agreement, documentation links and diff whitespace
+checks pass. Raw screenshots/results stay local under ignored output; normal
+player profiles were untouched. Physical phone testing and human balance testing
+remain outside this automated evidence.
+
 ## Approved visual growth stages — 2026-10-16
 
 V0.3.5 implements the user-approved child/teen/adult/elder stages: 0–5 days at
